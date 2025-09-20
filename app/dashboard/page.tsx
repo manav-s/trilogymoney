@@ -1,6 +1,14 @@
 import Link from "next/link";
+import { UserButton } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const { userId } = await auth();
+  
+  if (!userId) {
+    redirect("/signin");
+  }
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Navigation */}
@@ -14,9 +22,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-700 dark:text-gray-300">Welcome back!</span>
-              <button className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-md text-sm">
-                Sign Out
-              </button>
+              <UserButton afterSignOutUrl="/" />
             </div>
           </div>
         </div>

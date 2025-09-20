@@ -1,4 +1,11 @@
 import Link from "next/link";
+import {
+  SignInButton,
+  SignUpButton,
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from "@clerk/nextjs";
 
 export default function Home() {
   return (
@@ -11,18 +18,27 @@ export default function Home() {
           </span>
         </div>
         <div className="flex items-center space-x-4">
-          <Link 
-            href="/signin" 
-            className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium"
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/signup"
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
-          >
-            Get Started
-          </Link>
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium">
+                Sign In
+              </button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                Get Started
+              </button>
+            </SignUpButton>
+          </SignedOut>
+          <SignedIn>
+            <Link
+              href="/dashboard"
+              className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium"
+            >
+              Dashboard
+            </Link>
+            <UserButton afterSignOutUrl="/" />
+          </SignedIn>
         </div>
       </nav>
 
@@ -41,12 +57,21 @@ export default function Home() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link
-              href="/signup"
-              className="bg-indigo-600 text-white px-8 py-4 rounded-lg hover:bg-indigo-700 transition-colors font-semibold text-lg min-w-[200px]"
-            >
-              Start Free Trial
-            </Link>
+            <SignedOut>
+              <SignUpButton mode="modal">
+                <button className="bg-indigo-600 text-white px-8 py-4 rounded-lg hover:bg-indigo-700 transition-colors font-semibold text-lg min-w-[200px]">
+                  Start Free Trial
+                </button>
+              </SignUpButton>
+            </SignedOut>
+            <SignedIn>
+              <Link
+                href="/dashboard"
+                className="bg-indigo-600 text-white px-8 py-4 rounded-lg hover:bg-indigo-700 transition-colors font-semibold text-lg min-w-[200px]"
+              >
+                Go to Dashboard
+              </Link>
+            </SignedIn>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               3-day free trial • $10/month after
             </p>
@@ -141,12 +166,21 @@ export default function Home() {
                   3-day free trial
                 </li>
               </ul>
-              <Link
-                href="/signup"
-                className="block w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-colors font-semibold"
-              >
-                Start Free Trial
-              </Link>
+              <SignedOut>
+                <SignUpButton mode="modal">
+                  <button className="block w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-colors font-semibold">
+                    Start Free Trial
+                  </button>
+                </SignUpButton>
+              </SignedOut>
+              <SignedIn>
+                <Link
+                  href="/dashboard"
+                  className="block w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-colors font-semibold"
+                >
+                  Go to Dashboard
+                </Link>
+              </SignedIn>
             </div>
           </div>
         </div>
