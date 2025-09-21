@@ -23,6 +23,7 @@ export async function getOrCreateUser(): Promise<User | null> {
       const clerkUser = await currentUser();
       
       if (!clerkUser) {
+        console.error('Clerk user not found for userId:', userId);
         return null;
       }
 
@@ -30,7 +31,9 @@ export async function getOrCreateUser(): Promise<User | null> {
       const name = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim();
       
       if (!email) {
-        throw new Error('No email found for user');
+        console.error('No email found for Clerk user:', userId, clerkUser);
+        // Instead of throwing an error, return null and let the calling code handle it
+        return null;
       }
 
       user = await prisma.user.create({

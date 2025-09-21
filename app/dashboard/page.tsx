@@ -15,7 +15,38 @@ export default async function DashboardPage() {
   const user = await getOrCreateUser();
   
   if (!user) {
-    redirect("/signin");
+    // If user creation failed, show error page instead of redirecting to signin
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="max-w-md w-full space-y-6 text-center">
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto">
+            <span className="text-red-600 dark:text-red-400 text-2xl">⚠️</span>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Account Setup Error
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            We're having trouble setting up your account. Please try signing out and signing back in.
+          </p>
+          <div className="space-y-3">
+            <form action="/api/sync-user" method="POST">
+              <button 
+                type="submit"
+                className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700"
+              >
+                Try Account Sync
+              </button>
+            </form>
+            <Link
+              href="/"
+              className="block w-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
+            >
+              Back to Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
