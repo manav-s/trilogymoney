@@ -2,11 +2,19 @@ import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { getOrCreateUser, userNeedsOnboarding } from "@/lib/user-utils";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
   
   if (!userId) {
+    redirect("/signin");
+  }
+
+  // Get or create user in database
+  const user = await getOrCreateUser();
+  
+  if (!user) {
     redirect("/signin");
   }
   return (
@@ -21,7 +29,9 @@ export default async function DashboardPage() {
               </Link>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-700 dark:text-gray-300">Welcome back!</span>
+              <span className="text-gray-700 dark:text-gray-300">
+                Welcome back, {user.name}!
+              </span>
               <UserButton afterSignOutUrl="/" />
             </div>
           </div>
@@ -30,53 +40,92 @@ export default async function DashboardPage() {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          {/* Coming Soon Message */}
-          <div className="text-center py-20">
-            <div className="w-20 h-20 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-indigo-600 dark:text-indigo-400 text-3xl">📊</span>
+          {/* User Status Banner */}
+          {userNeedsOnboarding(user) && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <span className="text-yellow-400 text-xl">⚠️</span>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                    Complete Your Setup
+                  </h3>
+                  <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                    Please complete your profile to start receiving daily financial updates.
+                  </p>
+                  <div className="mt-2">
+                    <Link
+                      href="/onboarding"
+                      className="bg-yellow-100 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 px-3 py-1 rounded text-sm font-medium hover:bg-yellow-200 dark:hover:bg-yellow-700"
+                    >
+                      Complete Setup →
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Dashboard Coming Soon
-            </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-              Your complete dashboard for managing your 3Numbers subscription, viewing daily numbers, 
-              and adjusting settings will be available after authentication is implemented.
-            </p>
-            
-            {/* Preview Cards */}
-            <div className="grid md:grid-cols-3 gap-6 mt-12 max-w-4xl mx-auto">
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  Daily Numbers
-                </h3>
-                <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  View your recent financial metrics and SMS delivery history
-                </p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  Settings
-                </h3>
-                <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  Adjust your message time, phone number, and notification preferences
-                </p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  Subscription
-                </h3>
-                <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  Manage your billing, upgrade plans, or cancel your subscription
-                </p>
+          )}
+
+          {/* User Info Cards */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {/* Profile Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Profile
+              </h3>
+              <div className="space-y-2 text-sm">
+                <p><span className="font-medium">Name:</span> {user.name}</p>
+                <p><span className="font-medium">Email:</span> {user.email}</p>
+                <p><span className="font-medium">Phone:</span> {user.phone || 'Not set'}</p>
+                <p><span className="font-medium">City:</span> {user.city || 'Not set'}</p>
+                <p><span className="font-medium">Timezone:</span> {user.timezone}</p>
               </div>
             </div>
 
-            <Link
-              href="/"
-              className="inline-flex items-center mt-8 text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium"
-            >
-              ← Back to home
-            </Link>
+            {/* Settings Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Message Settings
+              </h3>
+              <div className="space-y-2 text-sm">
+                <p><span className="font-medium">Delivery Time:</span> {user.messageTime}:00</p>
+                <p><span className="font-medium">Messages:</span> {user.messageEnabled ? 'Enabled' : 'Disabled'}</p>
+                <p><span className="font-medium">Verified:</span> {user.isVerified ? '✅ Yes' : '❌ No'}</p>
+              </div>
+              <button className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded text-sm hover:bg-indigo-700">
+                Update Settings
+              </button>
+            </div>
+
+            {/* Subscription Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Subscription
+              </h3>
+              <div className="text-center py-8">
+                <span className="text-2xl">💳</span>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                  No active subscription
+                </p>
+                <button className="mt-4 bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700">
+                  Start Trial
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Recent Activity
+            </h3>
+            <div className="text-center py-8">
+              <span className="text-3xl">📊</span>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">
+                No daily numbers yet. Complete your setup to start receiving financial updates!
+              </p>
+            </div>
           </div>
         </div>
       </main>
