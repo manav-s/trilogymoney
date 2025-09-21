@@ -1,6 +1,6 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { prisma } from './db';
-import { User } from '@prisma/client';
+import type { User } from '@prisma/client';
 
 /**
  * Get or create user in database from Clerk authentication
@@ -28,20 +28,21 @@ export async function getOrCreateUser(): Promise<User | null> {
       }
 
       const email = clerkUser.emailAddresses?.[0]?.emailAddress;
+      const phone = clerkUser.phoneNumbers?.[0]?.phoneNumber;
       const name = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim();
       
-      if (!email) {
-        console.error('No email found for Clerk user:', userId, clerkUser);
-        // Instead of throwing an error, return null and let the calling code handle it
+      // For 3Numbers, we support phone-only signup since SMS is our primary feature
+      if (!email && !phone) {
+        console.error('No email or phone found for Clerk user:', userId, clerkUser);
         return null;
       }
 
       user = await prisma.user.create({
         data: {
           clerkId: userId,
-          email,
-          name: name || 'Anonymous User',
-          phone: '',
+          email: email || `${userId}@3numbers-phone-user.temp`, // Temporary email for phone-only users
+          name: name || 'Phone User',
+          phone: phone || '',
           city: '',
           timezone: 'America/New_York',
           isVerified: false

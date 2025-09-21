@@ -71,13 +71,15 @@ export async function POST(req: NextRequest) {
 
 async function handleUserCreated(data: any) {
   try {
-    const { id: clerkId, email_addresses, first_name, last_name } = data;
+    const { id: clerkId, email_addresses, phone_numbers, first_name, last_name } = data;
     
     const email = email_addresses?.[0]?.email_address;
+    const phone = phone_numbers?.[0]?.phone_number;
     const name = `${first_name || ''} ${last_name || ''}`.trim();
     
-    if (!email) {
-      console.error('No email found for user:', clerkId);
+    // For 3Numbers, support phone-only signup since SMS is our primary feature
+    if (!email && !phone) {
+      console.error('No email or phone found for user:', clerkId);
       return;
     }
 
@@ -85,9 +87,9 @@ async function handleUserCreated(data: any) {
     const user = await prisma.user.create({
       data: {
         clerkId,
-        email,
-        name: name || 'Anonymous User',
-        phone: '', // Will be collected during onboarding
+        email: email || `${clerkId}@3numbers-phone-user.temp`, // Temporary email for phone-only users
+        name: name || 'Phone User',
+        phone: phone || '', // Use phone from Clerk if available
         city: '', // Will be collected during onboarding
         timezone: 'America/New_York', // Default timezone
         isVerified: false

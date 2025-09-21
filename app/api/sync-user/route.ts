@@ -19,10 +19,12 @@ export async function POST() {
 
     // Extract data from Clerk user
     const email = clerkUser.emailAddresses?.[0]?.emailAddress;
+    const phone = clerkUser.phoneNumbers?.[0]?.phoneNumber;
     const name = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim();
     
-    if (!email) {
-      return NextResponse.json({ error: 'Email required' }, { status: 400 });
+    // For 3Numbers, support phone-only signup since SMS is our primary feature
+    if (!email && !phone) {
+      return NextResponse.json({ error: 'Email or phone number required' }, { status: 400 });
     }
 
     // Check if user already exists
@@ -37,7 +39,8 @@ export async function POST() {
       user = await prisma.user.update({
         where: { clerkId: userId },
         data: {
-          email,
+          email: email || existingUser.email,
+          phone: phone || existingUser.phone,
           name: name || existingUser.name,
           updatedAt: new Date()
         }
@@ -47,9 +50,9 @@ export async function POST() {
       user = await prisma.user.create({
         data: {
           clerkId: userId,
-          email,
-          name: name || 'Anonymous User',
-          phone: '',
+          email: email || `${userId}@3numbers-phone-user.temp`, // Temporary email for phone-only users
+          name: name || 'Phone User',
+          phone: phone || '',
           city: '',
           timezone: 'America/New_York',
           isVerified: false
