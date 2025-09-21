@@ -92,19 +92,18 @@ export default function OnboardingStep1() {
           />
         </div>
 
-        {/* City */}
+        {/* City (Optional) */}
         <div>
           <label htmlFor="city" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            City
+            City <span className="text-gray-400 text-xs">(Optional)</span>
           </label>
           <input
             type="text"
             id="city"
-            required
             value={formData.city}
             onChange={(e) => setFormData({ ...formData, city: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
-            placeholder="Enter your city"
+            placeholder="Enter your city (optional)"
           />
         </div>
 
@@ -139,7 +138,7 @@ export default function OnboardingStep1() {
 
       {/* Help Text */}
       <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-6">
-        We use your timezone to send messages at the right time for you
+        We use your timezone to deliver your daily SMS at the perfect time
       </p>
     </div>
   );
