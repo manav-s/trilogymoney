@@ -90,7 +90,6 @@ async function handleUserCreated(data: any) {
         email: email || `${clerkId}@3numbers-phone-user.temp`, // Temporary email for phone-only users
         name: name || 'Phone User',
         phone: phone || '', // Use phone from Clerk if available
-        city: '', // Will be collected during onboarding
         timezone: 'America/New_York', // Default timezone
         isVerified: false
       }

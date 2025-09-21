@@ -5,7 +5,6 @@ export interface User {
   email: string;
   name: string;
   phone: string;
-  city: string;
   timezone: string;
   isVerified: boolean;
   messageTime: number;

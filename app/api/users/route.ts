@@ -82,7 +82,6 @@ export async function POST(req: NextRequest) {
           email,
           name: name || 'Anonymous User',
           phone: '', // Will be collected during onboarding
-          city: '', // Will be collected during onboarding
           timezone: 'America/New_York', // Default, will be updated during onboarding
           isVerified: false
         }
@@ -106,14 +105,13 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, phone, city, timezone, messageTime, messageEnabled, isVerified } = body;
+    const { name, phone, timezone, messageTime, messageEnabled, isVerified } = body;
 
     const user = await prisma.user.update({
       where: { clerkId: userId },
       data: {
         ...(name && { name }),
         ...(phone && { phone }),
-        ...(city && { city }),
         ...(timezone && { timezone }),
         ...(messageTime !== undefined && { messageTime }),
         ...(messageEnabled !== undefined && { messageEnabled }),

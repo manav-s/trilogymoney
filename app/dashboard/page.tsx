@@ -111,13 +111,12 @@ export default async function DashboardPage() {
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Profile
               </h3>
-              <div className="space-y-2 text-sm">
-                <p><span className="font-medium">Name:</span> {user.name}</p>
-                <p><span className="font-medium">Email:</span> {user.email}</p>
-                <p><span className="font-medium">Phone:</span> {user.phone || 'Not set'}</p>
-                <p><span className="font-medium">City:</span> {user.city || 'Not set'}</p>
-                <p><span className="font-medium">Timezone:</span> {user.timezone}</p>
-              </div>
+                     <div className="space-y-2 text-sm">
+                       <p><span className="font-medium">Name:</span> {user.name}</p>
+                       <p><span className="font-medium">Email:</span> {user.email}</p>
+                       <p><span className="font-medium">Phone:</span> {user.phone || 'Not set'}</p>
+                       <p><span className="font-medium">Timezone:</span> {user.timezone}</p>
+                     </div>
             </div>
 
             {/* Settings Card */}

@@ -1,8 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
+import { 
+  guessTimezoneFromPhone, 
+  getTimezoneDisplayName, 
+  allTimezones 
+} from "@/lib/timezone-detection";
 
 export default function OnboardingStep1() {
   const router = useRouter();
@@ -10,19 +15,31 @@ export default function OnboardingStep1() {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.fullName || "",
-    city: "",
     timezone: "America/New_York"
   });
+  const [guessedTimezone, setGuessedTimezone] = useState<string | null>(null);
+  const [showTimezoneConfirmation, setShowTimezoneConfirmation] = useState(false);
+  const [showTimezoneDropdown, setShowTimezoneDropdown] = useState(false);
 
-  const timezones = [
-    { value: "America/New_York", label: "Eastern Time (EST)" },
-    { value: "America/Chicago", label: "Central Time (CST)" },
-    { value: "America/Denver", label: "Mountain Time (MST)" },
-    { value: "America/Los_Angeles", label: "Pacific Time (PST)" },
-    { value: "America/Phoenix", label: "Arizona Time (MST)" },
-    { value: "America/Anchorage", label: "Alaska Time (AKST)" },
-    { value: "Pacific/Honolulu", label: "Hawaii Time (HST)" },
-  ];
+  // Guess timezone from phone number when component mounts
+  useEffect(() => {
+    if (user?.phoneNumbers?.[0]?.phoneNumber) {
+      const phoneNumber = user.phoneNumbers[0].phoneNumber;
+      const guessed = guessTimezoneFromPhone(phoneNumber);
+      
+      if (guessed) {
+        setGuessedTimezone(guessed);
+        setFormData(prev => ({ ...prev, timezone: guessed }));
+        setShowTimezoneConfirmation(true);
+      } else {
+        // No guess possible, show dropdown
+        setShowTimezoneDropdown(true);
+      }
+    } else {
+      // No phone number, show dropdown
+      setShowTimezoneDropdown(true);
+    }
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,38 +109,77 @@ export default function OnboardingStep1() {
           />
         </div>
 
-        {/* City (Optional) */}
-        <div>
-          <label htmlFor="city" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            City <span className="text-gray-400 text-xs">(Optional)</span>
-          </label>
-          <input
-            type="text"
-            id="city"
-            value={formData.city}
-            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
-            placeholder="Enter your city (optional)"
-          />
-        </div>
 
         {/* Timezone */}
         <div>
           <label htmlFor="timezone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Timezone
           </label>
-          <select
-            id="timezone"
-            value={formData.timezone}
-            onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
-          >
-            {timezones.map((tz) => (
-              <option key={tz.value} value={tz.value}>
-                {tz.label}
-              </option>
-            ))}
-          </select>
+          
+          {showTimezoneConfirmation && guessedTimezone && (
+            <div className="space-y-3">
+              <div className="flex items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="flex-1">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    Based on your phone number, are you in <span className="font-semibold">{getTimezoneDisplayName(guessedTimezone)}</span>?
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowTimezoneConfirmation(false);
+                    // Keep the guessed timezone
+                  }}
+                  className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
+                >
+                  Yes, that's correct
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowTimezoneConfirmation(false);
+                    setShowTimezoneDropdown(true);
+                  }}
+                  className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                >
+                  No, let me choose
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {showTimezoneDropdown && (
+            <select
+              id="timezone"
+              value={formData.timezone}
+              onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+            >
+              {allTimezones.map((tz) => (
+                <option key={tz.value} value={tz.value}>
+                  {tz.label}
+                </option>
+              ))}
+            </select>
+          )}
+          
+          {!showTimezoneConfirmation && !showTimezoneDropdown && (
+            <div className="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <span className="text-gray-600 dark:text-gray-400">
+                Selected: {getTimezoneDisplayName(formData.timezone)}
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowTimezoneDropdown(true)}
+                className="ml-auto text-indigo-600 dark:text-indigo-400 text-sm hover:text-indigo-500"
+              >
+                Change
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Submit Button */}
@@ -138,7 +194,10 @@ export default function OnboardingStep1() {
 
       {/* Help Text */}
       <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-6">
-        We use your timezone to deliver your daily SMS at the perfect time
+        {showTimezoneConfirmation 
+          ? "We detected your timezone from your area code to ensure perfect SMS delivery timing"
+          : "We use your timezone to deliver your daily SMS at the perfect time"
+        }
       </p>
     </div>
   );

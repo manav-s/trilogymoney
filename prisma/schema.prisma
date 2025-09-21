@@ -13,7 +13,6 @@ model User {
   email          String        @unique
   name           String
   phone          String        @unique
-  city           String
   timezone       String        @default("America/New_York")
   isVerified     Boolean       @default(false)
   createdAt      DateTime      @default(now())

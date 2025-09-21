@@ -53,7 +53,6 @@ export async function POST() {
           email: email || `${userId}@3numbers-phone-user.temp`, // Temporary email for phone-only users
           name: name || 'Phone User',
           phone: phone || '',
-          city: '',
           timezone: 'America/New_York',
           isVerified: false
         }
