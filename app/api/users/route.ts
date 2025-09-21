@@ -106,7 +106,7 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, phone, city, timezone, messageTime, messageEnabled } = body;
+    const { name, phone, city, timezone, messageTime, messageEnabled, isVerified } = body;
 
     const user = await prisma.user.update({
       where: { clerkId: userId },
@@ -117,6 +117,7 @@ export async function PUT(req: NextRequest) {
         ...(timezone && { timezone }),
         ...(messageTime !== undefined && { messageTime }),
         ...(messageEnabled !== undefined && { messageEnabled }),
+        ...(isVerified !== undefined && { isVerified }),
         updatedAt: new Date()
       }
     });

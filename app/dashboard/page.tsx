@@ -48,6 +48,12 @@ export default async function DashboardPage() {
       </div>
     );
   }
+
+  // Check if user needs onboarding
+  if (userNeedsOnboarding(user)) {
+    redirect("/onboarding");
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Navigation */}
