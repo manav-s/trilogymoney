@@ -12,13 +12,25 @@ export default function OnboardingStep2() {
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [isAlreadyVerified, setIsAlreadyVerified] = useState(false);
 
-  // Get phone number from Clerk user
+  // Get phone number from Clerk user and check verification status
   useEffect(() => {
-    if (user?.phoneNumbers?.[0]?.phoneNumber) {
-      setPhoneNumber(user.phoneNumbers[0].phoneNumber);
-      // For now, we'll assume phone is already verified if it exists in Clerk
-      setIsCodeSent(true);
+    if (user?.phoneNumbers?.[0]) {
+      const clerkPhone = user.phoneNumbers[0];
+      setPhoneNumber(clerkPhone.phoneNumber);
+      
+      // If phone is already verified in Clerk, skip verification step
+      if (clerkPhone.verification?.status === 'verified') {
+        setIsAlreadyVerified(true);
+        // Auto-redirect after 2 seconds
+        setTimeout(() => {
+          handleVerifySuccess();
+        }, 2000);
+      } else {
+        // Phone exists but not verified, show verification UI
+        setIsCodeSent(false);
+      }
     }
   }, [user]);
 
@@ -55,20 +67,7 @@ export default function OnboardingStep2() {
       // TODO: Implement actual SMS verification
       // For now, accept any 6-digit code
       if (verificationCode.length === 6) {
-        // Update user verification status
-        const response = await fetch("/api/users", {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ isVerified: true }),
-        });
-
-        if (response.ok) {
-          router.push("/onboarding/3");
-        } else {
-          throw new Error("Failed to verify phone");
-        }
+        await handleVerifySuccess();
       } else {
         throw new Error("Please enter a 6-digit code");
       }
@@ -82,6 +81,26 @@ export default function OnboardingStep2() {
 
   const handleSkip = () => {
     router.push("/onboarding/3");
+  };
+
+  const handleVerifySuccess = async () => {
+    try {
+      // Update user verification status in database
+      await fetch("/api/users", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ isVerified: true }),
+      });
+
+      // Move to next step
+      router.push("/onboarding/3");
+    } catch (error) {
+      console.error("Error updating verification status:", error);
+      // Continue anyway - verification status can be updated later
+      router.push("/onboarding/3");
+    }
   };
 
   return (
@@ -101,12 +120,46 @@ export default function OnboardingStep2() {
       <div className="text-center mb-8">
         <div className="text-4xl mb-4">📱</div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Verify Your Phone Number
+          Phone Number Verification
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
-          We'll send your daily financial updates to this number
+          {isAlreadyVerified
+            ? "Your phone number is already verified! Redirecting..."
+            : "We'll send your daily financial updates to this number"
+          }
         </p>
       </div>
+
+      {isAlreadyVerified ? (
+        /* Already Verified State */
+        <div className="space-y-6">
+          <div className="flex items-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+            <div className="text-green-600 dark:text-green-400 text-2xl mr-3">✓</div>
+            <div>
+              <h3 className="font-medium text-green-800 dark:text-green-200">
+                Phone Number Verified
+              </h3>
+              <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                {phoneNumber} is ready to receive your daily updates
+              </p>
+            </div>
+          </div>
+          
+          <div className="text-center">
+            <div className="inline-flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>
+              <span className="text-sm">Continuing to next step...</span>
+            </div>
+          </div>
+          
+          <button
+            onClick={() => handleVerifySuccess()}
+            className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
+          >
+            Continue Now →
+          </button>
+        </div>
+      ) : (
 
       {!isCodeSent ? (
         /* Send Code Step */
@@ -198,9 +251,14 @@ export default function OnboardingStep2() {
         </form>
       )}
 
+      )}
+
       {/* Help Text */}
       <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-6">
-        SMS verification ensures reliable delivery of your daily updates
+        {isAlreadyVerified 
+          ? "Since you signed up with this number, we know it works!"
+          : "SMS verification ensures reliable delivery of your daily updates"
+        }
       </p>
     </div>
   );
