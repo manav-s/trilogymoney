@@ -7,7 +7,8 @@ export default function OnboardingStep3() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [messageTime, setMessageTime] = useState(8); // 8 AM default
-  const [messageEnabled, setMessageEnabled] = useState(true);
+  // Daily messages are always enabled - this is the core value of 3Numbers
+  const messageEnabled = true;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,29 +118,19 @@ export default function OnboardingStep3() {
           </div>
         </div>
 
-        {/* Enable/Disable Toggle */}
-        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-          <div>
-            <h3 className="font-medium text-gray-900 dark:text-white">
-              Daily Messages
+        {/* Daily Messages Info */}
+        <div className="flex items-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+          <div className="flex-shrink-0">
+            <span className="text-green-600 dark:text-green-400 text-xl">✓</span>
+          </div>
+          <div className="ml-3">
+            <h3 className="font-medium text-green-800 dark:text-green-200">
+              Daily Messages Enabled
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Receive your financial update every day
+            <p className="text-sm text-green-700 dark:text-green-300">
+              You'll receive your 3 key financial numbers every day at {formatTime(messageTime)}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => setMessageEnabled(!messageEnabled)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
-              messageEnabled ? "bg-indigo-600" : "bg-gray-200 dark:bg-gray-600"
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                messageEnabled ? "translate-x-6" : "translate-x-1"
-              }`}
-            />
-          </button>
         </div>
 
         {/* Submit Button */}
@@ -154,7 +145,7 @@ export default function OnboardingStep3() {
 
       {/* Help Text */}
       <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-6">
-        You can change these settings anytime in your dashboard
+        You can change your delivery time anytime in your dashboard
       </p>
 
       <style jsx>{`
