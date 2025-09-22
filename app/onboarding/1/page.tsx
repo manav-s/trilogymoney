@@ -56,7 +56,7 @@ export default function OnboardingStep1() {
       });
 
       if (response.ok) {
-        router.push("/onboarding/2");
+            router.push("/onboarding/3");
       } else {
         throw new Error("Failed to update profile");
       }

@@ -58,11 +58,11 @@ export default function OnboardingStep3() {
       {/* Progress Bar */}
       <div className="mb-8">
         <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-          <span>Step 3 of 5</span>
-          <span>60% Complete</span>
+          <span>Step 2 of 4</span>
+          <span>50% Complete</span>
         </div>
         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-          <div className="bg-indigo-600 h-2 rounded-full" style={{ width: "60%" }}></div>
+          <div className="bg-indigo-600 h-2 rounded-full" style={{ width: "50%" }}></div>
         </div>
       </div>
 

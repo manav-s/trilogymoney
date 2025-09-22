@@ -110,8 +110,8 @@ export async function updateUserProfile(
  * Check if user needs onboarding (missing required fields)
  */
 export function userNeedsOnboarding(user: User): boolean {
-  // Only require phone and basic verification - city is optional
-  return !user.phone || !user.isVerified;
+  // Only require phone - verification is not needed since we removed phone verification step
+  return !user.phone;
 }
 
 /**
