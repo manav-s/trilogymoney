@@ -14,6 +14,26 @@ export default function OnboardingStep2() {
   const [countdown, setCountdown] = useState(0);
   const [isAlreadyVerified, setIsAlreadyVerified] = useState(false);
 
+  const handleVerifySuccess = useCallback(async () => {
+    try {
+      // Update user verification status in database
+      await fetch("/api/users", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ isVerified: true }),
+      });
+
+      // Move to next step
+      router.push("/onboarding/3");
+    } catch (error) {
+      console.error("Error updating verification status:", error);
+      // Continue anyway - verification status can be updated later
+      router.push("/onboarding/3");
+    }
+  }, [router]);
+
   // Get phone number from Clerk user and check verification status
   useEffect(() => {
     if (user?.phoneNumbers?.[0]) {
@@ -82,26 +102,6 @@ export default function OnboardingStep2() {
   const handleSkip = () => {
     router.push("/onboarding/3");
   };
-
-  const handleVerifySuccess = useCallback(async () => {
-    try {
-      // Update user verification status in database
-      await fetch("/api/users", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ isVerified: true }),
-      });
-
-      // Move to next step
-      router.push("/onboarding/3");
-    } catch (error) {
-      console.error("Error updating verification status:", error);
-      // Continue anyway - verification status can be updated later
-      router.push("/onboarding/3");
-    }
-  }, [router]);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
