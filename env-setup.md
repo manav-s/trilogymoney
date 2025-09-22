@@ -60,3 +60,32 @@ Once you have the keys set up:
 4. You should see Clerk's authentication modal
 
 The authentication is now ready to use!
+
+## 🏦 Plaid Setup (Banking)
+
+1. **Create Plaid Account:**
+   - Go to [Plaid Dashboard](https://dashboard.plaid.com)
+   - Sign up for a developer account
+   - Create a new application
+
+2. **Get API Keys:**
+   - Copy your `PLAID_CLIENT_ID` from the dashboard
+   - Copy your `PLAID_SECRET` (sandbox key for development)
+   - Set `PLAID_ENV=sandbox` for development
+
+3. **Configure Products:**
+   - Enable: Transactions, Accounts, Identity
+   - Set up webhook URL: `https://yourdomain.com/api/plaid/webhook`
+
+4. **Add to .env.local:**
+   ```bash
+   PLAID_CLIENT_ID="your_client_id_here"
+   PLAID_SECRET="your_sandbox_secret_here"
+   PLAID_ENV="sandbox"
+   PLAID_WEBHOOK_URL="http://localhost:3000/api/plaid/webhook"
+   ```
+
+5. **Production Setup:**
+   - Apply for Production access in Plaid Dashboard
+   - Update `PLAID_ENV=production`
+   - Use production secrets

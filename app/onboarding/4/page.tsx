@@ -2,27 +2,47 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import PlaidLink from "@/components/PlaidLink";
 
 export default function OnboardingStep4() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
 
-  const handleConnectBank = async () => {
+  const handlePlaidSuccess = async (publicToken: string, metadata: any) => {
     setIsLoading(true);
-    
     try {
-      // TODO: Implement Plaid Link integration
-      // For now, simulate the process
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const response = await fetch('/api/plaid/exchange-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ public_token: publicToken, metadata }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to connect bank account');
+      }
+
+      const data = await response.json();
+      console.log('Bank connected successfully:', data);
+      setIsConnected(true);
       
-      alert("Bank connection coming soon! This is a placeholder for Plaid integration.");
-      router.push("/onboarding/5");
+      // Small delay to show success state, then redirect
+      setTimeout(() => {
+        router.push("/onboarding/5");
+      }, 1500);
     } catch (error) {
-      console.error("Error connecting bank:", error);
-      alert("Failed to connect bank. Please try again.");
+      console.error('Error connecting bank:', error);
+      alert('Failed to connect bank account. Please try again.');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handlePlaidError = (error: any) => {
+    console.error('Plaid Link error:', error);
+    alert('Bank connection failed. Please try again.');
   };
 
   const handleSkip = () => {
@@ -104,13 +124,21 @@ export default function OnboardingStep4() {
 
       {/* Action Buttons */}
       <div className="space-y-4">
-        <button
-          onClick={handleConnectBank}
-          disabled={isLoading}
-          className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {isLoading ? "Connecting..." : "Connect Bank Account (Demo)"}
-        </button>
+        {isConnected ? (
+          <div className="text-center py-4">
+            <div className="text-green-600 text-4xl mb-2">✅</div>
+            <p className="text-green-600 font-medium">Bank Connected Successfully!</p>
+            <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">Redirecting...</p>
+          </div>
+        ) : (
+          <PlaidLink
+            onSuccess={handlePlaidSuccess}
+            onError={handlePlaidError}
+            className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? "Connecting..." : "Connect Bank Account"}
+          </PlaidLink>
+        )}
 
         <button
           onClick={handleSkip}
