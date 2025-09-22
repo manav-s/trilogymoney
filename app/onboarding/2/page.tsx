@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 
@@ -32,7 +32,7 @@ export default function OnboardingStep2() {
         setIsCodeSent(false);
       }
     }
-  }, [user]);
+  }, [user, handleVerifySuccess]);
 
   // Countdown timer for resend
   useEffect(() => {
@@ -83,7 +83,7 @@ export default function OnboardingStep2() {
     router.push("/onboarding/3");
   };
 
-  const handleVerifySuccess = async () => {
+  const handleVerifySuccess = useCallback(async () => {
     try {
       // Update user verification status in database
       await fetch("/api/users", {
@@ -101,7 +101,7 @@ export default function OnboardingStep2() {
       // Continue anyway - verification status can be updated later
       router.push("/onboarding/3");
     }
-  };
+  }, [router]);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
@@ -160,8 +160,8 @@ export default function OnboardingStep2() {
           </button>
         </div>
       ) : (
-
-      {!isCodeSent ? (
+        <>
+        {!isCodeSent ? (
         /* Send Code Step */
         <div className="space-y-6">
           <div>
@@ -250,7 +250,7 @@ export default function OnboardingStep2() {
           </button>
         </form>
       )}
-
+        </>
       )}
 
       {/* Help Text */}
