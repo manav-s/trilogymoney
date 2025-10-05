@@ -110,8 +110,9 @@ export async function updateUserProfile(
  * Check if user needs onboarding (missing required fields)
  */
 export function userNeedsOnboarding(user: User): boolean {
-  // Only require phone - verification is not needed since we removed phone verification step
-  return !user.phone;
+  // Check if user has completed onboarding by looking at timezone
+  // Default timezone is 'America/New_York', so if it's still that AND name is 'Phone User', they haven't onboarded
+  return user.name === 'Phone User' || (user.timezone === 'America/New_York' && !user.name);
 }
 
 /**
