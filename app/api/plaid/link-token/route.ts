@@ -23,24 +23,20 @@ export async function POST(req: NextRequest) {
     const linkTokenRequest = {
       user: {
         client_user_id: userId,
-        legal_name: user.name,
-        phone_number: user.phone,
-        email_address: clerkUser.emailAddresses?.[0]?.emailAddress || null,
       },
       client_name: '3Numbers',
       products: PLAID_PRODUCTS,
       country_codes: PLAID_COUNTRY_CODES,
       language: 'en',
       webhook: process.env.PLAID_WEBHOOK_URL || `${process.env.NEXT_PUBLIC_URL}/api/plaid/webhook`,
-      account_filters: {
-        depository: {
-          account_subtypes: ['checking', 'savings', 'money_market', 'cd', 'paypal']
-        },
-        credit: {
-          account_subtypes: ['credit_card']
-        }
-      }
     };
+
+    console.log('Creating Plaid link token with request:', JSON.stringify(linkTokenRequest, null, 2));
+    console.log('Plaid ENV variables:', {
+      clientId: process.env.PLAID_CLIENT_ID,
+      env: process.env.PLAID_ENV,
+      hasSecret: !!process.env.PLAID_SECRET,
+    });
 
     const response = await plaidClient.linkTokenCreate(linkTokenRequest);
     
@@ -48,11 +44,13 @@ export async function POST(req: NextRequest) {
       link_token: response.data.link_token,
       expiration: response.data.expiration
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating Plaid link token:', error);
+    console.error('Plaid error details:', error.response?.data);
     return NextResponse.json({ 
       error: 'Failed to create link token',
-      details: process.env.NODE_ENV === 'development' ? error : undefined
+      message: error.response?.data?.error_message || error.message,
+      details: process.env.NODE_ENV === 'development' ? error.response?.data : undefined
     }, { status: 500 });
   }
 }

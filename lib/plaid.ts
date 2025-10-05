@@ -22,5 +22,6 @@ export const plaidConfig = {
 };
 
 // Common Plaid products for 3Numbers
-export const PLAID_PRODUCTS = ['transactions', 'accounts', 'identity'] as const;
+// Valid products: 'transactions', 'auth', 'identity', 'assets', 'investments', 'liabilities'
+export const PLAID_PRODUCTS = ['transactions', 'auth', 'identity'] as const;
 export const PLAID_COUNTRY_CODES = ['US'] as const;

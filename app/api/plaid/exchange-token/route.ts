@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Exchange public token for access token
-    const exchangeResponse = await plaidClient.linkTokenExchange({
+    const exchangeResponse = await plaidClient.itemPublicTokenExchange({
       public_token: public_token
     });
 
@@ -44,16 +44,30 @@ export async function POST(req: NextRequest) {
     // Encrypt the access token for secure storage
     const encryptedAccessToken = encrypt(access_token);
 
-    // Store Plaid account data
-    const plaidAccount = await prisma.plaidAccount.create({
-      data: {
+    // Store Plaid account data (using the first account for now)
+    const primaryAccount = accounts[0];
+    
+    const plaidAccount = await prisma.plaidAccount.upsert({
+      where: { userId: user.id },
+      update: {
+        accessToken: encryptedAccessToken,
+        itemId: item_id,
+        accountId: primaryAccount.account_id,
+        bankName: metadata?.institution?.name || 'Unknown Bank',
+        accountName: primaryAccount.name || primaryAccount.official_name || 'Account',
+        accountType: primaryAccount.subtype || primaryAccount.type || 'depository',
+        isActive: true,
+        lastSync: new Date(),
+      },
+      create: {
         userId: user.id,
         accessToken: encryptedAccessToken,
         itemId: item_id,
-        institutionId: metadata?.institution?.institution_id || '',
-        institutionName: metadata?.institution?.name || 'Unknown Bank',
-        accountsData: JSON.stringify(accounts),
-        isActive: true
+        accountId: primaryAccount.account_id,
+        bankName: metadata?.institution?.name || 'Unknown Bank',
+        accountName: primaryAccount.name || primaryAccount.official_name || 'Account',
+        accountType: primaryAccount.subtype || primaryAccount.type || 'depository',
+        isActive: true,
       }
     });
 

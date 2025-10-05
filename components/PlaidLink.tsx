@@ -30,13 +30,16 @@ export default function PlaidLink({
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch link token');
+          const errorData = await response.json();
+          console.error('Plaid link token error:', errorData);
+          throw new Error(errorData.message || errorData.error || 'Failed to fetch link token');
         }
 
         const data = await response.json();
         setLinkToken(data.link_token);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching Plaid link token:', error);
+        console.error('Full error details:', error.message);
         if (onError) {
           onError(error);
         }
