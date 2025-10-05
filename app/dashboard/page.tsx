@@ -3,6 +3,7 @@ import { UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { getOrCreateUser, userNeedsOnboarding } from "@/lib/user-utils";
+import TestSMSButton from "@/components/TestSMSButton";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -148,6 +149,17 @@ export default async function DashboardPage() {
                   Start Trial
                 </button>
               </div>
+            </div>
+
+            {/* Test SMS Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                📱 SMS Testing
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Send a test daily update message to {user.phone}
+              </p>
+              <TestSMSButton />
             </div>
           </div>
 
