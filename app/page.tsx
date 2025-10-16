@@ -34,7 +34,7 @@ export default function Home() {
               </h1>
 
               <p className="text-xl sm:text-2xl text-gray-600 lowercase">
-                texts you via imessage like a friend. keeps you aware. will roast you sometimes.
+                texts you via imessage like a friend. once a week, a quick money check-in.
               </p>
 
               <div className="space-y-4">
@@ -117,7 +117,7 @@ export default function Home() {
             we built something different.
           </h2>
           <p className="text-xl sm:text-2xl text-gray-700 lowercase">
-            every morning, you get an imessage. three numbers:
+            once a week, you get an imessage. three numbers:
           </p>
         </div>
       </section>
@@ -186,7 +186,7 @@ export default function Home() {
                 2
               </div>
               <h3 className="text-2xl font-bold text-gray-900 lowercase">
-                choose your time
+                choose your day + time
               </h3>
               <p className="text-lg text-gray-600 lowercase">
                 get your 3 numbers when you want them
@@ -202,7 +202,7 @@ export default function Home() {
                 stay aware
               </h3>
               <p className="text-lg text-gray-600 lowercase">
-                daily imessage 💙 with what matters most
+                weekly imessage 💙 with what matters most
               </p>
             </div>
           </div>
