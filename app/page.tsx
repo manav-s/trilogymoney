@@ -202,7 +202,7 @@ export default function Home() {
                 stay aware
               </h3>
               <p className="text-lg text-gray-600 lowercase">
-                weekly imessage 💙 with what matters most
+                weekly imessage with what matters most
               </p>
             </div>
           </div>
