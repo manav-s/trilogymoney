@@ -30,9 +30,9 @@ function OnboardContent() {
           setPhone(data.phone);
           // Store phone in sessionStorage for the onboarding flow
           sessionStorage.setItem("onboarding_phone", data.phone);
-          // Redirect to Clerk sign in/up first
+          // Redirect straight to Step A (no Clerk)
           setTimeout(() => {
-            router.push("/onboard/clerk-signin");
+            router.push("/onboard/step-a");
           }, 1500);
         } else if (data.expired) {
           setStatus("expired");

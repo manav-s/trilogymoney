@@ -25,10 +25,10 @@ export default function OnboardWithIdPage() {
           setStatus("valid");
           // Store phone in sessionStorage for the onboarding flow
           sessionStorage.setItem("onboarding_phone", data.phone);
-          // Redirect to Clerk sign in/up first
+          // Redirect straight to Step A
           setTimeout(() => {
-            router.push("/onboard/clerk-signin");
-          }, 1500);
+            router.push("/onboard/step-a");
+          }, 1000);
         } else if (data.expired) {
           setStatus("expired");
         } else {

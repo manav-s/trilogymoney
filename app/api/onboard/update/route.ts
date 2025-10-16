@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { phone, clerkId, name, timezone, onboardingStatus } = body;
+    const { phone, name, timezone, onboardingStatus } = body;
 
     if (!phone) {
       return NextResponse.json(
@@ -25,18 +25,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Update user with Clerk ID and profile information
+    // Update user profile information
     const updatedUser = await prisma.user.update({
       where: { phone },
       data: {
-        clerkId,
         name,
         timezone,
         onboardingStatus,
       },
     });
 
-    console.log(`[Onboarding.StepA] User updated: ${updatedUser.id}, ClerkID: ${clerkId}`);
+    console.log(`[Onboarding.StepA] User updated: ${updatedUser.id}`);
 
     return NextResponse.json({
       success: true,

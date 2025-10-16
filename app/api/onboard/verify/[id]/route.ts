@@ -17,9 +17,9 @@ export async function POST(
     if (result.valid) {
       return NextResponse.json({ valid: true, phone: result.phone }, { status: 200 });
     } else if (result.expired) {
-      return NextResponse.json({ valid: false, expired: true, error: 'Token expired or already used' }, { status: 401 });
+      return NextResponse.json({ valid: false, expired: true, error: 'Link expired' }, { status: 401 });
     } else {
-      return NextResponse.json({ valid: false, error: 'Invalid token' }, { status: 401 });
+      return NextResponse.json({ valid: false, error: 'Invalid link' }, { status: 401 });
     }
   } catch (error) {
     console.error('API error during magic link verification:', error);

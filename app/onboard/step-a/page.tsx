@@ -2,12 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
 import { detectTimezone, US_TIMEZONES } from "@/lib/timezone-detection";
 
 export default function StepA() {
   const router = useRouter();
-  const { isLoaded, isSignedIn, user } = useUser();
   const [phone, setPhone] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -16,27 +14,9 @@ export default function StepA() {
   });
   const [showTimezoneSelect, setShowTimezoneSelect] = useState(false);
 
-  console.log("[StepA] Component rendered", {
-    isLoaded,
-    isSignedIn,
-    userId: user?.id,
-    userPhone: user?.phoneNumbers?.[0]?.phoneNumber,
-    phoneFromState: phone,
-  });
+  console.log("[StepA] Component rendered", { phoneFromState: phone });
 
   useEffect(() => {
-    console.log("[StepA] useEffect - Auth check", {
-      isLoaded,
-      isSignedIn,
-    });
-    
-    // Check if user is signed in
-    if (isLoaded && !isSignedIn) {
-      console.log("[StepA] Not signed in, redirecting to clerk-signin");
-      router.replace("/onboard/clerk-signin");
-      return;
-    }
-
     // Get phone from sessionStorage
     const onboardingPhone = sessionStorage.getItem("onboarding_phone");
     console.log("[StepA] Phone from sessionStorage:", onboardingPhone);
@@ -48,19 +28,6 @@ export default function StepA() {
     }
     setPhone(onboardingPhone);
 
-    // Pre-fill form data from Clerk user if available
-    if (user) {
-      console.log("[StepA] Pre-filling form with Clerk user data:", {
-        fullName: user.fullName,
-        firstName: user.firstName,
-        lastName: user.lastName,
-      });
-      setFormData((prev) => ({
-        ...prev,
-        name: user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || prev.name,
-      }));
-    }
-
     // Try to detect timezone from area code
     const detected = detectTimezone(onboardingPhone);
     if (detected) {
@@ -68,34 +35,24 @@ export default function StepA() {
     } else {
       setShowTimezoneSelect(true);
     }
-  }, [router, isLoaded, isSignedIn, user]);
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone || !user) return;
+    if (!phone) return;
 
     setIsLoading(true);
 
     try {
-      // Update Clerk user metadata
-      await user.update({
-        unsafeMetadata: {
-          phone,
-          timezone: formData.timezone,
-          onboardingStep: "step-a",
-        },
-      });
-
-      // Update database with user info and link Clerk ID
+      // Update database with user info
       const response = await fetch("/api/onboard/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone,
-          clerkId: user.id,
           name: formData.name,
           timezone: formData.timezone,
-          onboardingStatus: "clerk_complete",
+          onboardingStatus: "step_a_complete",
         }),
       });
 
@@ -112,22 +69,7 @@ export default function StepA() {
     }
   };
 
-  // Show loading while Clerk is loading
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 lowercase">loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Redirect if not signed in
-  if (!isSignedIn) {
-    return null;
-  }
+  // No auth gating; proceed with message-first onboarding
 
   // Wait for phone number to be loaded
   if (!phone) {

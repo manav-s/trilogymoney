@@ -9,7 +9,7 @@ datasource db {
 
 model User {
   id                String         @id @default(cuid())
-  clerkId           String?        @unique // Null until Clerk signup complete
+  // clerkId removed with Clerk
   email             String?        @unique
   phone             String?        @unique // E.164 format
   phoneVerified     Boolean        @default(false)
