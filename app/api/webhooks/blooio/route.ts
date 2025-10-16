@@ -34,16 +34,33 @@ function verifySignature(rawBody: string, headerSig: string | null, secret: stri
 export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
+    // Temporary production log for debugging webhook receipt
+    // eslint-disable-next-line no-console
+    console.log('[Blooio] Webhook hit', {
+      ts: new Date().toISOString(),
+      contentType: req.headers.get('content-type'),
+    });
 
     if (WEBHOOK_SECRET) {
       const sig = req.headers.get('x-blooio-signature');
       const ok = verifySignature(rawBody, sig, WEBHOOK_SECRET);
-      if (!ok) return NextResponse.json({ error: 'invalid signature' }, { status: 401 });
+      if (!ok) {
+        // eslint-disable-next-line no-console
+        console.warn('[Blooio] Invalid signature');
+        return NextResponse.json({ error: 'invalid signature' }, { status: 401 });
+      }
     }
 
     const event: BlooioWebhookEvent = JSON.parse(rawBody);
 
     z.object({ event: z.string() }).parse(event);
+
+    // eslint-disable-next-line no-console
+    console.log('[Blooio] Event received', {
+      event: event.event,
+      from: event.external_id?.slice(-4),
+      hasMessageId: Boolean(event.message_id),
+    });
 
     switch (event.event) {
       case 'message.received':
