@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/db";
 
-export const config = { api: { bodyParser: false } } as const;
-
 export async function POST(req: NextRequest) {
   try {
     const raw = await req.text();
@@ -14,7 +12,7 @@ export async function POST(req: NextRequest) {
     let event: Stripe.Event;
     try {
       event = stripe.webhooks.constructEvent(raw, sig || "", secret);
-    } catch (_e) {
+    } catch {
       return NextResponse.json({ error: "invalid signature" }, { status: 400 });
     }
 
