@@ -16,9 +16,8 @@ import { sendMessage } from '@/lib/blooio';
 import { encryptMessage } from '@/lib/encryption';
 import { z } from 'zod';
 import { createHmac, timingSafeEqual } from 'crypto';
+import { RATE_LIMIT_WINDOW_MS, MAX_MESSAGES_PER_WINDOW } from '@/lib/constants';
 
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const MAX_MESSAGES_PER_WINDOW = 3;
 const WEBHOOK_SECRET = process.env.BLOOIO_WEBHOOK_SECRET;
 
 function verifySignature(rawBody: string, headerSig: string | null, secret: string): boolean {
@@ -37,14 +36,13 @@ export async function POST(req: NextRequest) {
     const rawBody = await req.text();
 
     if (WEBHOOK_SECRET) {
-      const sig = req.headers.get('x-blooio-signature') || req.headers.get('blooio-signature') || req.headers.get('x-signature');
+      const sig = req.headers.get('x-blooio-signature');
       const ok = verifySignature(rawBody, sig, WEBHOOK_SECRET);
       if (!ok) return NextResponse.json({ error: 'invalid signature' }, { status: 401 });
     }
 
     const event: BlooioWebhookEvent = JSON.parse(rawBody);
 
-    // Basic schema check
     z.object({ event: z.string() }).parse(event);
 
     switch (event.event) {
@@ -69,20 +67,17 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
   const phone = formatE164(event.external_id);
   const body = event.text.toLowerCase().trim();
 
-  // Idempotency: skip if already processed
   if (event.message_id) {
     const existing = await prisma.message.findFirst({ where: { providerId: event.message_id } });
     if (existing) return;
   }
 
-  // Durable rate limiting via DB
-  const since = new Date(Date.now() - RATE_LIMIT_WINDOW);
+  const since = new Date(Date.now() - RATE_LIMIT_WINDOW_MS);
   const recentCount = await prisma.message.count({
     where: { direction: 'inbound', sentAt: { gte: since }, user: { phone } },
   });
   if (recentCount >= MAX_MESSAGES_PER_WINDOW) return;
 
-  // Log inbound message (encrypted)
   await prisma.message.create({
     data: {
       user: { connect: { phone } },
@@ -96,7 +91,6 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
     },
   }).catch(() => {});
 
-  // STOP/START commands
   if (body === 'stop' || body === 'unsubscribe' || body === 'cancel') {
     await handleStopCommand(phone);
     return;
