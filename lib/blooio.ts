@@ -2,6 +2,7 @@
  * Blooio SMS/iMessage API client
  * Docs: https://imessages.readme.io/reference
  */
+import { createHmac, timingSafeEqual } from 'crypto';
 
 import { createHmac, timingSafeEqual } from 'crypto';
 
@@ -207,7 +208,7 @@ export async function sendOnboardingWelcome(phone: string, magicLink: string): P
 }
 
 /**
- * Send money pulse (daily update)
+ * Send money pulse (weekly update)
  */
 export async function sendMoneyPulse(
   phone: string,

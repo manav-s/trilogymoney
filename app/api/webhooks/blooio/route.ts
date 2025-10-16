@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { BlooioWebhookEvent, formatE164 } from '@/lib/blooio';
+import { BlooioWebhookEvent, formatE164, validateWebhookSignature } from '@/lib/blooio';
 import { generateMagicLink } from '@/lib/magic-link';
 import { sendMessage } from '@/lib/blooio';
 import { encryptMessage } from '@/lib/encryption';
