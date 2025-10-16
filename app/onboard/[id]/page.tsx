@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+const ONBOARDING_PHONE_KEY = "onboarding_phone";
 
 export default function OnboardWithIdPage() {
   const router = useRouter();
@@ -24,7 +25,7 @@ export default function OnboardWithIdPage() {
         if (data.valid) {
           setStatus("valid");
           // Store phone in sessionStorage for the onboarding flow
-          sessionStorage.setItem("onboarding_phone", data.phone);
+          sessionStorage.setItem(ONBOARDING_PHONE_KEY, data.phone);
           // Redirect straight to Step A
           setTimeout(() => {
             router.push("/onboard/step-a");

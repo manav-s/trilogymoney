@@ -79,12 +79,12 @@ export default function PrivacyPage() {
               
               <div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-1 lowercase">secure infrastructure</h3>
-                <p>we use SOC 2 certified providers: vercel for hosting, neon for database, clerk for authentication</p>
+                <p>we use SOC 2 certified providers: vercel for hosting and neon for database</p>
               </div>
               
               <div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-1 lowercase">access tokens</h3>
-                <p>your plaid access token is encrypted and only decrypted when fetching your daily numbers</p>
+                <p>your plaid access token is encrypted and only decrypted when fetching your weekly numbers</p>
               </div>
 
               <div>

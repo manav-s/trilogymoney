@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "trilogy - your money's personal assistant",
-  description: "texts you like a friend. keeps you aware. will roast you sometimes. get your 3 key financial numbers via sms every day.",
+  description: "texts you like a friend. keeps you aware. will roast you sometimes. weekly imessage with what matters most.",
 };
 
 export default function RootLayout({

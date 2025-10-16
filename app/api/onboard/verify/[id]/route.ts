@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const raw = await params;
@@ -25,7 +25,6 @@ export async function POST(
       return NextResponse.json({ valid: false, error: 'Invalid link' }, { status: 401 });
     }
   } catch (error) {
-    console.error('API error during magic link verification:', error);
     return NextResponse.json({ valid: false, error: 'Internal server error' }, { status: 500 });
   }
 }

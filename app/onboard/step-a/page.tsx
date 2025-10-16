@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { detectTimezone, US_TIMEZONES } from "@/lib/timezone-detection";
+const ONBOARDING_PHONE_KEY = "onboarding_phone";
 
 export default function StepA() {
   const router = useRouter();
@@ -57,10 +58,9 @@ export default function StepA() {
         throw new Error("Failed to update user profile");
       }
 
-      // Move to Step B (Plaid)
-      router.push("/onboard/step-b");
+      // Move to home (next step route not present in this branch)
+      router.push("/");
     } catch (error: unknown) {
-      console.error("Step A error:", error);
       alert((error as Error)?.message || "Failed to update profile");
       setIsLoading(false);
     }

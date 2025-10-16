@@ -24,7 +24,7 @@ export default function Home() {
                 </div>
                 <div className="inline-block px-4 py-2 bg-blue-50 border border-blue-200 rounded-full">
                   <span className="text-sm text-blue-600 font-medium lowercase">
-                    💙 imessage native
+                    imessage native
                   </span>
                 </div>
               </div>
