@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { detectTimezone, US_TIMEZONES } from "@/lib/timezone-detection";
+import { ONBOARDING_PHONE_KEY } from "@/lib/constants";
 
 export default function StepA() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export default function StepA() {
 
   useEffect(() => {
     // Get phone from sessionStorage
-    const onboardingPhone = sessionStorage.getItem("onboarding_phone");
+    const onboardingPhone = sessionStorage.getItem(ONBOARDING_PHONE_KEY);
     if (!onboardingPhone) {
       router.push("/");
       return;
@@ -57,8 +58,8 @@ export default function StepA() {
         throw new Error("Failed to update user profile");
       }
 
-      // Move to Step B (Plaid)
-      router.push("/onboard/step-b");
+      // Move to Quiz next
+      router.push("/onboard/quiz");
     } catch (error: unknown) {
       console.error("Step A error:", error);
       alert((error as Error)?.message || "Failed to update profile");
