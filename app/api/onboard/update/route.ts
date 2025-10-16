@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { z } from "zod";
+
+const updateSchema = z.object({
+  phone: z.string().min(10),
+  name: z.string().min(1),
+  timezone: z.string().min(1),
+  onboardingStatus: z.string().min(1),
+});
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { phone, name, timezone, onboardingStatus } = body;
+    const { phone, name, timezone, onboardingStatus } = updateSchema.parse(body);
 
     if (!phone) {
       return NextResponse.json(
@@ -47,10 +55,6 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("[Onboarding.Update] Error:", error);
-    return NextResponse.json(
-      { error: "Failed to update user" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
   }
 }

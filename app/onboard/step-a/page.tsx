@@ -14,15 +14,12 @@ export default function StepA() {
   });
   const [showTimezoneSelect, setShowTimezoneSelect] = useState(false);
 
-  console.log("[StepA] Component rendered", { phoneFromState: phone });
+  // no-op logs in production
 
   useEffect(() => {
     // Get phone from sessionStorage
     const onboardingPhone = sessionStorage.getItem("onboarding_phone");
-    console.log("[StepA] Phone from sessionStorage:", onboardingPhone);
-    
     if (!onboardingPhone) {
-      console.log("[StepA] No phone in sessionStorage, redirecting to home");
       router.push("/");
       return;
     }

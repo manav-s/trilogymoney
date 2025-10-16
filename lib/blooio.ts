@@ -6,9 +6,7 @@
 const BLOOIO_API_KEY = process.env.BLOOIO_API_KEY;
 const BLOOIO_BASE_URL = 'https://edge.blooio.com/v1/api';
 
-if (!BLOOIO_API_KEY) {
-  console.warn('⚠️  BLOOIO_API_KEY not set - SMS functionality will not work');
-}
+// Note: intentionally no logs in production
 
 export interface SendMessageOptions {
   to: string; // E.164 format: +15551234567
@@ -45,8 +43,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<BlooioMe
     throw new Error('BLOOIO_API_KEY not configured');
   }
 
-  console.log('[sendMessage] Sending to:', options.to);
-  console.log('[sendMessage] Message:', options.body);
+  
 
   const response = await fetch(`${BLOOIO_BASE_URL}/messages`, {
     method: 'POST',
@@ -61,17 +58,11 @@ export async function sendMessage(options: SendMessageOptions): Promise<BlooioMe
     }),
   });
 
-  console.log('[sendMessage] Response status:', response.status);
-  
   const data = await response.json();
-  console.log('[sendMessage] Response data:', JSON.stringify(data));
 
   if (!response.ok) {
-    console.error('[sendMessage] Blooio API error:', data);
     throw new Error(`Blooio API error: ${response.status} - ${data.error || data.message || 'Unknown error'}`);
   }
-
-  console.log('[sendMessage] Success! Message ID:', data.id || data.messageId);
 
   return {
     id: data.id || data.messageId || data.message_id,

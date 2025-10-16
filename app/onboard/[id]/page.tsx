@@ -35,9 +35,7 @@ export default function OnboardWithIdPage() {
           setStatus("invalid");
         }
       })
-      .catch(() => {
-        setStatus("invalid");
-      });
+      .catch(() => setStatus("invalid"));
   }, [id, router]);
 
   return (

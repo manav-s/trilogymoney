@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyMagicLink } from '@/lib/magic-link';
+import { z } from 'zod';
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const raw = await params;
+    const parsed = z.object({ id: z.string().min(1) }).parse(raw);
+    const { id } = parsed;
 
     if (!id) {
       return NextResponse.json({ valid: false, error: 'ID missing' }, { status: 400 });
