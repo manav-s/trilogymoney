@@ -13,21 +13,14 @@ import { prisma } from './db';
  * Generate a short magic link for onboarding
  */
 export async function generateMagicLink(phone: string): Promise<string> {
-  // Generate a short, cryptographically secure ID
   const id = nanoid(10); // ~170 bits of entropy
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-  // Store in database
   await prisma.magicLink.create({
-    data: {
-      id,
-      phone,
-      expiresAt,
-    },
+    data: { id, phone, expiresAt },
   });
 
   const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').trim();
-  // Redirect directly to step A after verification page handles it
   return `${baseUrl}/onboard/${id.trim()}`;
 }
 
@@ -36,37 +29,14 @@ export async function generateMagicLink(phone: string): Promise<string> {
  */
 export async function verifyMagicLink(id: string): Promise<{ valid: boolean; expired?: boolean; phone?: string }> {
   try {
-    // Look up the magic link
-    const magicLink = await prisma.magicLink.findUnique({
-      where: { id },
-    });
+    const magicLink = await prisma.magicLink.findUnique({ where: { id } });
+    if (!magicLink) return { valid: false };
+    if (magicLink.used) return { valid: false, expired: true };
+    if (magicLink.expiresAt < new Date()) return { valid: false, expired: true };
 
-    if (!magicLink) {
-      console.warn('[MagicLink] Token not found:', id);
-      return { valid: false };
-    }
-
-    // Check if already used
-    if (magicLink.used) {
-      console.warn('[MagicLink] Token already used:', id);
-      return { valid: false, expired: true };
-    }
-
-    // Check if expired
-    if (magicLink.expiresAt < new Date()) {
-      console.warn('[MagicLink] Token expired:', id);
-      return { valid: false, expired: true };
-    }
-
-    // Mark as used
-    await prisma.magicLink.update({
-      where: { id },
-      data: { used: true },
-    });
-
+    await prisma.magicLink.update({ where: { id }, data: { used: true } });
     return { valid: true, phone: magicLink.phone };
-  } catch (error) {
-    console.error('[MagicLink] Verification error:', error);
+  } catch {
     return { valid: false };
   }
 }
@@ -75,14 +45,6 @@ export async function verifyMagicLink(id: string): Promise<{ valid: boolean; exp
  * Cleanup expired magic links (run as cron job)
  */
 export async function cleanupExpiredMagicLinks(): Promise<number> {
-  const result = await prisma.magicLink.deleteMany({
-    where: {
-      expiresAt: {
-        lt: new Date(),
-      },
-    },
-  });
-
-  console.log(`[MagicLink] Cleaned up ${result.count} expired tokens`);
+  const result = await prisma.magicLink.deleteMany({ where: { expiresAt: { lt: new Date() } } });
   return result.count;
 }

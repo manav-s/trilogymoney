@@ -73,8 +73,10 @@ model MagicLink {
   id        String   @id // Short nanoid (8-10 chars)
   phone     String   // E.164 format
   used      Boolean  @default(false)
+  usedAt    DateTime?
   expiresAt DateTime // 10 minutes from creation
   createdAt DateTime @default(now())
   
   @@index([expiresAt]) // For cleanup jobs
+  @@index([used, expiresAt])
 }

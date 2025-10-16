@@ -3,6 +3,8 @@
  * Docs: https://imessages.readme.io/reference
  */
 
+import { createHmac, timingSafeEqual } from 'crypto';
+
 const BLOOIO_API_KEY = process.env.BLOOIO_API_KEY;
 const BLOOIO_BASE_URL = 'https://edge.blooio.com/v1/api';
 
@@ -43,35 +45,55 @@ export async function sendMessage(options: SendMessageOptions): Promise<BlooioMe
     throw new Error('BLOOIO_API_KEY not configured');
   }
 
-  
+  let lastError: unknown = undefined;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const response = await fetch(`${BLOOIO_BASE_URL}/messages`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${BLOOIO_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: options.to,
+          text: options.body, // Blooio uses 'text' not 'body'
+          ...(options.mediaUrl && { media_url: options.mediaUrl }),
+        }),
+      });
 
-  const response = await fetch(`${BLOOIO_BASE_URL}/messages`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${BLOOIO_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      to: options.to,
-      text: options.body, // Blooio uses 'text' not 'body'
-      ...(options.mediaUrl && { media_url: options.mediaUrl }),
-    }),
-  });
+      const isJson = response.headers.get('content-type')?.includes('application/json');
+      const hasBody = response.status !== 204;
+      const data = (isJson && hasBody) ? await response.json() : {} as Record<string, unknown>;
 
-  const data = await response.json();
+      if (!response.ok) {
+        // retry on 5xx/network errors
+        if (response.status >= 500 && response.status <= 599 && attempt < 3) {
+          const backoff = 200 * Math.pow(2, attempt - 1);
+          await new Promise(r => setTimeout(r, backoff));
+          continue;
+        }
+        throw new Error(`Blooio API error: ${response.status} - ${String((data as any)?.error || (data as any)?.message || 'Unknown error')}`);
+      }
 
-  if (!response.ok) {
-    throw new Error(`Blooio API error: ${response.status} - ${data.error || data.message || 'Unknown error'}`);
+      return {
+        id: (data as any)?.id || (data as any)?.messageId || (data as any)?.message_id || 'unknown',
+        status: 'sent',
+        to: options.to,
+        body: options.body,
+        direction: 'outbound',
+        createdAt: new Date().toISOString(),
+      };
+    } catch (err) {
+      lastError = err;
+      if (attempt < 3) {
+        const backoff = 200 * Math.pow(2, attempt - 1);
+        await new Promise(r => setTimeout(r, backoff));
+        continue;
+      }
+      throw err;
+    }
   }
-
-  return {
-    id: data.id || data.messageId || data.message_id,
-    status: 'sent',
-    to: options.to,
-    body: options.body,
-    direction: 'outbound',
-    createdAt: new Date().toISOString(),
-  };
+  throw lastError instanceof Error ? lastError : new Error('Unknown error sending message');
 }
 
 /**
@@ -121,17 +143,17 @@ export async function getWebhookConfig(): Promise<{ url: string }> {
 }
 
 /**
- * Validate Blooio webhook signature (if they provide one)
- * Check their docs for signature validation
+ * Verify Blooio webhook signature (sha256 HMAC over raw body)
  */
-export function validateWebhookSignature(
-  _payload: string,
-  _signature: string,
-  _secret: string
-): boolean {
-  // TODO: Implement based on Blooio's signature scheme
-  // For now, we'll validate based on API key match or implement later
-  return true;
+export function verifyBlooioSignature(rawBody: string, headerSig: string | null, secret: string): boolean {
+  if (!headerSig) return false;
+  const computed = createHmac('sha256', secret).update(rawBody, 'utf8').digest('hex');
+  const provided = headerSig.startsWith('sha256=') ? headerSig.slice(7) : headerSig;
+  try {
+    return timingSafeEqual(Buffer.from(computed), Buffer.from(provided));
+  } catch {
+    return false;
+  }
 }
 
 /**
