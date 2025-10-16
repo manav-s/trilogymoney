@@ -121,9 +121,13 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
   const isOnboardingMessage = body === 'hi trilogy...' || body === 'hi trilogy…';
 
   if (!user) {
+    // eslint-disable-next-line no-console
+    console.log('[Blooio] No user found, creating new user for', phone);
     await handleNewUser(phone, event);
   } else if (isOnboardingMessage && user.onboardingStatus !== 'complete') {
     const magicLink = await generateMagicLink(phone);
+    // eslint-disable-next-line no-console
+    console.log('[Blooio] Onboarding message from existing user - sending link', { phone: phone.slice(-4) });
     const messages = [
       `hi it's your lovely blue-bubble cfo`,
       `onboarding link below. i'll be gentle. mostly.`,
@@ -144,8 +148,12 @@ async function handleNewUser(phone: string, _event: BlooioWebhookEvent) {
   const user = await prisma.user.create({
     data: { phone, consent: true, onboardingStatus: 'pre_auth', messagingStatus: 'inactive' },
   });
+  // eslint-disable-next-line no-console
+  console.log('[Blooio] New user created', { userId: user.id, last4: phone.slice(-4) });
 
   const magicLink = await generateMagicLink(phone);
+  // eslint-disable-next-line no-console
+  console.log('[Blooio] Sending onboarding magic link', { last4: phone.slice(-4), magicLink });
   const messages = [
     `hi it's your lovely blue-bubble cfo`,
     `onboarding link below. i'll be gentle. mostly.`,
@@ -154,6 +162,8 @@ async function handleNewUser(phone: string, _event: BlooioWebhookEvent) {
 
   for (let i = 0; i < messages.length; i++) {
     await sendMessage({ to: phone, body: messages[i] });
+    // eslint-disable-next-line no-console
+    console.log('[Blooio] Sent onboarding message', { index: i + 1, last4: phone.slice(-4) });
     await prisma.message.create({
       data: {
         userId: user.id,
