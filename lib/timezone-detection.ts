@@ -34,10 +34,10 @@ const AREA_CODE_TIMEZONES: Record<string, string> = {
   // Mountain Time (MST/MDT)
   '303': 'America/Denver', // Denver
   '385': 'America/Denver', // Salt Lake City
-  '480': 'America/Denver', // Phoenix (observes MST year-round)
+  '480': 'America/Phoenix', // Phoenix (observes MST year-round)
   '505': 'America/Denver', // Albuquerque
-  '602': 'America/Denver', // Phoenix
-  '623': 'America/Denver', // Phoenix
+  '602': 'America/Phoenix', // Phoenix
+  '623': 'America/Phoenix', // Phoenix
   '702': 'America/Denver', // Las Vegas
   '719': 'America/Denver', // Colorado Springs
   '720': 'America/Denver', // Denver
@@ -126,6 +126,7 @@ export function getTimezoneDisplayName(timezone: string): string {
     'America/New_York': 'Eastern Time (ET)',
     'America/Chicago': 'Central Time (CT)',
     'America/Denver': 'Mountain Time (MT)',
+    'America/Phoenix': 'Arizona Time (AZ)',
     'America/Los_Angeles': 'Pacific Time (PT)',
     'America/Anchorage': 'Alaska Time (AKT)',
     'Pacific/Honolulu': 'Hawaii Time (HT)',
@@ -141,6 +142,7 @@ export const US_TIMEZONES: TimezoneInfo[] = [
   { timezone: 'America/New_York', displayName: 'Eastern Time (ET)' },
   { timezone: 'America/Chicago', displayName: 'Central Time (CT)' },
   { timezone: 'America/Denver', displayName: 'Mountain Time (MT)' },
+  { timezone: 'America/Phoenix', displayName: 'Arizona Time (AZ)' },
   { timezone: 'America/Los_Angeles', displayName: 'Pacific Time (PT)' },
   { timezone: 'America/Anchorage', displayName: 'Alaska Time (AKT)' },
   { timezone: 'Pacific/Honolulu', displayName: 'Hawaii Time (HT)' },
