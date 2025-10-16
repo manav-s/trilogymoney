@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "3Numbers - Daily Financial Awareness",
-  description: "Get your 3 key financial metrics via SMS every day: bank balance, yesterday's spending, and this week's spending. Simple financial awareness made effortless.",
+  title: "trilogy - your money's personal assistant",
+  description: "texts you like a friend. keeps you aware. will roast you sometimes. get your 3 key financial numbers via sms every day.",
 };
 
 export default function RootLayout({

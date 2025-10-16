@@ -1,0 +1,29 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { verifyMagicLink } from '@/lib/magic-link';
+
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    if (!id) {
+      return NextResponse.json({ valid: false, error: 'ID missing' }, { status: 400 });
+    }
+
+    const result = await verifyMagicLink(id);
+
+    if (result.valid) {
+      return NextResponse.json({ valid: true, phone: result.phone }, { status: 200 });
+    } else if (result.expired) {
+      return NextResponse.json({ valid: false, expired: true, error: 'Token expired or already used' }, { status: 401 });
+    } else {
+      return NextResponse.json({ valid: false, error: 'Invalid token' }, { status: 401 });
+    }
+  } catch (error) {
+    console.error('API error during magic link verification:', error);
+    return NextResponse.json({ valid: false, error: 'Internal server error' }, { status: 500 });
+  }
+}
+
