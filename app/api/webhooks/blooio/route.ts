@@ -97,7 +97,12 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
 
   await prisma.message.create({
     data: {
-      user: { connect: { phone } },
+      user: {
+        connectOrCreate: {
+          where: { phone },
+          create: { phone, onboardingStatus: 'pre_auth', messagingStatus: 'inactive', consent: true },
+        },
+      },
       direction: 'inbound',
       content: encryptMessage(event.text),
       status: 'received',
@@ -118,7 +123,8 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
   }
 
   const user = await prisma.user.findUnique({ where: { phone } });
-  const isOnboardingMessage = body === 'hi trilogy...' || body === 'hi trilogy…';
+  // Broaden detection to handle common variations users type
+  const isOnboardingMessage = /\b(hi|hey|hello)\b.*trilogy/.test(body) || body.includes('trilogy');
 
   if (!user) {
     // eslint-disable-next-line no-console
