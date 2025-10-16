@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ id: session.id, url: session.url });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Failed to create checkout session" }, { status: 500 });
   }
 }

@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     const sig = req.headers.get("stripe-signature");
     const secret = process.env.STRIPE_WEBHOOK_SECRET || "";
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", { apiVersion: "2024-06-20" });
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
     let event: Stripe.Event;
     try {
       event = stripe.webhooks.constructEvent(raw, sig || "", secret);
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ received: true });
-  } catch (_e) {
+  } catch {
     return NextResponse.json({ error: "webhook error" }, { status: 500 });
   }
 }

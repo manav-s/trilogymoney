@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
     await prisma.user.update({ where: { id: user.id }, data: { onboardingStatus: "quiz_complete" } });
     return NextResponse.json({ success: true });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Failed to complete quiz" }, { status: 500 });
   }
 }
