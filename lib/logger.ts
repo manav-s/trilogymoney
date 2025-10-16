@@ -5,11 +5,8 @@ const isDev = process.env.NODE_ENV !== 'production';
 function log(level: LogLevel, message: string, meta?: unknown) {
   if (!isDev) return; // no-op in production
   const prefix = `[${level.toUpperCase()}]`;
-  // eslint-disable-next-line no-console
   if (level === 'info') console.log(prefix, message, meta ?? '');
-  // eslint-disable-next-line no-console
   if (level === 'warn') console.warn(prefix, message, meta ?? '');
-  // eslint-disable-next-line no-console
   if (level === 'error') console.error(prefix, message, meta ?? '');
 }
 

@@ -37,6 +37,14 @@ export interface BlooioWebhookEvent {
   device_id?: string;
 }
 
+type BlooioSendResponse = Partial<{
+  id: string;
+  messageId: string;
+  message_id: string;
+  error: string;
+  message: string;
+}>;
+
 /**
  * Send an outbound message via Blooio
  */
@@ -63,7 +71,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<BlooioMe
 
       const isJson = response.headers.get('content-type')?.includes('application/json');
       const hasBody = response.status !== 204;
-      const data = (isJson && hasBody) ? await response.json() : {} as Record<string, unknown>;
+      const data: BlooioSendResponse = (isJson && hasBody) ? await response.json() as BlooioSendResponse : {};
 
       if (!response.ok) {
         // retry on 5xx/network errors
@@ -72,11 +80,12 @@ export async function sendMessage(options: SendMessageOptions): Promise<BlooioMe
           await new Promise(r => setTimeout(r, backoff));
           continue;
         }
-        throw new Error(`Blooio API error: ${response.status} - ${String((data as any)?.error || (data as any)?.message || 'Unknown error')}`);
+        const errText = data.error ?? data.message ?? 'Unknown error';
+        throw new Error(`Blooio API error: ${response.status} - ${errText}`);
       }
 
       return {
-        id: (data as any)?.id || (data as any)?.messageId || (data as any)?.message_id || 'unknown',
+        id: data.id || data.messageId || data.message_id || 'unknown',
         status: 'sent',
         to: options.to,
         body: options.body,

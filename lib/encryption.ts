@@ -38,9 +38,13 @@ export function decrypt(encryptedData: string): string {
   if (parts.length !== 4) {
     throw new Error('Invalid encrypted data format');
   }
-  const [_version, ivHex, tagHex, encHex] = parts;
+  const version = parts[0];
+  const ivHex = parts[1];
+  const tagHex = parts[2];
+  const encHex = parts[3];
 
   // In future, route based on version for key rotation
+  void version;
   const key = getEncryptionKey();
   const iv = Buffer.from(ivHex, 'hex');
   const authTag = Buffer.from(tagHex, 'hex');
