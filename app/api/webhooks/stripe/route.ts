@@ -8,7 +8,9 @@ export async function POST(req: NextRequest) {
     const sig = req.headers.get("stripe-signature");
     const secret = process.env.STRIPE_WEBHOOK_SECRET || "";
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) return NextResponse.json({ error: "missing stripe key" }, { status: 500 });
+    const stripe = new Stripe(key);
     let event: Stripe.Event;
     try {
       event = stripe.webhooks.constructEvent(raw, sig || "", secret);

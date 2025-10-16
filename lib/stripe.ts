@@ -1,8 +1,16 @@
 import Stripe from "stripe";
 
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
+let cachedStripe: Stripe | null = null;
 
-export const stripe = new Stripe(STRIPE_SECRET_KEY);
+export function getStripe(): Stripe {
+  if (cachedStripe) return cachedStripe;
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) {
+    throw new Error("STRIPE_SECRET_KEY not configured");
+  }
+  cachedStripe = new Stripe(key);
+  return cachedStripe;
+}
 
 export async function createCheckoutSession(params: {
   customerEmail?: string;
@@ -10,6 +18,7 @@ export async function createCheckoutSession(params: {
   successUrl: string;
   cancelUrl: string;
 }) {
+  const stripe = getStripe();
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     ui_mode: "hosted",
