@@ -43,8 +43,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.log(`[Onboarding.StepA] User updated: ${updatedUser.id}`);
-
     return NextResponse.json({
       success: true,
       user: {
