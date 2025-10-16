@@ -123,8 +123,8 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
   }
 
   const user = await prisma.user.findUnique({ where: { phone } });
-  // Broaden detection to handle common variations users type
-  const isOnboardingMessage = /\b(hi|hey|hello)\b.*trilogy/.test(body) || body.includes('trilogy');
+  // Strict detection: only accept the exact onboarding trigger
+  const isOnboardingMessage = body === 'hi trilogy...' ';
 
   if (!user) {
     // eslint-disable-next-line no-console
