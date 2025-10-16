@@ -24,18 +24,12 @@ model User {
   // Service status
   isActive          Boolean        @default(true)
   messagingStatus   String         @default("inactive") // inactive, active, stopped
-
-  // Billing/Subscription
-  stripeCustomerId      String?
-  stripeSubscriptionId  String?
-  subscriptionStatus    String         @default("none") // none, trialing, active, past_due, canceled
   
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
   
   plaidAccount      PlaidAccount?
   messages          Message[]
-  quizResponses     QuizResponse[]
   
   @@index([phone])
 }
@@ -85,17 +79,4 @@ model MagicLink {
   
   @@index([expiresAt]) // For cleanup jobs
   @@index([used, expiresAt])
-}
-
-model QuizResponse {
-  id          String   @id @default(cuid())
-  userId      String
-  questionId  String
-  answer      Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, questionId])
-  @@index([userId, updatedAt])
 }

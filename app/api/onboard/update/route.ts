@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
         onboardingStatus: updatedUser.onboardingStatus,
       },
     });
-  } catch {
+  } catch (error) {
     return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
   }
 }
