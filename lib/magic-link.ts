@@ -34,7 +34,8 @@ export async function verifyMagicLink(id: string): Promise<{ valid: boolean; exp
     if (magicLink.used) return { valid: false, expired: true };
     if (magicLink.expiresAt < new Date()) return { valid: false, expired: true };
 
-    await prisma.magicLink.update({ where: { id }, data: { used: true, usedAt: new Date() } });
+    // Set used and usedAt atomically
+    await prisma.$executeRaw`UPDATE "MagicLink" SET "used" = true, "usedAt" = NOW() WHERE "id" = ${id}`;
     return { valid: true, phone: magicLink.phone };
   } catch {
     return { valid: false };
