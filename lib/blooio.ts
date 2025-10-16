@@ -84,6 +84,10 @@ export async function sendMessage(options: SendMessageOptions): Promise<BlooioMe
         throw new Error(`Blooio API error: ${response.status} - ${errText}`);
       }
 
+      const id = getId(data);
+      if (!id) {
+        throw new Error('Blooio API response missing message id');
+      }
       return {
         id: data.id || data.messageId || data.message_id || 'unknown',
         status: 'sent',
