@@ -25,11 +25,25 @@ export async function POST(req: NextRequest) {
         if (email) {
           const user = await prisma.user.findUnique({ where: { email } });
           if (user) {
+            let customerId: string | undefined;
+            if (typeof session.customer === "string") {
+              customerId = session.customer;
+            } else if (session.customer && typeof session.customer === "object") {
+              customerId = (session.customer as Stripe.Customer).id;
+            }
+
+            let subscriptionId: string | undefined;
+            if (typeof session.subscription === "string") {
+              subscriptionId = session.subscription;
+            } else if (session.subscription && typeof session.subscription === "object") {
+              subscriptionId = (session.subscription as Stripe.Subscription).id;
+            }
+
             await prisma.user.update({
               where: { id: user.id },
               data: {
-                stripeCustomerId: typeof session.customer === "string" ? session.customer : session.customer?.id,
-                stripeSubscriptionId: typeof session.subscription === "string" ? session.subscription : (session.subscription as any)?.id,
+                stripeCustomerId: customerId,
+                stripeSubscriptionId: subscriptionId,
                 subscriptionStatus: "trialing",
                 onboardingStatus: "trial_started",
               },
