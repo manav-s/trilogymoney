@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const raw = await params;
