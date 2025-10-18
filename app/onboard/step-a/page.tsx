@@ -11,6 +11,7 @@ export default function StepA() {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
+    email: "",
     timezone: "America/Los_Angeles",
   });
   const [showTimezoneSelect, setShowTimezoneSelect] = useState(false);
@@ -54,6 +55,7 @@ export default function StepA() {
         body: JSON.stringify({
           phone,
           name: formData.name,
+          email: formData.email,
           timezone: formData.timezone,
           onboardingStatus: "step_a_complete",
         }),
@@ -127,6 +129,23 @@ export default function StepA() {
             />
           </div>
 
+
+          {/* Email */}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2 lowercase">
+              your email
+            </label>
+            <input
+              type="email"
+              id="email"
+              required
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value.trim().toLowerCase() })}
+              className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/20 outline-none transition-all"
+              placeholder="you@example.com"
+            />
+            <p className="text-sm text-gray-500 mt-2 lowercase">required — used for receipts and alerts</p>
+          </div>
 
           {/* Timezone */}
           <div>
