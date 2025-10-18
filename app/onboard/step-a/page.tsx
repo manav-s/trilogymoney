@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { detectTimezone, US_TIMEZONES } from "@/lib/timezone-detection";
+import { detectTimezone, US_TIMEZONES, getBrowserTimezone, getTimezoneAbbreviation } from "@/lib/timezone-detection";
 const ONBOARDING_PHONE_KEY = "onboarding_phone";
 
 export default function StepA() {
@@ -26,12 +26,17 @@ export default function StepA() {
     }
     setPhone(onboardingPhone);
 
-    // Try to detect timezone from area code
-    const detected = detectTimezone(onboardingPhone);
-    if (detected) {
-      setFormData((prev) => ({ ...prev, timezone: detected.timezone }));
+    // Prefer browser timezone; fallback to area code mapping
+    const browserTz = getBrowserTimezone();
+    if (browserTz) {
+      setFormData((prev) => ({ ...prev, timezone: browserTz }));
     } else {
-      setShowTimezoneSelect(true);
+      const detected = detectTimezone(onboardingPhone);
+      if (detected) {
+        setFormData((prev) => ({ ...prev, timezone: detected.timezone }));
+      } else {
+        setShowTimezoneSelect(true);
+      }
     }
   }, [router]);
 
@@ -130,11 +135,11 @@ export default function StepA() {
             </label>
             {!showTimezoneSelect ? (
               <div className="flex items-center justify-between p-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
-                <span className="text-gray-900 lowercase">{formData.timezone}</span>
+                <span className="text-gray-900">{getTimezoneAbbreviation(formData.timezone)}</span>
                 <button
                   type="button"
                   onClick={() => setShowTimezoneSelect(true)}
-                  className="text-sm text-indigo-600 hover:text-indigo-700 lowercase font-medium"
+                  className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
                 >
                   change
                 </button>
@@ -144,17 +149,20 @@ export default function StepA() {
                 id="timezone"
                 value={formData.timezone}
                 onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-gray-300 bg-white text-gray-900 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/20 outline-none transition-all lowercase"
+                className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-gray-300 bg-white text-gray-900 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/20 outline-none transition-all"
               >
-                {US_TIMEZONES.map((tz) => (
-                  <option key={tz.timezone} value={tz.timezone}>
-                    {tz.displayName}
-                  </option>
-                ))}
+                {US_TIMEZONES.map((tz) => {
+                  const abbr = getTimezoneAbbreviation(tz.timezone);
+                  return (
+                    <option key={tz.timezone} value={tz.timezone}>
+                      {tz.displayName.replace(/\((.*?)\)/, `(${abbr})`).toLowerCase()}
+                    </option>
+                  );
+                })}
               </select>
             )}
             <p className="text-sm text-gray-500 mt-2 lowercase">
-              we detected this from your area code
+              we detected this from your browser
             </p>
           </div>
 

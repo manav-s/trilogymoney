@@ -136,6 +136,36 @@ export function getTimezoneDisplayName(timezone: string): string {
 }
 
 /**
+ * Return a DST-aware short abbreviation for a timezone (e.g., EDT/EST/CT/PT)
+ * Falls back to the IANA id on failure.
+ */
+export function getTimezoneAbbreviation(timezone: string, date: Date = new Date()): string {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      timeZoneName: 'short',
+    }).formatToParts(date);
+    const tzName = parts.find((p) => p.type === 'timeZoneName')?.value;
+    return (tzName || timezone).toUpperCase();
+  } catch {
+    return timezone;
+  }
+}
+
+/**
+ * Read the browser's timezone (IANA id) when available
+ */
+export function getBrowserTimezone(): string | null {
+  try {
+    // eslint-disable-next-line no-restricted-globals
+    const tz = Intl?.DateTimeFormat().resolvedOptions().timeZone;
+    return tz || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * All US timezones for manual selection
  */
 export const US_TIMEZONES: TimezoneInfo[] = [
