@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       });
     } catch (e: unknown) {
       // Prisma unique constraint violation
-      if (typeof e === 'object' && e && (e as any).code === 'P2002') {
+      if (typeof e === 'object' && e && (e as { code?: string }).code === 'P2002') {
         return NextResponse.json({ error: 'email already in use' }, { status: 409 });
       }
       throw e;
