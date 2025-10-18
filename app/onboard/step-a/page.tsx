@@ -155,7 +155,7 @@ export default function StepA() {
                   const abbr = getTimezoneAbbreviation(tz.timezone);
                   return (
                     <option key={tz.timezone} value={tz.timezone}>
-                      {tz.displayName.replace(/\((.*?)\)/, `(${abbr})`).toLowerCase()}
+                      {tz.displayName.replace(/\((.*?)\)/, `(${abbr})`)}
                     </option>
                   );
                 })}
