@@ -2,12 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
 
+const multiNoneExclusive = (values: readonly [string, ...string[]]) =>
+  z.union([
+    z.tuple([z.literal("none")]),
+    z.array(z.enum(values)).min(1),
+  ]);
+
 const schema = z.object({
   phone: z.string().min(10),
   version: z.literal(1),
   answers: z.object({
-    q1: z.string(), q2: z.string(), q3: z.string(), q4: z.string(), q5: z.string(),
-    q6: z.string(), q7: z.string(), q8: z.string(), q9: z.string(), q10: z.string(), q11: z.string(),
+    q1: z.enum(["calm","under_control","manageable","tense","overwhelming"]),
+    q2: z.enum(["interest_charges","surprise_bills","overspending","not_saving","not_investing","nothing"]),
+    q3: z.enum(["pay_down_card","build_1mo_cushion","stop_leak_spend","automate_bills","start_investing"]),
+    q4: z.enum(["payday_slips","weekend_spend","late_night_scroll","unexpected_bill","social_plans"]),
+    q5: z.enum(["often","sometimes","rarely","never"]),
+    q6: multiNoneExclusive(["food_delivery","prime","coffee"]),
+    q7: multiNoneExclusive(["credit_card","student","auto","other"]),
+    q8: z.enum(["none","lt_1m","m_1_3","m_3_6","gt_6m"]),
+    q9: z.enum(["none","notes","spreadsheet","app","bank_only"]),
+    q10: z.enum(["never","rarely","sometimes","often"]),
   }),
 });
 
