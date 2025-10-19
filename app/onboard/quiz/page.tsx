@@ -21,6 +21,53 @@ type Question = {
   exclusiveNone?: boolean;
 };
 
+const LABELS: Record<string, string> = {
+  calm: 'calm',
+  under_control: 'under control',
+  manageable: 'manageable',
+  tense: 'tense',
+  overwhelming: 'overwhelming',
+  interest_charges: 'interest charges',
+  surprise_bills: 'surprise bills',
+  overspending: 'overspending',
+  not_saving: 'not saving',
+  not_investing: 'not investing',
+  retiring_early_and_leaving_the_rat_race: 'retiring early and leaving the rat race',
+  nothing: 'nothing',
+  pay_down_card: 'pay down a credit card',
+  build_1mo_cushion: 'build a 1‑month cushion',
+  stop_leak_spend: 'stop leak‑spend',
+  automate_bills: 'automate bills',
+  start_investing: 'start investing',
+  payday_slips: 'right after payday',
+  weekend_spend: 'weekends',
+  late_night_scroll: 'late‑night scrolling',
+  unexpected_bill: 'surprise expense',
+  social_plans: 'social plans',
+  often: 'often',
+  sometimes: 'sometimes',
+  rarely: 'rarely',
+  never: 'never',
+  food_delivery: 'food (doordash, ubereats, etc)',
+  prime: 'amazon prime',
+  coffee: 'coffee',
+  none: 'none',
+  credit_card: 'credit card',
+  student: 'student',
+  auto: 'auto',
+  other: 'other',
+  lt_1m: '< 1 month',
+  m_1_3: '1–3 months',
+  m_3_6: '3–6 months',
+  gt_6m: '6+ months',
+  notes: 'notes app',
+  spreadsheet: 'spreadsheet',
+  app: 'money app',
+  bank_only: 'bank app only',
+};
+
+const labelFor = (value: string): string => LABELS[value] ?? value.replace(/_/g, ' ');
+
 const QUESTIONS: Question[] = [
   { key: "q1", label: "most days, money feels…", options: ["calm","under_control","manageable","tense","overwhelming"] },
   { key: "q2", label: "what quietly worries you the most?", options: ["interest_charges","surprise_bills","overspending","not_saving","not_investing","retiring_early_and_leaving_the_rat_race","nothing"] },
@@ -153,7 +200,7 @@ export default function QuizPage() {
                 onClick={onClick}
                 className={`px-6 py-4 rounded-2xl border-2 transition-all ${active ? "border-indigo-600 bg-indigo-50" : "border-gray-300 bg-white hover:border-gray-400"} lowercase text-left`}
               >
-                {opt.replace(/_/g, " ")}
+                {labelFor(opt)}
               </button>
             );
           })}
