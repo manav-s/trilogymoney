@@ -22,51 +22,90 @@ type Question = {
 };
 
 const LABELS: Record<string, string> = {
-  calm: 'calm',
-  under_control: 'under control',
-  manageable: 'manageable',
-  tense: 'tense',
-  overwhelming: 'overwhelming',
-  interest_charges: 'interest charges',
-  surprise_bills: 'surprise bills',
-  overspending: 'overspending',
-  not_saving: 'not saving',
-  not_investing: 'not investing',
-  retiring_early_and_leaving_the_rat_race: 'retiring early and leaving the rat race',
-  nothing: 'nothing',
-  pay_down_card: 'pay down a credit card',
-  build_1mo_cushion: 'build a 1‑month cushion',
-  stop_leak_spend: 'stop leak‑spend',
-  automate_bills: 'automate bills',
-  start_investing: 'start investing',
-  payday_slips: 'right after payday',
-  weekend_spend: 'weekends',
-  late_night_scroll: 'late‑night scrolling',
-  unexpected_bill: 'surprise expense',
-  social_plans: 'social plans',
+  // q1
+  calm: 'calm — money rarely spikes my stress',
+  under_control: 'under control — I know what’s coming and when',
+  manageable: 'manageable — a bit messy but I keep up',
+  tense: 'tense — I worry about it most weeks',
+  overwhelming: 'overwhelming — money feels chaotic right now',
+
+  // q2
+  interest_charges: 'paying interest every month is draining me',
+  surprise_bills: 'surprise bills keep catching me off‑guard',
+  overspending: 'I spend more than I mean to, too often',
+  not_saving: 'I’m not saving toward any cushion right now',
+  not_investing: 'I’m not investing and feel behind',
+  retiring_early_and_leaving_the_rat_race: 'retiring early and leaving the rat race feels out of reach',
+  nothing: 'nothing really worries me right now',
+
+  // q3
+  pay_down_card: 'pay down a credit card and stop the interest',
+  build_1mo_cushion: 'build a 1‑month emergency cushion',
+  stop_leak_spend: 'plug leak‑spend and stick to a weekly target',
+  automate_bills: 'automate bills so nothing slips through',
+  start_investing: 'start investing consistently, even small amounts',
+
+  // q4
+  payday_slips: 'right after payday — I loosen up and overspend',
+  weekend_spend: 'weekends — social plans derail the budget',
+  late_night_scroll: 'late‑night scrolling leads to impulse buys',
+  unexpected_bill: 'a surprise expense knocks everything off course',
+  social_plans: 'saying yes to plans when I shouldn’t',
+
+  // shared enums (fallbacks; per-question overrides below)
   often: 'often',
   sometimes: 'sometimes',
   rarely: 'rarely',
   never: 'never',
-  food_delivery: 'food (doordash, ubereats, etc)',
-  prime: 'amazon prime',
-  coffee: 'coffee',
+
+  // q6 guilty pleasures
+  food_delivery: 'food delivery — doordash, ubereats, etc adds up',
+  prime: 'amazon prime and quick “add to cart” buys',
+  coffee: 'coffee runs — small but frequent',
   none: 'none',
-  credit_card: 'credit card',
-  student: 'student',
-  auto: 'auto',
-  other: 'other',
-  lt_1m: '< 1 month',
-  m_1_3: '1–3 months',
-  m_3_6: '3–6 months',
-  gt_6m: '6+ months',
-  notes: 'notes app',
-  spreadsheet: 'spreadsheet',
-  app: 'money app',
-  bank_only: 'bank app only',
+
+  // q7 debt
+  credit_card: 'credit card balance I carry month to month',
+  student: 'student loans I’m still paying',
+  auto: 'auto loan or lease payment',
+  other: 'other revolving debt (medical, personal, etc.)',
+
+  // q8 cushion
+  lt_1m: 'less than 1 month of expenses saved',
+  m_1_3: 'about 1–3 months of expenses saved',
+  m_3_6: 'about 3–6 months of expenses saved',
+  gt_6m: 'more than 6 months of expenses saved',
+
+  // q9 tracking
+  notes: 'simple notes app checklists',
+  spreadsheet: 'a spreadsheet I update by hand',
+  app: 'a money app I try to keep up with',
+  bank_only: 'I just check my bank or card apps',
 };
 
-const labelFor = (value: string): string => LABELS[value] ?? value.replace(/_/g, ' ');
+// Per-question label overrides for shared enums
+const LABEL_OVERRIDES: Partial<Record<keyof Answers, Record<string, string>>> = {
+  q5: {
+    often: 'often — I delay opening my banking apps',
+    sometimes: 'sometimes — depends on the week',
+    rarely: 'rarely — I feel mostly okay checking',
+    never: 'never — I check balances comfortably',
+  },
+  q6: {
+    none: 'none of these are a thing for me',
+  },
+  q7: {
+    none: 'no revolving debt right now',
+  },
+  q10: {
+    never: 'never — I hit my plan most weeks',
+    rarely: 'rarely — small misses happen occasionally',
+    sometimes: 'sometimes — I drift more than I’d like',
+    often: 'often — I need tighter rails',
+  },
+};
+const labelFor = (key: keyof Answers, value: string): string =>
+  LABEL_OVERRIDES[key]?.[value] ?? LABELS[value] ?? value.replace(/_/g, ' ');
 
 const QUESTIONS: Question[] = [
   { key: "q1", label: "most days, money feels…", options: ["calm","under_control","manageable","tense","overwhelming"] },
@@ -200,7 +239,7 @@ export default function QuizPage() {
                 onClick={onClick}
                 className={`px-6 py-4 rounded-2xl border-2 transition-all ${active ? "border-indigo-600 bg-indigo-50" : "border-gray-300 bg-white hover:border-gray-400"} lowercase text-left`}
               >
-                {labelFor(opt)}
+                {labelFor(current.key, opt)}
               </button>
             );
           })}
