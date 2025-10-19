@@ -36,18 +36,12 @@ export default function PlanPage() {
           <li>build a 1‑month cushion with a monthly transfer</li>
           <li>weekly check‑in keeps you consistent</li>
         </ul>
-        <div className="mt-10 flex gap-3">
+        <div className="mt-10 flex">
           <button
             onClick={() => router.push("/onboard/connect")}
             className="px-6 py-4 rounded-full bg-indigo-600 text-white lowercase hover:bg-indigo-700"
           >
             connect your accounts
-          </button>
-          <button
-            onClick={() => router.push("/onboard/connect")}
-            className="px-6 py-4 rounded-full bg-gray-100 text-gray-900 lowercase hover:bg-gray-200"
-          >
-            send me a sample
           </button>
         </div>
       </div>
