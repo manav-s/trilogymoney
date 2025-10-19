@@ -1,17 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 const schema = z.object({ phone: z.string().min(10) });
 
-function computeSummary(user: { timezone: string; preferredTime: string; quizAnswers: any }) {
-  const a = user.quizAnswers || {};
+type QuizAnswers = {
+  q1?: string; q2?: string[]; q3?: string; q4?: string; q5?: string;
+  q6?: string[]; q7?: string[]; q8?: string; q9?: string; q10?: string;
+};
+
+function computeSummary(user: { timezone: string; preferredTime: string; quizAnswers: QuizAnswers | null }) {
+  const a: QuizAnswers = user.quizAnswers || {};
   // baseline score from balances anxiety and overspending
   let score = 50;
   if (a.q5 === 'never') score += 10; else if (a.q5 === 'often') score -= 10;
   if (a.q10 === 'never') score += 10; else if (a.q10 === 'often') score -= 10;
   // debt penalties
-  const hasDebt = Array.isArray(a.q7) && a.q7.some((t: string) => t !== 'none');
+  const hasDebt = Array.isArray(a.q7) && a.q7.some((t) => t !== 'none');
   if (hasDebt) score -= 10;
   // cushion boost
   if (a.q8 === 'gt_6m') score += 10; else if (a.q8 === 'none') score -= 10;
@@ -48,14 +54,21 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { phone } = schema.parse(body);
 
-    const user = await prisma.user.findUnique({ where: { phone } });
+  const user = await prisma.user.findUnique({ where: { phone } });
     if (!user) return NextResponse.json({ error: 'user not found' }, { status: 404 });
 
-    const summary = computeSummary(user as any);
+  const summary = computeSummary({
+    timezone: user.timezone,
+    preferredTime: user.preferredTime,
+    quizAnswers: (user as unknown as { quizAnswers?: QuizAnswers }).quizAnswers ?? null,
+  });
 
     await prisma.user.update({
       where: { phone },
-      data: { analysisSummary: summary as unknown as object, onboardingStatus: 'analysis_complete' },
+      data: {
+        onboardingStatus: 'analysis_complete',
+        ...( { analysisSummary: summary } as Record<string, unknown> ),
+      },
     });
 
     return NextResponse.json({ ok: true, summary, next: '/onboard/plan' });
