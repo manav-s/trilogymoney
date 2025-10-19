@@ -7,7 +7,7 @@ const ONBOARDING_PHONE_KEY = "onboarding_phone";
 const QUIZ_KEY = "onboarding_quiz_answers_v2";
 
 type Answers = {
-  q1?: string; q2?: string; q3?: string; q4?: string; q5?: string;
+  q1?: string; q2?: string[]; q3?: string; q4?: string; q5?: string;
   q6?: string[]; // guilty pleasures multi
   q7?: string[]; // revolving debt multi
   q8?: string; q9?: string; q10?: string;
@@ -18,7 +18,7 @@ type Question = {
   label: string;
   options: string[];
   type?: 'single' | 'multi';
-  exclusiveNone?: boolean;
+  exclusiveValues?: string[]; // options that are exclusive (selecting them clears others)
 };
 
 const LABELS: Record<string, string> = {
@@ -109,12 +109,12 @@ const labelFor = (key: keyof Answers, value: string): string =>
 
 const QUESTIONS: Question[] = [
   { key: "q1", label: "most days, money feels…", options: ["calm","under_control","manageable","tense","overwhelming"] },
-  { key: "q2", label: "what quietly worries you the most?", options: ["interest_charges","surprise_bills","overspending","not_saving","not_investing","retiring_early_and_leaving_the_rat_race","nothing"] },
+  { key: "q2", label: "what quietly worries you the most?", options: ["interest_charges","surprise_bills","overspending","not_saving","not_investing","retiring_early_and_leaving_the_rat_race","nothing"], type: 'multi', exclusiveValues: ["nothing"] },
   { key: "q3", label: "if we nailed one win in 90 days, you’d want…", options: ["pay_down_card","build_1mo_cushion","stop_leak_spend","automate_bills","start_investing"] },
   { key: "q4", label: "the moment you drift off‑track is usually…", options: ["payday_slips","weekend_spend","late_night_scroll","unexpected_bill","social_plans"] },
   { key: "q5", label: "are you ever nervous to check your balances?", options: ["often","sometimes","rarely","never"] },
-  { key: "q6", label: "any guilty pleasures?", options: ["food_delivery","prime","coffee","none"], type: 'multi', exclusiveNone: true },
-  { key: "q7", label: "revolving debt right now?", options: ["none","credit_card","student","auto","other"], type: 'multi', exclusiveNone: true },
+  { key: "q6", label: "any guilty pleasures?", options: ["food_delivery","prime","coffee","none"], type: 'multi', exclusiveValues: ["none"] },
+  { key: "q7", label: "revolving debt right now?", options: ["none","credit_card","student","auto","other"], type: 'multi', exclusiveValues: ["none"] },
   { key: "q8", label: "your savings cushion feels like…", options: ["none","lt_1m","m_1_3","m_3_6","gt_6m"] },
   { key: "q9", label: "how do you keep track today?", options: ["none","notes","spreadsheet","app","bank_only"] },
   { key: "q10", label: "in a typical week, do you spend more than you meant to?", options: ["never","rarely","sometimes","often"] },
@@ -123,7 +123,7 @@ const QUESTIONS: Question[] = [
 export default function QuizPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<Answers>({ q6: [], q7: [] });
+  const [answers, setAnswers] = useState<Answers>({ q2: [], q6: [], q7: [] });
 
   // load persisted answers
   useEffect(() => {
@@ -145,7 +145,14 @@ export default function QuizPage() {
       } catch {}
       const raw = sessionStorage.getItem(QUIZ_KEY);
       if (raw) {
-        try { setAnswers(JSON.parse(raw)); } catch {}
+        try {
+          const parsed = JSON.parse(raw);
+          // migrate legacy single-selection q2 to array
+          if (parsed && typeof parsed.q2 === 'string') {
+            parsed.q2 = parsed.q2 ? [parsed.q2] : [];
+          }
+          setAnswers(parsed);
+        } catch {}
       }
     })();
   }, [router]);
@@ -163,18 +170,19 @@ export default function QuizPage() {
   const hasAnswer = isMulti ? Array.isArray(selected) && (selected as string[]).length > 0 : !!selected;
   const isLast = step === QUESTIONS.length - 1;
 
-  const toggleMulti = (key: keyof Answers, option: string) => {
+  const toggleMulti = (question: Question, option: string) => {
+    const key = question.key;
     const prev = (answers[key] as string[] | undefined) ?? [];
     let next: string[] = [...prev];
     const idx = next.indexOf(option);
     if (idx >= 0) {
       next.splice(idx, 1);
     } else {
-      // handle exclusive none
-      if (option === 'none') {
-        next = ['none'];
+      const exclusive = new Set(question.exclusiveValues ?? []);
+      if (exclusive.has(option)) {
+        next = [option];
       } else {
-        next = next.filter((v) => v !== 'none');
+        next = next.filter((v) => !exclusive.has(v));
         next.push(option);
       }
     }
@@ -228,7 +236,7 @@ export default function QuizPage() {
               : selected === opt;
             const onClick = () => {
               if (isMulti) {
-                toggleMulti(current.key, opt);
+                toggleMulti(current, opt);
               } else {
                 setAnswers({ ...answers, [current.key]: opt });
               }

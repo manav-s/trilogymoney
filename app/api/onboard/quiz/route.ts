@@ -13,7 +13,10 @@ const schema = z.object({
   version: z.literal(1),
   answers: z.object({
     q1: z.enum(["calm","under_control","manageable","tense","overwhelming"]),
-    q2: z.enum(["interest_charges","surprise_bills","overspending","not_saving","not_investing","retiring_early_and_leaving_the_rat_race","nothing"]),
+    q2: z.union([
+      z.tuple([z.literal("nothing")]),
+      z.array(z.enum(["interest_charges","surprise_bills","overspending","not_saving","not_investing","retiring_early_and_leaving_the_rat_race"])).min(1),
+    ]),
     q3: z.enum(["pay_down_card","build_1mo_cushion","stop_leak_spend","automate_bills","start_investing"]),
     q4: z.enum(["payday_slips","weekend_spend","late_night_scroll","unexpected_bill","social_plans"]),
     q5: z.enum(["often","sometimes","rarely","never"]),
