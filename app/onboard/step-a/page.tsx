@@ -65,8 +65,8 @@ export default function StepA() {
         throw new Error("Failed to update user profile");
       }
 
-      // Move to home (next step route not present in this branch)
-      router.push("/");
+      // Move to quiz (next step)
+      router.push("/onboard/quiz");
     } catch (error: unknown) {
       alert((error as Error)?.message || "Failed to update profile");
       setIsLoading(false);
