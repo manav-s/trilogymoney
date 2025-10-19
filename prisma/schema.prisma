@@ -17,36 +17,65 @@ model User {
   preferredTime     String         @default("09:00") // HH:mm format
   name              String?
   
+  // Onboarding artifacts
+  quizAnswers       Json?
+  analysisSummary   Json?
+  
   // Onboarding state
-  onboardingStatus  String         @default("pre_auth") // pre_auth, clerk_complete, plaid_complete, complete
+  onboardingStatus  String         @default("pre_auth") // pre_auth -> profile_collected -> quiz_complete -> analysis_complete -> plaid_connected -> subscribed -> complete
   consent           Boolean        @default(false)
   
   // Service status
   isActive          Boolean        @default(true)
   messagingStatus   String         @default("inactive") // inactive, active, stopped
+
+  // Plaid
+  items             PlaidItem[]
+
+  // Billing
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  stripePriceId        String?
+  billingStatus        String? // trialing | active | incomplete | canceled
   
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
   
-  plaidAccount      PlaidAccount?
   messages          Message[]
   
   @@index([phone])
 }
 
+model PlaidItem {
+  id              String       @id @default(cuid())
+  userId          String
+  itemId          String       @unique
+  accessToken     String       @db.Text // Encrypted with ENCRYPTION_KEY
+  institutionName String?
+  lastSync        DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accounts        PlaidAccount[]
+  @@index([userId])
+}
+
 model PlaidAccount {
-  id          String    @id @default(cuid())
-  userId      String    @unique
-  accessToken String    @db.Text // Encrypted with ENCRYPTION_KEY
-  itemId      String
-  accountId   String    // Primary checking account
-  bankName    String
-  accountName String
-  isActive    Boolean   @default(true)
-  lastSync    DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String     @id @default(cuid())
+  itemId           String
+  accountId        String     @unique
+  name             String
+  officialName     String?
+  mask             String?
+  type             String
+  subtype          String?
+  currency         String?
+  currentBalance   Float?
+  availableBalance Float?
+  lastSync         DateTime?
+  isActive         Boolean    @default(true)
+  item             PlaidItem  @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  @@index([itemId])
 }
 
 model Message {
