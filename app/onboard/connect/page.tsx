@@ -9,6 +9,8 @@ const ONBOARDING_PHONE_KEY = "onboarding_phone";
 export default function ConnectPage() {
   const router = useRouter();
   const [linkToken, setLinkToken] = useState<string | null>(null);
+  const [isFetchingToken, setIsFetchingToken] = useState(false);
+  const [tokenError, setTokenError] = useState<string | null>(null);
 
   useEffect(() => {
     const phone = sessionStorage.getItem(ONBOARDING_PHONE_KEY);
@@ -29,13 +31,26 @@ export default function ConnectPage() {
       } catch {}
       // request link token
       try {
+        setIsFetchingToken(true);
+        setTokenError(null);
         const lt = await fetch('/api/plaid/link-token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ clientUserId: phone, clientName: 'Trilogy' }),
-        }).then((r) => r.json());
-        if (lt?.link_token) setLinkToken(lt.link_token);
-      } catch {}
+        });
+        if (!lt.ok) {
+          const data = await lt.json().catch(() => ({}));
+          setTokenError(data?.error || 'failed to create link token');
+        } else {
+          const data = await lt.json();
+          if (data?.link_token) setLinkToken(data.link_token);
+          else setTokenError('failed to create link token');
+        }
+      } catch {
+        setTokenError('network error while creating link token');
+      } finally {
+        setIsFetchingToken(false);
+      }
     })();
   }, [router]);
 
@@ -61,7 +76,44 @@ export default function ConnectPage() {
               <button className="px-6 py-3 rounded-full bg-indigo-600 text-white">connect your accounts</button>
             </PlaidLink>
           ) : (
-            <button disabled className="px-6 py-3 rounded-full bg-indigo-600 text-white opacity-50">loading…</button>
+            <div className="flex items-center gap-3">
+              <button disabled className="px-6 py-3 rounded-full bg-indigo-600 text-white opacity-50">{isFetchingToken ? 'loading…' : 'unavailable'}</button>
+              {tokenError && (
+                <button
+                  onClick={() => {
+                    // trigger a refetch by resetting state (effect runs only once; so call inline fetch)
+                    (async () => {
+                      const phone = sessionStorage.getItem(ONBOARDING_PHONE_KEY);
+                      if (!phone) return;
+                      try {
+                        setIsFetchingToken(true);
+                        setTokenError(null);
+                        const lt = await fetch('/api/plaid/link-token', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ clientUserId: phone, clientName: 'Trilogy' }),
+                        });
+                        if (!lt.ok) {
+                          const data = await lt.json().catch(() => ({}));
+                          setTokenError(data?.error || 'failed to create link token');
+                        } else {
+                          const data = await lt.json();
+                          if (data?.link_token) setLinkToken(data.link_token);
+                          else setTokenError('failed to create link token');
+                        }
+                      } catch {
+                        setTokenError('network error while creating link token');
+                      } finally {
+                        setIsFetchingToken(false);
+                      }
+                    })();
+                  }}
+                  className="px-4 py-2 rounded-full bg-gray-200 text-gray-800"
+                >
+                  try again
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
