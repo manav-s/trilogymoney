@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { usePlaidLink } from "react-plaid-link";
+import { PlaidLink } from "react-plaid-link";
 
 const ONBOARDING_PHONE_KEY = "onboarding_phone";
 
@@ -49,15 +49,19 @@ export default function ConnectPage() {
     if (res.ok) router.push('/onboard/checkout');
   };
 
-  const plaid = usePlaidLink({ token: linkToken || '', onSuccess });
-
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-2xl mx-auto px-4 py-16">
         <h1 className="text-4xl font-bold text-gray-900 mb-6 lowercase">connect your accounts</h1>
         <div className="bg-gray-100 rounded-2xl p-6 text-gray-700 lowercase flex items-center justify-between">
           <span>link your bank accounts securely</span>
-          <button disabled={!plaid.open || !linkToken} onClick={() => plaid.open?.()} className="px-6 py-3 rounded-full bg-indigo-600 text-white disabled:opacity-50">open plaid link</button>
+          {linkToken ? (
+            <PlaidLink token={linkToken} onSuccess={onSuccess}>
+              <button className="px-6 py-3 rounded-full bg-indigo-600 text-white">connect your accounts</button>
+            </PlaidLink>
+          ) : (
+            <button disabled className="px-6 py-3 rounded-full bg-indigo-600 text-white opacity-50">loading…</button>
+          )}
         </div>
       </div>
     </div>
