@@ -21,7 +21,8 @@ export default function ConnectPage() {
         const res = await fetch(`/api/onboard/status?phone=${encodeURIComponent(phone)}`);
         if (res.ok) {
           const data = await res.json();
-          if (data.next && data.next !== "/onboard/connect") {
+          // Allow access if user just finished analysis and is moving forward from plan
+          if (data.status !== 'analysis_complete' && data.next && data.next !== "/onboard/connect") {
             router.replace(data.next);
           }
         }
