@@ -23,7 +23,7 @@ type Question = {
 
 const QUESTIONS: Question[] = [
   { key: "q1", label: "most days, money feels…", options: ["calm","under_control","manageable","tense","overwhelming"] },
-  { key: "q2", label: "what quietly worries you the most?", options: ["interest_charges","surprise_bills","overspending","not_saving","not_investing","nothing"] },
+  { key: "q2", label: "what quietly worries you the most?", options: ["interest_charges","surprise_bills","overspending","not_saving","not_investing","retiring_early_and_leaving_the_rat_race","nothing"] },
   { key: "q3", label: "if we nailed one win in 90 days, you’d want…", options: ["pay_down_card","build_1mo_cushion","stop_leak_spend","automate_bills","start_investing"] },
   { key: "q4", label: "the moment you drift off‑track is usually…", options: ["payday_slips","weekend_spend","late_night_scroll","unexpected_bill","social_plans"] },
   { key: "q5", label: "are you ever nervous to check your balances?", options: ["often","sometimes","rarely","never"] },
