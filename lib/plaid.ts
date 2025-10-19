@@ -30,20 +30,22 @@ export function getPlaidDefaults() {
   return { countryCodes, products, redirectUri };
 }
 
+type LinkTokenCreateRequestWithRedirect = LinkTokenCreateRequest & { redirect_uri?: string };
+
 export async function createLinkToken(params: { clientUserId: string; clientName: string; }): Promise<string> {
   const client = getPlaidClient();
   const { countryCodes, products, redirectUri } = getPlaidDefaults();
 
-  const request: LinkTokenCreateRequest = {
+  const request: LinkTokenCreateRequestWithRedirect = {
     user: { client_user_id: params.clientUserId },
     client_name: params.clientName,
     products,
     country_codes: countryCodes,
     language: 'en',
+    ...(redirectUri ? { redirect_uri: redirectUri } : {}),
   };
-  if (redirectUri) (request as any).redirect_uri = redirectUri; // tolerated if type lags
 
-  const resp = await client.linkTokenCreate(request as any);
+  const resp = await client.linkTokenCreate(request);
   return resp.data.link_token;
 }
 
