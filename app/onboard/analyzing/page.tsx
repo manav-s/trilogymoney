@@ -34,6 +34,14 @@ export default function AnalyzingPage() {
         }
       } catch {}
       const timer = setInterval(() => setIdx((i) => (i + 1) % STEPS.length), 1200);
+      // call analyze in the background while animating
+      try {
+        await fetch('/api/onboard/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone }),
+        });
+      } catch {}
       const done = setTimeout(() => router.push("/onboard/plan"), 5200);
       return () => {
         clearInterval(timer);
