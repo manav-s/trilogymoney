@@ -93,7 +93,7 @@ model Message {
   sentAt    DateTime    @default(now())
   expiresAt DateTime    // Auto-calculated: sentAt + 60 days
   user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@index([userId, sentAt])
   @@index([expiresAt]) // For cleanup jobs
 }

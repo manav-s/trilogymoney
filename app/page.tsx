@@ -31,7 +31,7 @@ export default function Home() {
 
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 lowercase">
                 your money&apos;s personal assistant.
-              </h1>
+          </h1>
 
               <p className="text-xl sm:text-2xl text-gray-600 lowercase">
                 texts you via imessage like a friend. once a week, a quick money check-in.
@@ -93,9 +93,9 @@ export default function Home() {
                         <div className="bg-gray-200 rounded-3xl rounded-tr-sm p-4 shadow-md max-w-[240px]">
                           <p className="text-gray-900 text-sm">
                             ok fine 🙄
-                          </p>
-                        </div>
-                      </div>
+            </p>
+          </div>
+        </div>
                     </div>
                   </div>
                   {/* iPhone notch */}
@@ -137,8 +137,8 @@ export default function Home() {
               <div className="text-5xl mb-4">💸</div>
               <p className="text-lg font-semibold text-gray-900 lowercase">
                 yesterday
-              </p>
-            </div>
+            </p>
+          </div>
 
             <div className="text-center p-8 bg-white border border-gray-200 rounded-2xl shadow-sm">
               <div className="text-5xl mb-4">📊</div>

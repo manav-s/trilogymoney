@@ -41,25 +41,25 @@ export async function POST(req: NextRequest) {
 
     // Update user profile information
     try {
-      const updatedUser = await prisma.user.update({
-        where: { phone },
-        data: {
-          name,
+    const updatedUser = await prisma.user.update({
+      where: { phone },
+      data: {
+        name,
           email,
-          timezone,
-          onboardingStatus,
-        },
-      });
+        timezone,
+        onboardingStatus,
+      },
+    });
 
-      return NextResponse.json({
-        success: true,
-        user: {
-          id: updatedUser.id,
-          phone: updatedUser.phone,
-          name: updatedUser.name,
-          onboardingStatus: updatedUser.onboardingStatus,
-        },
-      });
+    return NextResponse.json({
+      success: true,
+      user: {
+        id: updatedUser.id,
+        phone: updatedUser.phone,
+        name: updatedUser.name,
+        onboardingStatus: updatedUser.onboardingStatus,
+      },
+    });
     } catch (e: unknown) {
       // Prisma unique constraint violation
       if (typeof e === 'object' && e && (e as { code?: string }).code === 'P2002') {

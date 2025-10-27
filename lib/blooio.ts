@@ -7,7 +7,7 @@ import { createHmac, timingSafeEqual } from 'crypto';
 import { createHmac, timingSafeEqual } from 'crypto';
 
 const BLOOIO_API_KEY = process.env.BLOOIO_API_KEY;
-const BLOOIO_BASE_URL = 'https://edge.blooio.com/v1/api';
+const BLOOIO_BASE_URL = 'https://backend.blooio.com/v1/api';
 
 // Note: intentionally no logs in production
 
