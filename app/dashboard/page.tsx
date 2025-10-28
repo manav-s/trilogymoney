@@ -124,7 +124,9 @@ export default function DashboardPage() {
           ) : (
             items.map((it) => (
               <div key={it.id} className="border rounded-2xl p-4">
-                <div className="font-semibold mb-2 lowercase">{it.institutionName || "linked institution"}</div>
+                {it.institutionName ? (
+                  <div className="font-semibold mb-2 lowercase">{it.institutionName}</div>
+                ) : null}
                 <div className="space-y-2">
                   {it.accounts.map((a) => (
                     <div key={a.id} className="flex items-center justify-between bg-gray-50 rounded-xl p-3">
