@@ -1,12 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const ONBOARDING_PHONE_KEY = "onboarding_phone";
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const phone = sessionStorage.getItem(ONBOARDING_PHONE_KEY);
@@ -33,10 +34,20 @@ export default function CheckoutPage() {
         <h1 className="text-4xl font-bold text-gray-900 mb-6 lowercase">checkout</h1>
         <p className="text-gray-600 lowercase mb-8">secure payment via stripe</p>
         <button
-          onClick={() => router.push("/dashboard")}
-          className="px-8 py-4 rounded-full bg-indigo-600 text-white lowercase hover:bg-indigo-700"
+          onClick={async () => {
+            setLoading(true);
+            try {
+              const res = await fetch("/api/stripe/checkout", { method: "POST" });
+              const data = await res.json();
+              if (data.url) window.location.href = data.url as string;
+            } finally {
+              setLoading(false);
+            }
+          }}
+          className="px-8 py-4 rounded-full bg-indigo-600 text-white lowercase hover:bg-indigo-700 disabled:opacity-60"
+          disabled={loading}
         >
-          simulate payment →
+          {loading ? "redirecting…" : "continue to stripe →"}
         </button>
       </div>
     </div>
