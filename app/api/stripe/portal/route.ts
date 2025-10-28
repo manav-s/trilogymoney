@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   if (!stripeSecretKey) {
     return NextResponse.json({ error: "Stripe not configured" }, { status: 500 });
   }
-  const stripe = new Stripe(stripeSecretKey, { apiVersion: "2024-06-20" });
+  const stripe = new Stripe(stripeSecretKey);
   let body: { customer_id?: string } = {};
   try { body = await req.json(); } catch {}
   const { customer_id } = body;

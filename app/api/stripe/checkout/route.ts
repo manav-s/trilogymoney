@@ -14,7 +14,8 @@ export async function POST(req: NextRequest) {
     body = await req.json();
   } catch {}
 
-  const stripe = new Stripe(stripeSecretKey, { apiVersion: "2024-06-20" });
+  // Use SDK default API version to avoid type mismatches during deploy
+  const stripe = new Stripe(stripeSecretKey);
 
   try {
     const session = await stripe.checkout.sessions.create({
