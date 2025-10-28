@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Stripe not configured" }, { status: 500 });
   }
 
-  let body: { success_url?: string; cancel_url?: string; customer_email?: string } = {};
+  let body: { success_url?: string; cancel_url?: string; customer_email?: string; trial_days?: number } = {};
   try {
     body = await req.json();
   } catch {}
@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
   const stripe = new Stripe(stripeSecretKey);
 
   try {
+    const trialDays = Number.isFinite(body.trial_days) ? Number(body.trial_days) : Number(process.env.STRIPE_TRIAL_DAYS || 0);
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price: stripePriceId, quantity: 1 }],
@@ -26,6 +27,7 @@ export async function POST(req: NextRequest) {
       customer_email: body.customer_email,
       allow_promotion_codes: true,
       billing_address_collection: "auto",
+      ...(trialDays > 0 ? { subscription_data: { trial_period_days: trialDays } } : {}),
     });
     return NextResponse.json({ id: session.id, url: session.url });
   } catch (e) {
