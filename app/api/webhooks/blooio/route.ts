@@ -36,7 +36,10 @@ export async function POST(req: NextRequest) {
     const rawBody = await req.text();
 
     if (WEBHOOK_SECRET) {
-      const sig = req.headers.get('x-blooio-signature');
+      const sig =
+        req.headers.get('x-blooio-signature') ||
+        req.headers.get('x-blooio-signature-sha256') ||
+        req.headers.get('x-signature');
       const ok = verifySignature(rawBody, sig, WEBHOOK_SECRET);
       if (!ok) return NextResponse.json({ error: 'invalid signature' }, { status: 401 });
     }
@@ -101,7 +104,8 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
   }
 
   const user = await prisma.user.findUnique({ where: { phone } });
-  const isOnboardingMessage = body === 'hi trilogy...' || body === 'hi trilogy…';
+  const onboardingRegex = /^hi\s+trilogy(?:[\s.!…]*)$/i;
+  const isOnboardingMessage = onboardingRegex.test(body);
 
   if (!user) {
     await handleNewUser(phone, event);
