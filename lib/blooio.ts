@@ -4,8 +4,6 @@
  */
 import { createHmac, timingSafeEqual } from 'crypto';
 
-import { createHmac, timingSafeEqual } from 'crypto';
-
 const BLOOIO_API_KEY = process.env.BLOOIO_API_KEY;
 const BLOOIO_BASE_URL = 'https://backend.blooio.com/v1/api';
 
@@ -45,6 +43,10 @@ type BlooioSendResponse = Partial<{
   error: string;
   message: string;
 }>;
+
+function getId(resp: BlooioSendResponse): string | undefined {
+  return resp.id || resp.messageId || resp.message_id;
+}
 
 /**
  * Send an outbound message via Blooio
