@@ -112,8 +112,7 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
   }
 
   const user = await prisma.user.findUnique({ where: { phone } });
-  const onboardingRegex = /^hi\s+trilogy(?:[\s.!…]*)$/i;
-  const isOnboardingMessage = onboardingRegex.test(body);
+  const isOnboardingMessage = body === 'hi trilogy...';
 
   if (!user) {
     await handleNewUser(phone, event);
