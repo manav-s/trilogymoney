@@ -34,17 +34,25 @@ function verifySignature(rawBody: string, headerSig: string | null, secret: stri
 export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
+    console.log('[blooio] webhook: received', { length: rawBody.length });
 
+    const sig =
+      req.headers.get('x-blooio-signature') ||
+      req.headers.get('x-blooio-signature-sha256') ||
+      req.headers.get('x-signature');
     if (WEBHOOK_SECRET) {
-      const sig =
-        req.headers.get('x-blooio-signature') ||
-        req.headers.get('x-blooio-signature-sha256') ||
-        req.headers.get('x-signature');
       const ok = verifySignature(rawBody, sig, WEBHOOK_SECRET);
-      if (!ok) return NextResponse.json({ error: 'invalid signature' }, { status: 401 });
+      if (!ok) {
+        console.warn('[blooio] webhook: invalid signature');
+        return NextResponse.json({ error: 'invalid signature' }, { status: 401 });
+      }
+      console.log('[blooio] webhook: signature verified');
+    } else {
+      console.log('[blooio] webhook: no secret configured; skipping signature verify');
     }
 
     const event: BlooioWebhookEvent = JSON.parse(rawBody);
+    console.log('[blooio] webhook: parsed event', { event: event.event });
 
     z.object({ event: z.string() }).parse(event);
 
