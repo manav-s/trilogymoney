@@ -34,33 +34,16 @@ export async function verifyMagicLink(id: string): Promise<{ valid: boolean; exp
     if (magicLink.used) return { valid: false, expired: true };
     if (magicLink.expiresAt < new Date()) return { valid: false, expired: true };
 
-    // Set used and usedAt atomically
-    await prisma.$executeRaw`UPDATE "MagicLink" SET "used" = true, "usedAt" = NOW() WHERE "id" = ${id}`;
+    // Atomically mark as used only if not yet used and not expired
+    const result = await prisma.magicLink.updateMany({
+      where: { id, used: false, expiresAt: { gt: new Date() } },
+      data: { used: true },
+    });
+    if (result.count === 0) return { valid: false, expired: true };
     return { valid: true, phone: magicLink.phone };
   } catch {
     return { valid: false };
   }
-
-  // Fast checks
-  if (magicLink.used) {
-    return { valid: false, expired: true };
-  }
-  if (magicLink.expiresAt < new Date()) {
-    return { valid: false, expired: true };
-  }
-
-  // Atomic consume: only mark as used if still unused and unexpired at the DB level
-  const result = await prisma.magicLink.updateMany({
-    where: { id, used: false, expiresAt: { gt: new Date() } },
-    data: { used: true },
-  });
-
-  if (result.count === 0) {
-    // Lost the race or just expired
-    return { valid: false, expired: true };
-  }
-
-  return { valid: true, phone: magicLink.phone };
 }
 
 /**
