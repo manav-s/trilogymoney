@@ -69,7 +69,7 @@ export default function ConnectPage() {
     <div className="min-h-screen bg-white">
       <div className="max-w-2xl mx-auto px-4 py-16">
         <h1 className="text-4xl font-bold text-gray-900 mb-6 lowercase">connect your accounts</h1>
-        <div className="bg-gray-100 rounded-2xl p-6 text-gray-700 lowercase flex items-center justify-between">
+        <div className="rounded-2xl p-6 text-gray-700 lowercase flex items-center justify-between">
           <span>link your bank accounts securely</span>
           {linkToken ? (
             <PlaidLink token={linkToken} onSuccess={onSuccess}>
