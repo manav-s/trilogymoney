@@ -30,10 +30,12 @@ export async function POST(req: NextRequest) {
         const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
         const subscriptionId = typeof session.subscription === "string" ? session.subscription : (session.subscription as Stripe.Subscription | null)?.id;
 
-        const dataToSet: Record<string, string | null> = {
+        const dataToSet: Record<string, string | null | undefined> = {
           stripeCustomerId: customerId || null,
           stripeSubscriptionId: subscriptionId || null,
           billingStatus: "active",
+          // Advance onboarding
+          onboardingStatus: "subscribed",
         };
 
         if (phone) {
