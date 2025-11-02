@@ -37,7 +37,12 @@ export default function CheckoutPage() {
           onClick={async () => {
             setLoading(true);
             try {
-              const res = await fetch("/api/stripe/checkout", { method: "POST" });
+              const phone = sessionStorage.getItem(ONBOARDING_PHONE_KEY);
+              const res = await fetch("/api/stripe/checkout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ phone }),
+              });
               const data = await res.json();
               if (data.url) window.location.href = data.url as string;
             } finally {

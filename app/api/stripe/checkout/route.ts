@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Stripe not configured" }, { status: 500 });
   }
 
-  let body: { success_url?: string; cancel_url?: string; customer_email?: string; trial_days?: number } = {};
+  let body: { success_url?: string; cancel_url?: string; customer_email?: string; trial_days?: number; phone?: string | null } = {};
   try {
     body = await req.json();
   } catch {}
@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
       customer_email: body.customer_email,
       allow_promotion_codes: true,
       billing_address_collection: "auto",
+      metadata: body.phone ? { phone: body.phone } : undefined,
       ...(trialDays > 0 ? { subscription_data: { trial_period_days: trialDays } } : {}),
     });
     return NextResponse.json({ id: session.id, url: session.url });
