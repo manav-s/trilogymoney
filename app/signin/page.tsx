@@ -1,9 +1,13 @@
 "use client";
 
+import { useState } from "react";
+
 const SMS_LINK = "https://shorturl.at/wqcwo"; // opens Messages to +16468941360 with body "pass the sign in link"
 
 export default function SignInPage() {
+  const [openedOnce, setOpenedOnce] = useState(false);
   const openSms = () => {
+    setOpenedOnce(true);
     try {
       window.location.href = SMS_LINK;
     } catch {}
@@ -18,9 +22,11 @@ export default function SignInPage() {
           <button onClick={openSms} className="px-8 py-4 rounded-full bg-indigo-600 text-white lowercase hover:bg-indigo-700">
             send me a link
           </button>
-          <button onClick={openSms} className="px-8 py-4 rounded-full bg-gray-200 text-gray-800 lowercase hover:bg-gray-300">
-            open messages again
-          </button>
+          {openedOnce ? (
+            <button onClick={openSms} className="px-8 py-4 rounded-full bg-gray-200 text-gray-800 lowercase hover:bg-gray-300">
+              open messages again
+            </button>
+          ) : null}
         </div>
       </div>
     </div>
