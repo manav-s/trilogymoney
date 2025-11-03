@@ -26,10 +26,16 @@ export default function OnboardWithIdPage() {
           setStatus("valid");
           // Store phone in sessionStorage for the onboarding flow
           sessionStorage.setItem(ONBOARDING_PHONE_KEY, data.phone);
-          // Redirect straight to Step A
-          setTimeout(() => {
-            router.push("/onboard/step-a");
-          }, 1000);
+          // Route to the appropriate next step based on current status
+          fetch(`/api/onboard/status?phone=${encodeURIComponent(data.phone)}`)
+            .then((r) => r.json())
+            .then((s) => {
+              const nextPath = s?.next || "/onboard/step-a";
+              router.replace(nextPath);
+            })
+            .catch(() => {
+              router.replace("/onboard/step-a");
+            });
         } else if (data.expired) {
           setStatus("expired");
         } else {

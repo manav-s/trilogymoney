@@ -30,12 +30,15 @@ export async function POST(req: NextRequest) {
         const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
         const subscriptionId = typeof session.subscription === "string" ? session.subscription : (session.subscription as Stripe.Subscription | null)?.id;
 
-        const dataToSet: Record<string, string | null | undefined> = {
+        const dataToSet: Record<string, string | boolean | null | undefined> = {
           stripeCustomerId: customerId || null,
           stripeSubscriptionId: subscriptionId || null,
           billingStatus: "active",
           // Advance onboarding
           onboardingStatus: "subscribed",
+          // Ensure messaging is active upon successful checkout
+          messagingStatus: "active",
+          isActive: true,
         };
 
         if (phone) {
@@ -54,13 +57,23 @@ export async function POST(req: NextRequest) {
         const priceId = sub.items?.data?.[0]?.price?.id || null;
         const status = sub.status; // active | trialing | canceled | incomplete | past_due | unpaid | incomplete_expired
 
+        const dataUpdate: Record<string, string | boolean | null | undefined> = {
+          stripeSubscriptionId: sub.id,
+          stripePriceId: priceId,
+          billingStatus: status,
+        };
+
+        if (status === "active" || status === "trialing") {
+          dataUpdate.messagingStatus = "active";
+          dataUpdate.isActive = true;
+        } else {
+          dataUpdate.messagingStatus = "stopped";
+          dataUpdate.isActive = false;
+        }
+
         await prisma.user.updateMany({
           where: { stripeCustomerId: customerId },
-          data: {
-            stripeSubscriptionId: sub.id,
-            stripePriceId: priceId,
-            billingStatus: status,
-          },
+          data: dataUpdate,
         });
         break;
       }
