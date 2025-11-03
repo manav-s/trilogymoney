@@ -8,6 +8,11 @@ export default function Home() {
             trilogy
           </span>
         </div>
+        <div className="flex items-center">
+          <a href="/signin" className="text-sm font-semibold leading-6 text-gray-900 lowercase hover:text-indigo-600">
+            sign in
+          </a>
+        </div>
       </nav>
 
       {/* Hero Section */}
@@ -266,6 +271,9 @@ export default function Home() {
             <div className="flex items-center space-x-6 text-sm text-gray-600 lowercase">
               <a href="/privacy" className="hover:text-indigo-600 transition-colors">
                 privacy
+              </a>
+              <a href="/signin" className="hover:text-indigo-600 transition-colors">
+                sign in
               </a>
             </div>
             <p className="text-sm text-gray-500 lowercase">© 2025 trilogy</p>
