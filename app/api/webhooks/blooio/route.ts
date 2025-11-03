@@ -108,14 +108,52 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
   const user = await prisma.user.findUnique({ where: { phone } });
   const isOnboardingMessage = body === 'hi trilogy...';
 
-  // Sign-in cue: do NOT create users if unknown. Send magic link for existing users only.
+  // Sign-in cue
   if (body === 'pass the sign in link') {
-    if (user) {
+    if (!user) {
+      // No account yet → start onboarding flow and send onboarding messages
+      await handleNewUser(phone, event);
+      return;
+    }
+
+    const isBillingOk = !!user?.billingStatus && (user.billingStatus === 'active' || user.billingStatus === 'trialing');
+    const isMessagingActive = user?.messagingStatus === 'active' && user?.isActive !== false;
+    const isOnboardingComplete = user?.onboardingStatus === 'complete' || user?.onboardingStatus === 'subscribed';
+
+    if (isBillingOk && isMessagingActive && isOnboardingComplete) {
+      // Happy path → send sign-in magic link
       const magicLink = await generateMagicLink(phone);
       await sendMessage({ to: phone, body: `here's your sign-in link (expires in 10 min):\n\n${magicLink}` });
-    } else {
-      await sendMessage({ to: phone, body: `don't see an account for this number. text "hi trilogy..." to start onboarding.` });
+      return;
     }
+
+    // If paused/stopped
+    if (user.messagingStatus === 'stopped' || user.isActive === false) {
+      await sendMessage({ to: phone, body: `you're paused. reply START to resume.` });
+      return;
+    }
+
+    // If onboarding not finished (or explicitly inactive) → push onboarding messages with fresh link
+    if (user.messagingStatus === 'inactive' || !isOnboardingComplete) {
+      const magicLink = await generateMagicLink(phone);
+      const messages = [
+        `hi it's your lovely blue-bubble cfo`,
+        `onboarding link below. i'll be gentle. mostly.`,
+        magicLink.trim(),
+      ];
+      for (let i = 0; i < messages.length; i++) {
+        await sendMessage({ to: phone, body: messages[i] });
+        if (i < messages.length - 1) await new Promise(r => setTimeout(r, 500));
+      }
+      return;
+    }
+
+    // Billing not active/trialing → advise to re-subscribe
+    if (!isBillingOk) {
+      await sendMessage({ to: phone, body: `your subscription isn't active. sign in from the link in your email or visit the billing portal to re-subscribe.` });
+      return;
+    }
+
     return;
   }
 
