@@ -35,7 +35,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const p = sessionStorage.getItem(ONBOARDING_PHONE_KEY);
     if (!p) {
-      router.replace("/");
+      router.replace("/signin");
       return;
     }
     setPhone(p);

@@ -108,6 +108,17 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
   const user = await prisma.user.findUnique({ where: { phone } });
   const isOnboardingMessage = body === 'hi trilogy...';
 
+  // Sign-in cue: do NOT create users if unknown. Send magic link for existing users only.
+  if (body === 'pass the sign in link') {
+    if (user) {
+      const magicLink = await generateMagicLink(phone);
+      await sendMessage({ to: phone, body: `here's your sign-in link (expires in 10 min):\n\n${magicLink}` });
+    } else {
+      await sendMessage({ to: phone, body: `don't see an account for this number. text "hi trilogy..." to start onboarding.` });
+    }
+    return;
+  }
+
   if (!user) {
     await handleNewUser(phone, event);
   } else if (isOnboardingMessage && user.onboardingStatus !== 'complete') {
