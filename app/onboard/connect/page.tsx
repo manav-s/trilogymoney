@@ -133,17 +133,16 @@ export default function ConnectPage() {
         <h1 className="text-4xl font-bold text-gray-900 mb-2 lowercase">connect your accounts</h1>
         <p className="text-gray-600 lowercase mb-6">add your bank accounts and credit cards</p>
 
-        <div className="rounded-2xl p-6 text-gray-700 lowercase flex items-center justify-between">
-          <span>{totalAccounts === 0 ? 'link your first account securely' : 'link more accounts if you like'}</span>
+        <div className="rounded-2xl p-6 text-gray-700 lowercase flex items-center justify-end">
           {linkToken ? (
             <PlaidLink token={linkToken} onSuccess={onSuccess}>
               <button className="px-6 py-3 rounded-full bg-indigo-600 text-white">
-                {totalAccounts === 0 ? 'add account' : 'add another account'}
+                add account
               </button>
             </PlaidLink>
           ) : (
             <div className="flex items-center gap-3">
-              <button disabled className="px-6 py-3 rounded-full bg-indigo-600 text-white opacity-50">{isFetchingToken ? 'loading…' : 'prepare link'}</button>
+              <button disabled className="px-6 py-3 rounded-full bg-indigo-600 text-white opacity-50">{isFetchingToken ? 'loading…' : 'add account'}</button>
               {tokenError && (
                 <button
                   onClick={() => {
