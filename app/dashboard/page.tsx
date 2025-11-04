@@ -31,6 +31,12 @@ export default function DashboardPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const signOut = () => {
+    try { sessionStorage.removeItem(ONBOARDING_PHONE_KEY); } catch {}
+    router.replace('/signin');
+  };
 
   useEffect(() => {
     const p = sessionStorage.getItem(ONBOARDING_PHONE_KEY);
@@ -92,20 +98,27 @@ export default function DashboardPage() {
 
   const softDelete = async () => {
     if (!phone) return;
-    await fetch("/api/user/soft-delete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone }),
-    });
-    alert("Your data has been marked for deletion and messaging paused.");
+    setDeleting(true);
+    try {
+      await fetch("/api/user/soft-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      });
+      alert("Your data has been marked for deletion and messaging paused.");
+    } finally {
+      setDeleting(false);
+      setConfirmingDelete(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col">
+      <main className="flex-1">
       <div className="max-w-3xl mx-auto px-4 py-10">
         <h1 className="text-4xl font-bold text-gray-900 mb-6 lowercase">dashboard</h1>
 
-        <div className="mb-8 flex gap-3">
+        <div className="mb-8 flex flex-wrap gap-3">
           {linkToken ? (
             <PlaidLink token={linkToken} onSuccess={onLinkSuccess}>
               <button className="px-5 py-3 rounded-full bg-indigo-600 text-white lowercase">add another account</button>
@@ -115,7 +128,21 @@ export default function DashboardPage() {
           )}
 
           <button onClick={openPortal} disabled={!customerId} className="px-5 py-3 rounded-full bg-gray-900 text-white lowercase disabled:opacity-50">manage subscription</button>
-          <button onClick={softDelete} className="px-5 py-3 rounded-full bg-red-600 text-white lowercase">delete all data</button>
+          {!confirmingDelete ? (
+            <button onClick={() => setConfirmingDelete(true)} className="px-5 py-3 rounded-full bg-red-600 text-white lowercase">delete all data</button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button onClick={softDelete} disabled={deleting} className="px-5 py-3 rounded-full bg-red-700 text-white lowercase disabled:opacity-50">{deleting ? 'deleting…' : 'confirm delete'}</button>
+              <button onClick={() => setConfirmingDelete(false)} className="px-5 py-3 rounded-full bg-gray-200 text-gray-800 lowercase">cancel</button>
+            </div>
+          )}
+
+          <button
+            onClick={signOut}
+            className="px-5 py-3 rounded-full border border-gray-300 bg-white text-gray-800 lowercase hover:bg-gray-100"
+          >
+            sign out
+          </button>
         </div>
 
         <div className="space-y-4">
@@ -143,6 +170,27 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+      </main>
+
+      {/* Footer (same as homepage) */}
+      <footer className="border-t border-gray-200 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
+            <span className="text-xl font-bold text-gray-900 lowercase">
+              trilogy
+            </span>
+            <div className="flex items-center space-x-6 text-sm text-gray-600 lowercase">
+              <a href="/privacy" className="hover:text-indigo-600 transition-colors">
+                privacy
+              </a>
+              <button onClick={signOut} className="hover:text-indigo-600 transition-colors">
+                sign out
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 lowercase">© 2025 trilogy</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

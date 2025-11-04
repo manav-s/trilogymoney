@@ -131,6 +131,19 @@ export default function ConnectPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Navigation (copied from homepage) */}
+      <nav className="flex items-center justify-between p-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="flex items-center">
+          <span className="text-xl font-bold text-gray-900 lowercase">
+            trilogy
+          </span>
+        </div>
+        <div className="flex items-center">
+          <a href="/signin" className="text-sm font-semibold leading-6 text-gray-900 lowercase hover:text-indigo-600">
+            sign in
+          </a>
+        </div>
+      </nav>
       <div className="max-w-2xl mx-auto px-4 py-16">
         <h1 className="text-4xl font-bold text-gray-900 mb-2 lowercase">connect your accounts</h1>
         <p className="text-gray-600 lowercase mb-6">add your bank accounts and credit cards</p>
@@ -165,10 +178,10 @@ export default function ConnectPage() {
         <div className="mt-6 flex justify-center">
           {linkToken ? (
             <PlaidLink token={linkToken} onSuccess={onSuccess}>
-              <button className="px-6 py-3 rounded-full bg-indigo-600 text-white">add account</button>
+              <button className="px-6 py-3 rounded-full bg-indigo-600 text-white focus:outline-none focus:ring-0 outline-none ring-0 border-none shadow-none">add account</button>
             </PlaidLink>
           ) : (
-            <button disabled className="px-6 py-3 rounded-full bg-indigo-600 text-white opacity-50">{isFetchingToken ? 'loading…' : 'add account'}</button>
+            <button disabled className="px-6 py-3 rounded-full bg-indigo-600 text-white opacity-50 focus:outline-none focus:ring-0 outline-none ring-0 border-none shadow-none">{isFetchingToken ? 'loading…' : 'add account'}</button>
           )}
           {tokenError && (
             <button
@@ -193,6 +206,26 @@ export default function ConnectPage() {
           </button>
         </div>
       </div>
+
+      {/* Footer (copied from homepage) */}
+      <footer className="border-t border-gray-200 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
+            <span className="text-xl font-bold text-gray-900 lowercase">
+              trilogy
+            </span>
+            <div className="flex items-center space-x-6 text-sm text-gray-600 lowercase">
+              <a href="/privacy" className="hover:text-indigo-600 transition-colors">
+                privacy
+              </a>
+              <a href="/signin" className="hover:text-indigo-600 transition-colors">
+                sign in
+              </a>
+            </div>
+            <p className="text-sm text-gray-500 lowercase">© 2025 trilogy</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
