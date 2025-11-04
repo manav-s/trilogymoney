@@ -221,7 +221,8 @@ async function handleExistingUser(user: { phone: string | null; onboardingStatus
     return;
   }
 
-  await sendMessage({ to: user.phone, body: `Got your message! I'll send your next money pulse at ${user.preferredTime}. Reply STOP to pause anytime.` });
+  // Subscribed/complete users: no automatic reply on arbitrary messages.
+  return;
 }
 
 async function handleStopCommand(phone: string) {
