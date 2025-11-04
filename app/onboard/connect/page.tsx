@@ -100,8 +100,8 @@ export default function ConnectPage() {
       });
       if (res.ok) {
         await fetchAccounts(phone);
-        // clear link token until user chooses to add another
-        setLinkToken(null);
+        // immediately prepare a fresh link token so the user can add another account
+        await createLinkToken(phone);
       }
     } finally {
       setLoadingExchange(false);
