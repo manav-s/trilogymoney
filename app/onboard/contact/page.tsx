@@ -15,6 +15,10 @@ export default function ContactPage() {
         </a>
 
         <p className="text-gray-500 text-sm lowercase mt-4">on iphone, tapping will open the contact card to save</p>
+
+        <div className="mt-10">
+          <a href="/dashboard" className="px-8 py-4 rounded-full bg-gray-900 text-white lowercase">continue</a>
+        </div>
       </div>
     </div>
   );

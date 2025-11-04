@@ -10,6 +10,7 @@ export default function PlanPage() {
   const router = useRouter();
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const [opening, setOpening] = useState(false);
+  const [openRequested, setOpenRequested] = useState(false);
 
   const { open, ready } = usePlaidLink({
     token: linkToken || "",
@@ -24,6 +25,13 @@ export default function PlanPage() {
       router.replace('/onboard/connect');
     },
   });
+
+  // Open Plaid as soon as the link is ready and the user requested it
+  useEffect(() => {
+    if (openRequested && ready) {
+      try { open(); } finally { setOpenRequested(false); }
+    }
+  }, [openRequested, ready, open]);
 
   useEffect(() => {
     const phone = sessionStorage.getItem(ONBOARDING_PHONE_KEY);
@@ -59,6 +67,7 @@ export default function PlanPage() {
               const phone = sessionStorage.getItem(ONBOARDING_PHONE_KEY);
               if (!phone || opening) return;
               setOpening(true);
+              setOpenRequested(true);
               try {
                 const res = await fetch('/api/accounts/add-link-token', {
                   method: 'POST',
