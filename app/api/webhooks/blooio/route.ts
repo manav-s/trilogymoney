@@ -171,7 +171,7 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
       if (i < messages.length - 1) await new Promise(r => setTimeout(r, 500));
     }
   } else if (isOnboardingMessage && (user.onboardingStatus === 'complete' || user.onboardingStatus === 'subscribed')) {
-    await sendMessage({ to: phone, body: `hey! you're all set up already. i'll hit you with your money pulse at ${user.preferredTime}. 💰` });
+    await sendMessage({ to: phone, body: `you’re set up already my love, go away` });
   } else {
     await handleExistingUser(user, event);
   }
