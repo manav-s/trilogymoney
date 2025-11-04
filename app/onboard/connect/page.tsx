@@ -133,30 +133,7 @@ export default function ConnectPage() {
         <h1 className="text-4xl font-bold text-gray-900 mb-2 lowercase">connect your accounts</h1>
         <p className="text-gray-600 lowercase mb-6">add your bank accounts and credit cards</p>
 
-        <div className="rounded-2xl p-6 text-gray-700 lowercase flex items-center justify-end">
-          {linkToken ? (
-            <PlaidLink token={linkToken} onSuccess={onSuccess}>
-              <button className="px-6 py-3 rounded-full bg-indigo-600 text-white">
-                add account
-              </button>
-            </PlaidLink>
-          ) : (
-            <div className="flex items-center gap-3">
-              <button disabled className="px-6 py-3 rounded-full bg-indigo-600 text-white opacity-50">{isFetchingToken ? 'loading…' : 'add account'}</button>
-              {tokenError && (
-                <button
-                  onClick={() => {
-                    const phone = sessionStorage.getItem(ONBOARDING_PHONE_KEY);
-                    if (phone) createLinkToken(phone);
-                  }}
-                  className="px-4 py-2 rounded-full bg-gray-200 text-gray-800"
-                >
-                  try again
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+        {/* add account CTA moved below list; header container removed intentionally */}
 
         {/* Linked accounts list */}
         <div className="mt-8 space-y-4">
@@ -180,6 +157,27 @@ export default function ConnectPage() {
                 </div>
               </div>
             ))
+          )}
+        </div>
+
+        <div className="mt-6 flex justify-center">
+          {linkToken ? (
+            <PlaidLink token={linkToken} onSuccess={onSuccess}>
+              <button className="px-6 py-3 rounded-full bg-indigo-600 text-white">add account</button>
+            </PlaidLink>
+          ) : (
+            <button disabled className="px-6 py-3 rounded-full bg-indigo-600 text-white opacity-50">{isFetchingToken ? 'loading…' : 'add account'}</button>
+          )}
+          {tokenError && (
+            <button
+              onClick={() => {
+                const phone = sessionStorage.getItem(ONBOARDING_PHONE_KEY);
+                if (phone) createLinkToken(phone);
+              }}
+              className="ml-3 px-4 py-2 rounded-full bg-gray-200 text-gray-800"
+            >
+              try again
+            </button>
           )}
         </div>
 
