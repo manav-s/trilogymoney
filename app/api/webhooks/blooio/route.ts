@@ -159,7 +159,7 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
 
   if (!user) {
     await handleNewUser(phone, event);
-  } else if (isOnboardingMessage && user.onboardingStatus !== 'complete') {
+  } else if (isOnboardingMessage && !(user.onboardingStatus === 'complete' || user.onboardingStatus === 'subscribed')) {
     const magicLink = await generateMagicLink(phone);
     const messages = [
       `hi it's your lovely blue-bubble cfo`,
@@ -170,7 +170,7 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
       await sendMessage({ to: phone, body: messages[i] });
       if (i < messages.length - 1) await new Promise(r => setTimeout(r, 500));
     }
-  } else if (isOnboardingMessage && user.onboardingStatus === 'complete') {
+  } else if (isOnboardingMessage && (user.onboardingStatus === 'complete' || user.onboardingStatus === 'subscribed')) {
     await sendMessage({ to: phone, body: `hey! you're all set up already. i'll hit you with your money pulse at ${user.preferredTime}. 💰` });
   } else {
     await handleExistingUser(user, event);
@@ -211,7 +211,7 @@ async function handleExistingUser(user: { phone: string | null; onboardingStatus
   if (user.messagingStatus === 'stopped') return;
   if (!user.phone) return;
 
-  if (user.onboardingStatus !== 'complete') {
+  if (!(user.onboardingStatus === 'complete' || user.onboardingStatus === 'subscribed')) {
     if (body.includes('link') || body.includes('onboard') || body.includes('help')) {
       const magicLink = await generateMagicLink(user.phone);
       await sendMessage({ to: user.phone, body: `Here's a fresh link to finish setup (expires in 10 min):\n\n${magicLink}` });
