@@ -35,7 +35,7 @@ export default function DashboardPage() {
   const [deleting, setDeleting] = useState(false);
   const signOut = () => {
     try { sessionStorage.removeItem(ONBOARDING_PHONE_KEY); } catch {}
-    router.replace('/signin');
+    router.replace('/');
   };
 
   useEffect(() => {

@@ -24,12 +24,11 @@ export default function PrivacyPage() {
           <section className="mb-12">
             <h2 className="text-2xl font-bold text-gray-900 mb-4 lowercase">our promise</h2>
             <p className="mb-4">
-              trilogy is built on a simple principle: <strong>we don&apos;t store your financial data</strong>. 
-              we fetch it, calculate what you need to know, send it to you, and immediately forget it.
+              we minimize what we keep and encrypt the rest. we never store your bank credentials, and we only
+              retain the data needed to deliver your weekly money updates and operate the service safely.
             </p>
             <p>
-              this privacy policy explains exactly what information we collect, how we protect it, 
-              and your rights regarding your data.
+              this policy explains what we collect, how we protect it, what we share, and your rights.
             </p>
           </section>
 
@@ -48,22 +47,23 @@ export default function PrivacyPage() {
             <div className="mb-6">
               <h3 className="text-xl font-semibold text-gray-800 mb-2 lowercase">to connect your bank</h3>
               <ul className="list-disc pl-6 space-y-2">
-                <li><strong>encrypted plaid access token</strong> - allows us to fetch your data from plaid</li>
-                <li><strong>bank name & account type</strong> - so you know which account we&apos;re checking</li>
+                <li><strong>encrypted plaid access token</strong> - used to securely fetch account data</li>
+                <li><strong>institution & account metadata</strong> - name, mask, type/subtype, currency</li>
+                <li><strong>balances/snapshots</strong> - minimal fields required to generate your weekly summary</li>
               </ul>
               <p className="mt-2 text-sm italic">
-                note: we never store your bank login credentials - those go directly to plaid
+                note: we never store your bank login credentials — those go directly to plaid.
               </p>
             </div>
 
             <div className="mb-6">
-              <h3 className="text-xl font-semibold text-gray-800 mb-2 lowercase">conversation history</h3>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2 lowercase">conversation history (we store this)</h3>
               <ul className="list-disc pl-6 space-y-2">
-                <li><strong>your messages to trilogy</strong> - questions you ask us</li>
-                <li><strong>our responses</strong> - the insights and answers we provide</li>
+                <li><strong>message content</strong> - encrypted at rest</li>
+                <li><strong>metadata</strong> - direction, status, provider, timestamps (not encrypted)</li>
               </ul>
               <p className="mt-2 text-sm italic">
-                conversations are encrypted and automatically deleted after 60 days
+                most messages auto‑expire after 60 days; some onboarding messages may be kept up to 90 days.
               </p>
             </div>
           </section>
@@ -88,8 +88,8 @@ export default function PrivacyPage() {
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-1 lowercase">no logs</h3>
-                <p>we never log your financial data, decrypted tokens, or sensitive information</p>
+                <h3 className="text-lg font-semibold text-gray-800 mb-1 lowercase">no sensitive logs</h3>
+                <p>we do not log decrypted financial data, tokens, or message content</p>
               </div>
             </div>
           </section>
@@ -105,18 +105,23 @@ export default function PrivacyPage() {
               </div>
               
               <div className="border-l-4 border-indigo-500 pl-4">
-                <h3 className="font-semibold text-gray-800 lowercase">clerk</h3>
-                <p className="text-sm">handles authentication. we share your phone number for verification.</p>
-              </div>
-              
-              <div className="border-l-4 border-indigo-500 pl-4">
                 <h3 className="font-semibold text-gray-800 lowercase">blooio</h3>
                 <p className="text-sm">delivers your texts. we share your phone number and message content.</p>
               </div>
               
               <div className="border-l-4 border-indigo-500 pl-4">
                 <h3 className="font-semibold text-gray-800 lowercase">AI providers (when you chat)</h3>
-                <p className="text-sm">if you ask questions, we share your question and real-time calculations (not stored data) to generate responses.</p>
+                <p className="text-sm">not in use today. if enabled, we would share your question and real‑time calculations (not stored data) to generate responses.</p>
+              </div>
+
+              <div className="border-l-4 border-indigo-500 pl-4">
+                <h3 className="font-semibold text-gray-800 lowercase">stripe</h3>
+                <p className="text-sm">payments and subscription management.</p>
+              </div>
+
+              <div className="border-l-4 border-indigo-500 pl-4">
+                <h3 className="font-semibold text-gray-800 lowercase">hosting & database</h3>
+                <p className="text-sm">vercel (app hosting) and neon (database) as processors to run the service.</p>
               </div>
             </div>
             
@@ -204,9 +209,9 @@ export default function PrivacyPage() {
           <section className="mb-12">
             <h2 className="text-2xl font-bold text-gray-900 mb-4 lowercase">changes to this policy</h2>
             <p>
-              we&apos;ll notify you of any significant changes to this privacy policy via text message 
-              and update the &quot;last updated&quot; date at the top. continued use of trilogy after changes 
-              means you accept the updated policy.
+              we&apos;ll notify you of any significant changes to this privacy policy by email and update the
+              &quot;last updated&quot; date at the top. continued use of trilogy after changes means you accept the
+              updated policy.
             </p>
           </section>
 
@@ -216,8 +221,7 @@ export default function PrivacyPage() {
               questions about privacy? concerns about your data? just want to chat?
             </p>
             <p>
-              <strong>email:</strong> <a href="mailto:privacy@trytrilogy.com" className="text-indigo-600 hover:text-indigo-700">privacy@trytrilogy.com</a><br />
-              <strong>text:</strong> just text us! we&apos;ll respond within 24 hours
+              <strong>email:</strong> <a href="mailto:manav-s@outlook.com" className="text-indigo-600 hover:text-indigo-700">manav-s@outlook.com</a>
             </p>
           </section>
 
