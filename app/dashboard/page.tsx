@@ -108,10 +108,10 @@ export default function DashboardPage() {
         <div className="mb-8 flex gap-3">
           {linkToken ? (
             <PlaidLink token={linkToken} onSuccess={onLinkSuccess}>
-              <button className="px-5 py-3 rounded-full bg-indigo-600 text-white lowercase">add another bank</button>
+              <button className="px-5 py-3 rounded-full bg-indigo-600 text-white lowercase">add another account</button>
             </PlaidLink>
           ) : (
-            <button onClick={createLinkToken} className="px-5 py-3 rounded-full bg-indigo-600 text-white lowercase">add bank</button>
+            <button onClick={createLinkToken} className="px-5 py-3 rounded-full bg-indigo-600 text-white lowercase">add account</button>
           )}
 
           <button onClick={openPortal} disabled={!customerId} className="px-5 py-3 rounded-full bg-gray-900 text-white lowercase disabled:opacity-50">manage subscription</button>
