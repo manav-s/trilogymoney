@@ -77,7 +77,9 @@ export default function ConnectPage() {
         const res = await fetch(`/api/onboard/status?phone=${encodeURIComponent(phone)}`);
         if (res.ok) {
           const data = await res.json();
-          if (data.next && data.next !== "/onboard/connect" && data.status !== 'analysis_complete') {
+          // Stay on connect for 'analysis_complete' (coming from plan) and 'plaid_connected' (after first link)
+          const canStay = data.status === 'analysis_complete' || data.status === 'plaid_connected';
+          if (data.next && data.next !== "/onboard/connect" && !canStay) {
             router.replace(data.next);
             return;
           }
