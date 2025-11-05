@@ -8,7 +8,7 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const MODEL = process.env.OPENAI_MODEL || 'gpt-5-mini';
 
 export async function chooseIntentFromText(userText: string): Promise<Intent> {
-  if (!OPENAI_API_KEY) return 'help';
+  if (!OPENAI_API_KEY) return 'chat';
 
   const system = `Classify a short SMS into EXACTLY ONE of: balances | spend_7d | txns_3 | chat.
 
@@ -42,7 +42,7 @@ Return the bare token ONLY.`;
       let errText = '';
       try { errText = await res.text(); } catch {}
       console.error('[llm.intent] openai_error', { status: res.status, model: MODEL, body: errText?.slice(0, 200) });
-      return 'help';
+      return 'chat';
     }
     const data = await res.json();
     const text: string = data?.choices?.[0]?.message?.content?.trim()?.toLowerCase?.() || 'chat';

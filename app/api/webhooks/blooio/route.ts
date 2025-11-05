@@ -13,7 +13,8 @@ import { prisma } from '@/lib/db';
 import { BlooioWebhookEvent, formatE164 } from '@/lib/blooio';
 import { generateMagicLink } from '@/lib/magic-link';
 import { sendMessage } from '@/lib/blooio';
-import { encryptMessage } from '@/lib/encryption';
+import { encryptMessage, decryptMessage } from '@/lib/encryption';
+import { generateReply } from '@/lib/llm';
 import { z } from 'zod';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { RATE_LIMIT_WINDOW_MS, MAX_MESSAGES_PER_WINDOW } from '@/lib/constants';
@@ -220,9 +221,45 @@ async function handleExistingUser(user: { phone: string | null; onboardingStatus
     }
     return;
   }
-
-  // Subscribed/complete users: no automatic reply on arbitrary messages.
+  // Subscribed/complete users: route to conversational LLM (no tools yet)
+  await handleLLMConversation(user.phone, body);
   return;
+}
+
+async function handleLLMConversation(phone: string, userText: string) {
+  const user = await prisma.user.findUnique({ where: { phone } });
+  if (!user) return;
+  const isPaid = user.billingStatus === 'active' || user.billingStatus === 'trialing';
+  const isActive = user.messagingStatus === 'active' && user.isActive !== false;
+  const isFinished = user.onboardingStatus === 'complete' || user.onboardingStatus === 'subscribed';
+  if (!(isPaid && isActive && isFinished)) return;
+
+  const history = await getRecentHistorySnippet(user.id, 2, 12);
+  let body = '';
+  try {
+    body = await generateReply('chat', { history });
+  } catch {
+    body = 'how can I help today? quick options: balance, last‑week spend, or recent charges.';
+  }
+  await sendMessage({ to: phone, body });
+}
+
+async function getRecentHistorySnippet(userId: string, days = 2, limit = 12): Promise<string> {
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const msgs = await prisma.message.findMany({
+    where: { userId, sentAt: { gte: since } },
+    orderBy: { sentAt: 'desc' },
+    take: limit,
+  });
+  const lines: string[] = [];
+  for (const m of msgs.reverse()) {
+    try {
+      const role = m.direction === 'inbound' ? 'you' : 'trilogy';
+      const text = decryptMessage(m.content).replace(/\s+/g, ' ').slice(0, 140);
+      lines.push(`${role}: ${text}`);
+    } catch {}
+  }
+  return lines.join('\n');
 }
 
 async function handleStopCommand(phone: string) {
