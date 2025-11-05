@@ -188,6 +188,18 @@ Data: ${line}`;
   }
   const history = (ctx.history as string) || '';
   const userMsg = (ctx.userText as string) || '';
+  const profile = (ctx.profile as { name?: string | null; timezone?: string; preferredTime?: string }) || {};
+  const quiz = (ctx.quizAnswers as unknown) ?? null;
+  const analysis = (ctx.analysisSummary as unknown) ?? null;
+  const toShortJson = (v: unknown) => {
+    try {
+      const s = JSON.stringify(v);
+      if (!s || s === 'null' || s === 'undefined') return '';
+      return s.length > 300 ? s.slice(0, 300) + '…' : s;
+    } catch { return ''; }
+  };
+  const quizStr = toShortJson(quiz);
+  const analysisStr = toShortJson(analysis);
   const balances = ctx.balances as { total: number; count: number } | undefined;
   const spend = ctx.spend as { total: number; top: { name: string; amount: number }[] } | undefined;
   const txns = ctx.txns as { date: string; merchant: string; amount: number }[] | undefined;
@@ -202,7 +214,10 @@ balances: total=${balances ? Math.round(balances.total) : 'n/a'}, accounts=${bal
 spend_7d: total=${spend ? Math.round(spend.total) : 'n/a'}, top=${topLine}
 txns_3: ${txnLine}
  Recent messages:\n${history}
-  Latest user message: ${userMsg}`;
+  Latest user message: ${userMsg}
+  Profile: name=${profile.name || ''}, tz=${profile.timezone || ''}, time=${profile.preferredTime || ''}
+  Quiz: ${quizStr}
+  Analysis: ${analysisStr}`;
 }
 
 function extractTextFromOpenAI(data: unknown): string | null {

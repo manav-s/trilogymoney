@@ -237,7 +237,14 @@ async function handleLLMConversation(phone: string, userText: string) {
   const history = await getRecentHistorySnippet(user.id, 2, 12);
   let body = '';
   try {
-    body = await generateReply('chat', { history, userText });
+    const profile = { name: user.name, timezone: user.timezone, preferredTime: user.preferredTime } as const;
+    body = await generateReply('chat', {
+      history,
+      userText,
+      quizAnswers: (user as unknown as { quizAnswers?: unknown }).quizAnswers ?? null,
+      analysisSummary: (user as unknown as { analysisSummary?: unknown }).analysisSummary ?? null,
+      profile,
+    });
   } catch {
     body = /^(hi|hey|hello|yo|sup|howdy)\b/i.test(userText)
       ? 'hey—what money thing can I help with today? balance, last‑week spend, or a recent charge?'
