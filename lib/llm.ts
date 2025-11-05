@@ -6,10 +6,11 @@ export type Intent = 'balances' | 'spend_7d' | 'txns_3' | 'chat';
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const MODEL = process.env.OPENAI_MODEL || 'gpt-5-mini';
+import { logError } from './logger';
 
 export async function chooseIntentFromText(userText: string): Promise<Intent> {
   if (!OPENAI_API_KEY) {
-    console.error('[llm.intent] missing_api_key');
+    logError('llm.intent', undefined, { reason: 'missing_api_key' });
     return 'chat';
   }
 
@@ -43,7 +44,7 @@ Return the bare token ONLY.`;
     if (!res.ok) {
       let errText = '';
       try { errText = await res.text(); } catch {}
-      console.error('[llm.intent] openai_error', { status: res.status, model: MODEL, body: errText?.slice(0, 200) });
+      logError('llm.intent', undefined, { reason: 'openai_error', status: res.status, model: MODEL, body: errText?.slice(0, 200) });
       return 'chat';
     }
     let data = await res.json();
@@ -77,7 +78,7 @@ Return the bare token ONLY.`;
       } catch {}
     }
     if (!rawText) {
-      console.error('[llm.intent] empty_completion', { model: MODEL });
+      logError('llm.intent', undefined, { reason: 'empty_completion', model: MODEL });
       return 'chat';
     }
     const text: string = rawText.toLowerCase();
@@ -85,7 +86,7 @@ Return the bare token ONLY.`;
     return 'chat';
   } catch (e) {
     const name = (e as Error)?.name;
-    console.error('[llm.intent] exception', { model: MODEL, error: name || 'unknown' });
+    logError('llm.intent', e, { model: MODEL, error: name || 'unknown' });
     return 'chat';
   }
 }
@@ -96,7 +97,7 @@ Return the bare token ONLY.`;
  */
 export async function generateReply(tool: Intent, context: Record<string, unknown>): Promise<string> {
   if (!OPENAI_API_KEY) {
-    console.error('[llm.reply] missing_api_key');
+    logError('llm.reply', undefined, { reason: 'missing_api_key' });
     return 'sorry the model is having trouble';
   }
   const system = `You are Trilogy, a concise, warm money coach over SMS.
@@ -124,7 +125,7 @@ behavior: answer directly; do NOT add a question at the end unless a question is
     if (!res.ok) {
       let errText = '';
       try { errText = await res.text(); } catch {}
-      console.error('[llm.reply] openai_error', { status: res.status, model: MODEL, body: errText?.slice(0, 200) });
+      logError('llm.reply', undefined, { reason: 'openai_error', status: res.status, model: MODEL, body: errText?.slice(0, 200) });
       return 'sorry the model is having trouble';
     }
     let data = await res.json();
@@ -155,13 +156,13 @@ behavior: answer directly; do NOT add a question at the end unless a question is
       } catch {}
     }
     if (!rawText) {
-      console.error('[llm.reply] empty_completion', { model: MODEL });
+      logError('llm.reply', undefined, { reason: 'empty_completion', model: MODEL });
       return 'sorry the model is having trouble';
     }
     return rawText;
   } catch (e) {
     const name = (e as Error)?.name;
-    console.error('[llm.reply] exception', { model: MODEL, error: name || 'unknown' });
+    logError('llm.reply', e, { model: MODEL, error: name || 'unknown' });
     return 'sorry the model is having trouble';
   }
 }
