@@ -210,14 +210,19 @@ function extractTextFromOpenAI(data: unknown): string | null {
     const content = msg?.content;
     if (typeof content === 'string' && content.trim()) return content.trim();
     if (Array.isArray(content)) {
+      const parts: string[] = [];
       for (const part of content) {
-        const text = (part?.text || part?.value || '').toString().trim();
-        if (text) return text;
+        const t1 = typeof part?.text === 'string' ? part.text : undefined;
+        const t2 = typeof part?.text?.value === 'string' ? part.text.value : undefined;
+        const t3 = typeof part?.value === 'string' ? part.value : undefined;
+        const pick = t1 || t2 || t3;
+        if (typeof pick === 'string' && pick.trim()) parts.push(pick.trim());
       }
+      if (parts.length) return parts.join(' ');
     }
     // Responses API style
-    const outputText = (dc?.output_text || dc?.text || '').toString().trim();
-    if (outputText) return outputText;
+    const outputTextAny = dc?.output_text ?? dc?.text;
+    if (typeof outputTextAny === 'string' && outputTextAny.trim()) return outputTextAny.trim();
     const content0 = dc?.content?.[0]?.text;
     if (typeof content0 === 'string' && content0.trim()) return content0.trim();
     return null;
