@@ -99,7 +99,10 @@ export async function generateReply(tool: Intent, context: Record<string, unknow
     console.error('[llm.reply] missing_api_key');
     return 'sorry the model is having trouble';
   }
-  const system = `You are Trilogy, a concise, warm money coach over SMS. 1–2 lines, numbers first, plain language. No emojis.`;
+  const system = `You are Trilogy, a concise, warm money coach over SMS.
+style: lowercase, short, playful‑but‑respectful, slightly sassy (never rude), no doom.
+format: prefer bullets or 1–3 tight lines. put numbers first. plain language. no emojis.
+behavior: answer directly; ask at most one brief clarifying question only if required to be correct. avoid menus/boilerplate.`;
   const user = buildUserPrompt(tool, context);
   try {
     const controller = new AbortController();
