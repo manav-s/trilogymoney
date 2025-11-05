@@ -23,7 +23,7 @@ Return the bare token ONLY.`;
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 4000);
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    let res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${OPENAI_API_KEY}`,
@@ -46,8 +46,36 @@ Return the bare token ONLY.`;
       console.error('[llm.intent] openai_error', { status: res.status, model: MODEL, body: errText?.slice(0, 200) });
       return 'chat';
     }
-    const data = await res.json();
-    const rawText = extractTextFromOpenAI(data);
+    let data = await res.json();
+    let rawText = extractTextFromOpenAI(data);
+    if (!rawText) {
+      // Try Responses API once in case this model prefers it
+      try {
+        const controller2 = new AbortController();
+        const timeout2 = setTimeout(() => controller2.abort(), 4000);
+        res = await fetch('https://api.openai.com/v1/responses', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: MODEL,
+            input: [
+              { role: 'system', content: system },
+              { role: 'user', content: String(userText || '') },
+            ],
+            max_output_tokens: 5,
+          }),
+          signal: controller2.signal,
+        });
+        clearTimeout(timeout2);
+        if (res.ok) {
+          data = await res.json();
+          rawText = extractTextFromOpenAI(data);
+        }
+      } catch {}
+    }
     if (!rawText) {
       console.error('[llm.intent] empty_completion', { model: MODEL });
       return 'chat';
@@ -76,7 +104,7 @@ export async function generateReply(tool: Intent, context: Record<string, unknow
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    let res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${OPENAI_API_KEY}`,
@@ -96,8 +124,33 @@ export async function generateReply(tool: Intent, context: Record<string, unknow
       console.error('[llm.reply] openai_error', { status: res.status, model: MODEL, body: errText?.slice(0, 200) });
       return 'sorry the model is having trouble';
     }
-    const data = await res.json();
-    const rawText = extractTextFromOpenAI(data);
+    let data = await res.json();
+    let rawText = extractTextFromOpenAI(data);
+    if (!rawText) {
+      // Try Responses API once if chat completion content is empty
+      try {
+        const controller2 = new AbortController();
+        const timeout2 = setTimeout(() => controller2.abort(), 5000);
+        res = await fetch('https://api.openai.com/v1/responses', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: MODEL,
+            input: [ { role: 'system', content: system }, { role: 'user', content: user } ],
+            max_output_tokens: 120,
+          }),
+          signal: controller2.signal,
+        });
+        clearTimeout(timeout2);
+        if (res.ok) {
+          data = await res.json();
+          rawText = extractTextFromOpenAI(data);
+        }
+      } catch {}
+    }
     if (!rawText) {
       console.error('[llm.reply] empty_completion', { model: MODEL });
       return 'sorry the model is having trouble';
