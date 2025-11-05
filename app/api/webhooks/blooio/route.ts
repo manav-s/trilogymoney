@@ -234,7 +234,7 @@ async function handleLLMConversation(phone: string, userText: string) {
   const isFinished = user.onboardingStatus === 'complete' || user.onboardingStatus === 'subscribed';
   if (!(isPaid && isActive && isFinished)) return;
 
-  const history = await getRecentHistorySnippet(user.id, 2, 12);
+  const history = await getRecentHistorySnippet(user.id, 30, 30);
   let body = '';
   try {
     const profile = { name: user.name, timezone: user.timezone, preferredTime: user.preferredTime } as const;
@@ -253,7 +253,7 @@ async function handleLLMConversation(phone: string, userText: string) {
   await sendMessage({ to: phone, body });
 }
 
-async function getRecentHistorySnippet(userId: string, days = 2, limit = 12): Promise<string> {
+async function getRecentHistorySnippet(userId: string, days = 30, limit = 30): Promise<string> {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   const msgs = await prisma.message.findMany({
     where: { userId, sentAt: { gte: since } },
