@@ -60,7 +60,7 @@ Return the bare token ONLY.`;
  * Pass only small, non-sensitive summaries.
  */
 export async function generateReply(tool: Intent, context: Record<string, unknown>): Promise<string> {
-  if (!OPENAI_API_KEY) return fallbackReply(tool, context);
+  if (!OPENAI_API_KEY) return 'sorry the model is having trouble';
   const system = `You are Trilogy, a concise, warm money coach over SMS. 1–2 lines, numbers first, plain language. No emojis.`;
   const user = buildUserPrompt(tool, context);
   try {
@@ -85,15 +85,15 @@ export async function generateReply(tool: Intent, context: Record<string, unknow
       let errText = '';
       try { errText = await res.text(); } catch {}
       console.error('[llm.reply] openai_error', { status: res.status, model: MODEL, body: errText?.slice(0, 200) });
-      return fallbackReply(tool, context);
+      return 'sorry the model is having trouble';
     }
     const data = await res.json();
-    const text: string = data?.choices?.[0]?.message?.content?.trim() || fallbackReply(tool, context);
+    const text: string = data?.choices?.[0]?.message?.content?.trim() || 'sorry the model is having trouble';
     return text;
   } catch (e) {
     const name = (e as Error)?.name;
     console.error('[llm.reply] exception', { model: MODEL, error: name || 'unknown' });
-    return fallbackReply(tool, context);
+    return 'sorry the model is having trouble';
   }
 }
 
