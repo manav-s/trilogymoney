@@ -2,7 +2,7 @@
  * Minimal LLM intent chooser using OpenAI
  * Returns one of: 'balances' | 'spend_7d' | 'txns_3' | 'help'
  */
-export type Intent = 'balances' | 'spend_7d' | 'txns_3' | 'help';
+export type Intent = 'balances' | 'spend_7d' | 'txns_3' | 'chat';
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const MODEL = process.env.OPENAI_MODEL || 'gpt-5-mini';
@@ -10,15 +10,12 @@ const MODEL = process.env.OPENAI_MODEL || 'gpt-5-mini';
 export async function chooseIntentFromText(userText: string): Promise<Intent> {
   if (!OPENAI_API_KEY) return 'help';
 
-  const system = `You classify a short SMS into EXACTLY ONE of these tokens:
-balances | spend_7d | txns_3 | help
+  const system = `Classify a short SMS into EXACTLY ONE of: balances | spend_7d | txns_3 | chat.
 
-Guidelines:
-- "balance", "what's my balance", "how much money do i have", "cash" => balances
-- "spent", "spend", "what did i spend this week", "weekly spend", "last 7 days" => spend_7d
-- "transactions", "recent charges", "latest transactions", "what just posted" => txns_3
-- Anything else => help
-RETURN THE BARE TOKEN ONLY (no punctuation, no quotes).`;
+Use balances for cash/balance requests. Use spend_7d for weekly/spend/last 7 days.
+Use txns_3 for recent/transactions/charges.
+Use chat for greetings, opinions, budgeting questions, general advice, or anything that does not clearly require a tool.
+Return the bare token ONLY.`;
 
   try {
     const controller = new AbortController();
@@ -48,13 +45,13 @@ RETURN THE BARE TOKEN ONLY (no punctuation, no quotes).`;
       return 'help';
     }
     const data = await res.json();
-    const text: string = data?.choices?.[0]?.message?.content?.trim()?.toLowerCase?.() || 'help';
-    if (text === 'balances' || text === 'spend_7d' || text === 'txns_3' || text === 'help') return text as Intent;
-    return 'help';
+    const text: string = data?.choices?.[0]?.message?.content?.trim()?.toLowerCase?.() || 'chat';
+    if (text === 'balances' || text === 'spend_7d' || text === 'txns_3' || text === 'chat') return text as Intent;
+    return 'chat';
   } catch (e) {
     const name = (e as Error)?.name;
     console.error('[llm.intent] exception', { model: MODEL, error: name || 'unknown' });
-    return 'help';
+    return 'chat';
   }
 }
 
@@ -126,8 +123,8 @@ Data: ${line}`;
   const txns = ctx.txns as { date: string; merchant: string; amount: number }[] | undefined;
   const topLine = spend?.top?.slice(0,2).map(t => `${t.name} $${Math.round(t.amount)}`).join(', ') || '';
   const txnLine = (txns || []).slice(0,3).map(t => `$${t.amount.toFixed(2)} ${t.merchant} (${t.date})`).join('; ');
-  return `User asked a general money question. Use the data below to give ONE concise, actionable tip if relevant.
-If the question clearly asks for balances/spend/transactions, craft a 1–2 line answer using the data. Otherwise, give a useful tip.
+  return `You are chatting over SMS. Give ONE concise, helpful reply in ≤2 lines.
+If the message clearly asks for balances/spend/transactions, write the answer using the data. Otherwise, respond conversationally with one actionable tip.
 Data (may be partial):
 balances: total=${balances ? Math.round(balances.total) : 'n/a'}, accounts=${balances?.count ?? 'n/a'}
 spend_7d: total=${spend ? Math.round(spend.total) : 'n/a'}, top=${topLine}
@@ -153,8 +150,8 @@ function fallbackReply(tool: Intent, ctx: Record<string, unknown>): string {
     return `latest: ${line}`;
   }
   const history = (ctx.history as string) || '';
-  if (history) return `tip: ask for “balance”, “spent”, or “transactions” to get a quick read.`;
-  return `tip: ask for “balance” to see cash, or “spent” for last 7 days.`;
+  if (history) return `got it—what’s top of mind? quick options: balance, last‑week spend, or recent charges.`;
+  return `how can I help today? quick options: balance, last‑week spend, or recent charges.`;
 }
 
 
