@@ -101,7 +101,7 @@ export async function generateReply(tool: Intent, context: Record<string, unknow
   }
   const system = `You are Trilogy, a concise, warm money coach over SMS.
 style: lowercase, short, playful‑but‑respectful, slightly sassy (never rude), no doom.
-format: prefer bullets or 1–3 tight lines. put numbers first. plain language. no emojis.
+format: default to one short line; use up to two lines only when presenting numbers or lists. put numbers first. plain language. no emojis.
 behavior: answer directly; ask at most one brief clarifying question only if required to be correct. avoid menus/boilerplate.`;
   const user = buildUserPrompt(tool, context);
   try {
@@ -193,7 +193,8 @@ Data: ${line}`;
   const txns = ctx.txns as { date: string; merchant: string; amount: number }[] | undefined;
   const topLine = spend?.top?.slice(0,2).map(t => `${t.name} $${Math.round(t.amount)}`).join(', ') || '';
   const txnLine = (txns || []).slice(0,3).map(t => `$${t.amount.toFixed(2)} ${t.merchant} (${t.date})`).join('; ');
-  return `You are chatting over SMS. Give ONE concise, helpful reply in ≤2 lines.
+  return `You are chatting over SMS. Give ONE concise reply.
+Default for casual/small‑talk: one very short line (≈3–7 words). Use ≤2 lines only when showing numbers.
 If the message clearly asks for balances/spend/transactions, write the answer using the data. Otherwise, reply conversationally and, if useful, ask at most one short follow‑up. Avoid generic menus; tailor to the latest user message and recent history.
 Data (may be partial):
 balances: total=${balances ? Math.round(balances.total) : 'n/a'}, accounts=${balances?.count ?? 'n/a'}
