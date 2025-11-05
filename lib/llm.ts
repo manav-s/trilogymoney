@@ -125,13 +125,13 @@ Data: ${line}`;
   const topLine = spend?.top?.slice(0,2).map(t => `${t.name} $${Math.round(t.amount)}`).join(', ') || '';
   const txnLine = (txns || []).slice(0,3).map(t => `$${t.amount.toFixed(2)} ${t.merchant} (${t.date})`).join('; ');
   return `You are chatting over SMS. Give ONE concise, helpful reply in ≤2 lines.
-If the message clearly asks for balances/spend/transactions, write the answer using the data. For greetings or small talk (e.g., “how are you”), reply briefly and pivot to a money help.
+If the message clearly asks for balances/spend/transactions, write the answer using the data. Otherwise, reply conversationally and, if useful, ask at most one short follow‑up. Avoid generic menus; tailor to the latest user message and recent history.
 Data (may be partial):
 balances: total=${balances ? Math.round(balances.total) : 'n/a'}, accounts=${balances?.count ?? 'n/a'}
 spend_7d: total=${spend ? Math.round(spend.total) : 'n/a'}, top=${topLine}
 txns_3: ${txnLine}
  Recent messages:\n${history}
- Latest user message: ${userMsg}`;
+  Latest user message: ${userMsg}`;
 }
 
 function fallbackReply(tool: Intent, ctx: Record<string, unknown>): string {
@@ -153,16 +153,8 @@ function fallbackReply(tool: Intent, ctx: Record<string, unknown>): string {
   }
   const history = (ctx.history as string) || '';
   const userMsg = (ctx.userText as string) || '';
-  const greet = /^(hi|hey|hello|yo|sup|howdy)\b/i.test(userMsg);
-  const howAreYou = /how\s+are\s+(you|u|ya|yoo)/i.test(userMsg);
-  const askOptions = /(what\s+options|what\s+can\s+i\s+(ask|do)|options\b)/i.test(userMsg);
-  const thanks = /\b(thanks|thank you|ty)\b/i.test(userMsg);
-
-  if (greet || howAreYou) return `doing well—what should we check: balance, last‑week spend, or a recent charge?`;
-  if (askOptions) return `options: balance (cash), last‑week spend (top 2 categories), or recent charges (last 3).`;
-  if (thanks) return `anytime. want cash, last‑week spend, or recent charges?`;
-  if (history) return `what’s top of mind—cash, last‑week spend, or a recent charge?`;
-  return `how can I help with money today—cash, last‑week spend, or a recent charge?`;
+  // Generic, non-branching fallback to avoid hard-coded behavior
+  return `what’s on your mind?`;
 }
 
 
