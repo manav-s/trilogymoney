@@ -31,7 +31,6 @@ Return the bare token ONLY.`;
       },
       body: JSON.stringify({
         model: MODEL,
-        temperature: 0,
         messages: [
           { role: 'system', content: system },
           { role: 'user', content: String(userText || '') },
@@ -85,7 +84,6 @@ export async function generateReply(tool: Intent, context: Record<string, unknow
       },
       body: JSON.stringify({
         model: MODEL,
-        temperature: 0.3,
         messages: [ { role: 'system', content: system }, { role: 'user', content: user } ],
         max_completion_tokens: 120,
       }),
