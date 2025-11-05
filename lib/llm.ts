@@ -47,12 +47,12 @@ Return the bare token ONLY.`;
       return 'chat';
     }
     const data = await res.json();
-    const raw: string | undefined = data?.choices?.[0]?.message?.content;
-    if (!raw || !raw.trim()) {
+    const rawText = extractTextFromOpenAI(data);
+    if (!rawText) {
       console.error('[llm.intent] empty_completion', { model: MODEL });
       return 'chat';
     }
-    const text: string = raw.trim().toLowerCase();
+    const text: string = rawText.toLowerCase();
     if (text === 'balances' || text === 'spend_7d' || text === 'txns_3' || text === 'chat') return text as Intent;
     return 'chat';
   } catch (e) {
@@ -97,12 +97,12 @@ export async function generateReply(tool: Intent, context: Record<string, unknow
       return 'sorry the model is having trouble';
     }
     const data = await res.json();
-    const raw: string | undefined = data?.choices?.[0]?.message?.content;
-    if (!raw || !raw.trim()) {
+    const rawText = extractTextFromOpenAI(data);
+    if (!rawText) {
       console.error('[llm.reply] empty_completion', { model: MODEL });
       return 'sorry the model is having trouble';
     }
-    return raw.trim();
+    return rawText;
   } catch (e) {
     const name = (e as Error)?.name;
     console.error('[llm.reply] exception', { model: MODEL, error: name || 'unknown' });
@@ -145,5 +145,31 @@ spend_7d: total=${spend ? Math.round(spend.total) : 'n/a'}, top=${topLine}
 txns_3: ${txnLine}
  Recent messages:\n${history}
   Latest user message: ${userMsg}`;
+}
+
+function extractTextFromOpenAI(data: unknown): string | null {
+  try {
+    // Chat Completions classic shape
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    const dc = data as any;
+    const choice = dc?.choices?.[0];
+    const msg = choice?.message;
+    const content = msg?.content;
+    if (typeof content === 'string' && content.trim()) return content.trim();
+    if (Array.isArray(content)) {
+      for (const part of content) {
+        const text = (part?.text || part?.value || '').toString().trim();
+        if (text) return text;
+      }
+    }
+    // Responses API style
+    const outputText = (dc?.output_text || dc?.text || '').toString().trim();
+    if (outputText) return outputText;
+    const content0 = dc?.content?.[0]?.text;
+    if (typeof content0 === 'string' && content0.trim()) return content0.trim();
+    return null;
+  } catch {
+    return null;
+  }
 }
 
