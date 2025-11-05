@@ -8,7 +8,10 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const MODEL = process.env.OPENAI_MODEL || 'gpt-5-mini';
 
 export async function chooseIntentFromText(userText: string): Promise<Intent> {
-  if (!OPENAI_API_KEY) return 'chat';
+  if (!OPENAI_API_KEY) {
+    console.error('[llm.intent] missing_api_key');
+    return 'chat';
+  }
 
   const system = `Classify a short SMS into EXACTLY ONE of: balances | spend_7d | txns_3 | chat.
 
@@ -33,7 +36,7 @@ Return the bare token ONLY.`;
           { role: 'system', content: system },
           { role: 'user', content: String(userText || '') },
         ],
-        max_tokens: 5,
+        max_completion_tokens: 5,
       }),
       signal: controller.signal,
     });
@@ -45,7 +48,12 @@ Return the bare token ONLY.`;
       return 'chat';
     }
     const data = await res.json();
-    const text: string = data?.choices?.[0]?.message?.content?.trim()?.toLowerCase?.() || 'chat';
+    const raw: string | undefined = data?.choices?.[0]?.message?.content;
+    if (!raw || !raw.trim()) {
+      console.error('[llm.intent] empty_completion', { model: MODEL });
+      return 'chat';
+    }
+    const text: string = raw.trim().toLowerCase();
     if (text === 'balances' || text === 'spend_7d' || text === 'txns_3' || text === 'chat') return text as Intent;
     return 'chat';
   } catch (e) {
@@ -60,7 +68,10 @@ Return the bare token ONLY.`;
  * Pass only small, non-sensitive summaries.
  */
 export async function generateReply(tool: Intent, context: Record<string, unknown>): Promise<string> {
-  if (!OPENAI_API_KEY) return 'sorry the model is having trouble';
+  if (!OPENAI_API_KEY) {
+    console.error('[llm.reply] missing_api_key');
+    return 'sorry the model is having trouble';
+  }
   const system = `You are Trilogy, a concise, warm money coach over SMS. 1–2 lines, numbers first, plain language. No emojis.`;
   const user = buildUserPrompt(tool, context);
   try {
@@ -76,7 +87,7 @@ export async function generateReply(tool: Intent, context: Record<string, unknow
         model: MODEL,
         temperature: 0.3,
         messages: [ { role: 'system', content: system }, { role: 'user', content: user } ],
-        max_tokens: 120,
+        max_completion_tokens: 120,
       }),
       signal: controller.signal,
     });
@@ -88,8 +99,12 @@ export async function generateReply(tool: Intent, context: Record<string, unknow
       return 'sorry the model is having trouble';
     }
     const data = await res.json();
-    const text: string = data?.choices?.[0]?.message?.content?.trim() || 'sorry the model is having trouble';
-    return text;
+    const raw: string | undefined = data?.choices?.[0]?.message?.content;
+    if (!raw || !raw.trim()) {
+      console.error('[llm.reply] empty_completion', { model: MODEL });
+      return 'sorry the model is having trouble';
+    }
+    return raw.trim();
   } catch (e) {
     const name = (e as Error)?.name;
     console.error('[llm.reply] exception', { model: MODEL, error: name || 'unknown' });
@@ -133,28 +148,4 @@ txns_3: ${txnLine}
  Recent messages:\n${history}
   Latest user message: ${userMsg}`;
 }
-
-function fallbackReply(tool: Intent, ctx: Record<string, unknown>): string {
-  if (tool === 'balances') {
-    const total = (ctx.total as number) ?? 0;
-    const count = (ctx.count as number) ?? 0;
-    return `cash: $${Math.round(total)} across ${count} accts.`;
-  }
-  if (tool === 'spend_7d') {
-    const total = (ctx.total as number) ?? 0;
-    const top = (ctx.top as { name: string; amount: number }[]) ?? [];
-    const topLine = top.slice(0, 2).map(t => `${t.name} $${Math.round(t.amount)}`).join(', ');
-    return `last 7d: $${Math.round(total)}${topLine ? '. top: ' + topLine : ''}`;
-  }
-  if (tool === 'txns_3') {
-    const list = (ctx.list as { date: string; merchant: string; amount: number }[]) ?? [];
-    const line = list.map(t => `$${t.amount.toFixed(2)} ${t.merchant} (${t.date})`).join('; ');
-    return `latest: ${line}`;
-  }
-  const history = (ctx.history as string) || '';
-  const userMsg = (ctx.userText as string) || '';
-  // Generic, non-branching fallback to avoid hard-coded behavior
-  return `what’s on your mind?`;
-}
-
 
