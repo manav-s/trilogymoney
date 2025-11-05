@@ -118,6 +118,7 @@ Data: total=${Math.round(total)}, top=${topLine}`;
 Data: ${line}`;
   }
   const history = (ctx.history as string) || '';
+  const userMsg = (ctx.userText as string) || '';
   const balances = ctx.balances as { total: number; count: number } | undefined;
   const spend = ctx.spend as { total: number; top: { name: string; amount: number }[] } | undefined;
   const txns = ctx.txns as { date: string; merchant: string; amount: number }[] | undefined;
@@ -129,7 +130,8 @@ Data (may be partial):
 balances: total=${balances ? Math.round(balances.total) : 'n/a'}, accounts=${balances?.count ?? 'n/a'}
 spend_7d: total=${spend ? Math.round(spend.total) : 'n/a'}, top=${topLine}
 txns_3: ${txnLine}
-Recent messages:\n${history}`;
+ Recent messages:\n${history}
+ Latest user message: ${userMsg}`;
 }
 
 function fallbackReply(tool: Intent, ctx: Record<string, unknown>): string {
@@ -150,8 +152,11 @@ function fallbackReply(tool: Intent, ctx: Record<string, unknown>): string {
     return `latest: ${line}`;
   }
   const history = (ctx.history as string) || '';
-  if (history) return `got it—what’s top of mind? quick options: balance, last‑week spend, or recent charges.`;
-  return `how can I help today? quick options: balance, last‑week spend, or recent charges.`;
+  const userMsg = (ctx.userText as string) || '';
+  const greet = /^(hi|hey|hello|yo|sup|howdy)\b/i.test(userMsg);
+  if (greet) return `hey—what money thing can I help with today? balance, last‑week spend, or a recent charge?`;
+  if (history) return `what’s top of mind? balance, last‑week spend, or a recent charge?`;
+  return `how can I help with money today? balance, last‑week spend, or a recent charge?`;
 }
 
 

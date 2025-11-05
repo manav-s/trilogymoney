@@ -237,9 +237,11 @@ async function handleLLMConversation(phone: string, userText: string) {
   const history = await getRecentHistorySnippet(user.id, 2, 12);
   let body = '';
   try {
-    body = await generateReply('chat', { history });
+    body = await generateReply('chat', { history, userText });
   } catch {
-    body = 'how can I help today? quick options: balance, last‑week spend, or recent charges.';
+    body = /^(hi|hey|hello|yo|sup|howdy)\b/i.test(userText)
+      ? 'hey—what money thing can I help with today? balance, last‑week spend, or a recent charge?'
+      : 'how can I help with money today? balance, last‑week spend, or a recent charge?';
   }
   await sendMessage({ to: phone, body });
 }
