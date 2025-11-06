@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPlaidClient, getPlaidDefaults } from '@/lib/plaid';
+import { getPlaidClient } from '@/lib/plaid';
 import { prisma } from '@/lib/db';
 import { z } from 'zod';
 import { encryptMessage } from '@/lib/encryption';
+import { logError } from '@/lib/logger';
 
 const schema = z.object({ phone: z.string().min(10), public_token: z.string().min(10) });
 
@@ -18,17 +19,22 @@ export async function POST(req: NextRequest) {
     const accessToken = exchange.data.access_token;
     const itemId = exchange.data.item_id;
 
-    // Try to resolve institution name for the Item
+    // Get institution name from Item (Plaid includes it directly in itemGet response)
     let institutionName: string | null = null;
     try {
       const itemResp = await client.itemGet({ access_token: accessToken });
-      const instId = itemResp.data.item.institution_id;
-      if (instId) {
-        const { countryCodes } = getPlaidDefaults();
-        const inst = await client.institutionsGetById({ institution_id: instId, country_codes: countryCodes });
-        institutionName = inst.data.institution?.name || null;
+      institutionName = itemResp.data.item?.name || null;
+      if (!institutionName) {
+        logError('plaid.exchange.institution_name_null', undefined, {
+          hasItem: !!itemResp.data.item,
+          institutionId: itemResp.data.item?.institution_id || null
+        });
       }
-    } catch {}
+    } catch (e) {
+      logError('plaid.exchange.item_get_failed', e, {
+        hasAccessToken: !!accessToken
+      });
+    }
 
     // create PlaidItem
     const item = await prisma.plaidItem.create({
