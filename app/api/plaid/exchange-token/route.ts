@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPlaidClient } from '@/lib/plaid';
+import { getPlaidClient, getPlaidDefaults } from '@/lib/plaid';
 import { prisma } from '@/lib/db';
 import { z } from 'zod';
 import { encryptMessage } from '@/lib/encryption';
@@ -19,20 +19,34 @@ export async function POST(req: NextRequest) {
     const accessToken = exchange.data.access_token;
     const itemId = exchange.data.item_id;
 
-    // Get institution name from Item (Plaid includes it directly in itemGet response)
+    // Get institution name via Plaid (requires institution lookup)
     let institutionName: string | null = null;
     try {
       const itemResp = await client.itemGet({ access_token: accessToken });
-      institutionName = itemResp.data.item?.name || null;
-      if (!institutionName) {
-        logError('plaid.exchange.institution_name_null', undefined, {
+      const instId = itemResp.data.item?.institution_id || null;
+      if (instId) {
+        try {
+          const { countryCodes } = getPlaidDefaults();
+          const instResp = await client.institutionsGetById({ institution_id: instId, country_codes: countryCodes });
+          institutionName = instResp.data.institution?.name || null;
+          if (!institutionName) {
+            logError('plaid.exchange.institution_name_null', undefined, {
+              hasItem: !!itemResp.data.item,
+              institutionId: instId,
+              hasInstitution: !!instResp.data.institution,
+            });
+          }
+        } catch (inner) {
+          logError('plaid.exchange.institution_lookup_failed', inner, { institutionId: instId });
+        }
+      } else {
+        logError('plaid.exchange.institution_id_missing', undefined, {
           hasItem: !!itemResp.data.item,
-          institutionId: itemResp.data.item?.institution_id || null
         });
       }
     } catch (e) {
       logError('plaid.exchange.item_get_failed', e, {
-        hasAccessToken: !!accessToken
+        hasAccessToken: !!accessToken,
       });
     }
 
