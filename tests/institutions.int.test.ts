@@ -203,7 +203,7 @@ describe('institution names in balances breakdown', () => {
 
     expect(capturedPrompt).toContain('cash_institutions=Chase Bank');
     expect(capturedPrompt).toContain('card_institutions=Discover');
-    expect(capturedPrompt).toContain('If asked about specific banks');
+    expect(capturedPrompt).toContain('If asked about which bank/institution');
   });
 
   it('handles empty institution arrays in prompt', async () => {
