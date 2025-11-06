@@ -52,10 +52,7 @@ export async function getBalances(params: { userId: string }): Promise<GetBalanc
         return;
       }
       try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000);
-        const resp = await client.accountsBalanceGet({ access_token: accessToken! }, { signal: controller.signal as any });
-        clearTimeout(timeout);
+        const resp = await client.accountsBalanceGet({ access_token: accessToken! });
         const accounts = resp.data.accounts || [];
 
         for (const a of accounts) {
@@ -85,7 +82,7 @@ export async function getBalances(params: { userId: string }): Promise<GetBalanc
                 currentBalance: a.balances?.current ?? null,
                 availableBalance: a.balances?.available ?? null,
               },
-              select: { id: true, accountId: true, name: true, mask: true, subtype: true, currency: true, currentBalance: true, availableBalance: true, updatedAt: true },
+              select: { id: true, accountId: true, name: true, mask: true, subtype: true, currency: true, currentBalance: true, availableBalance: true, lastSync: true },
             });
 
             allAccounts.push({
@@ -98,7 +95,7 @@ export async function getBalances(params: { userId: string }): Promise<GetBalanc
               currency: updated.currency,
               current: updated.currentBalance,
               available: updated.availableBalance,
-              updatedAt: updated.updatedAt?.toISOString?.() || null,
+              updatedAt: (updated as { lastSync?: Date | null })?.lastSync ? (updated as { lastSync?: Date | null }).lastSync!.toISOString() : null,
             });
           } catch (e) {
             logError('balances.update_account', e, { accountId: a.account_id, itemId: item.id });
