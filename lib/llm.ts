@@ -175,13 +175,13 @@ function buildUserPrompt(tool: Intent, ctx: Record<string, unknown>): string {
     const cardCount = (ctx.cardCount as number) ?? 0;
     const cashInsts = (ctx.cashInstitutions as string[] | null) ?? null;
     const cardInsts = (ctx.cardInstitutions as string[] | null) ?? null;
-    const cashAccountsDetail = (ctx.cashAccountsDetail as string) || '';
-    const cardAccountsDetail = (ctx.cardAccountsDetail as string) || '';
+    const cashAccountsJson = (ctx.cashAccountsJson as string) || '[]';
+    const cardAccountsJson = (ctx.cardAccountsJson as string) || '[]';
     const cashInstStr = cashInsts && cashInsts.length > 0 ? cashInsts.join(', ') : 'unknown';
     const cardInstStr = cardInsts && cardInsts.length > 0 ? cardInsts.join(', ') : 'unknown';
     return `Write a single SMS showing balances on two lines: first cash, then cards (owed). Prefer integers.
-If asked about which bank/institution accounts belong to, answer using the account details below.
-Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_institutions=${cashInstStr}${cashAccountsDetail ? `, cash_accounts_detail=${cashAccountsDetail}` : ''}, cards_owed=${Math.round(cardOwed)}, cards=${cardCount}, card_institutions=${cardInstStr}${cardAccountsDetail ? `, card_accounts_detail=${cardAccountsDetail}` : ''}`;
+If asked about which bank/institution accounts belong to, read the JSON lists below and quote the institutions exactly; do not invent new names.
+Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_institutions=${cashInstStr}, cash_accounts_json=${cashAccountsJson}, cards_owed=${Math.round(cardOwed)}, cards=${cardCount}, card_institutions=${cardInstStr}, card_accounts_json=${cardAccountsJson}`;
   }
   if (tool === 'spend_7d') {
     const total = (ctx.total as number) ?? 0;

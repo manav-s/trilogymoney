@@ -244,22 +244,29 @@ async function handleLLMConversation(phone: string, userText: string) {
       const breakdown = await getBalancesBreakdown({ userId: user.id });
       const cashInstitutions = [...new Set(breakdown.cash.accounts.map(a => a.institution).filter(Boolean))] as string[];
       const cardInstitutions = [...new Set(breakdown.credit.accounts.map(a => a.institution).filter(Boolean))] as string[];
-      // Format account details for LLM: "AccountName (Institution)"
-      const cashAccountsDetail = breakdown.cash.accounts.slice(0, 5).map(a => 
-        `${a.name}${a.institution ? ` (${a.institution})` : ''}`
-      ).join(', ');
-      const cardAccountsDetail = breakdown.credit.accounts.slice(0, 5).map(a => 
-        `${a.name}${a.institution ? ` (${a.institution})` : ''}`
-      ).join(', ');
+      const cashAccountsJson = JSON.stringify(
+        breakdown.cash.accounts.slice(0, 5).map(a => ({
+          name: a.name,
+          institution: a.institution ?? 'unknown',
+          mask: a.mask ?? undefined,
+        })),
+      );
+      const cardAccountsJson = JSON.stringify(
+        breakdown.credit.accounts.slice(0, 5).map(a => ({
+          name: a.name,
+          institution: a.institution ?? 'unknown',
+          mask: a.mask ?? undefined,
+        })),
+      );
       body = await generateReply('balances', {
         cashTotal: breakdown.cash.total,
         cashCount: breakdown.cash.count,
         cashInstitutions: cashInstitutions.length > 0 ? cashInstitutions : null,
-        cashAccountsDetail: cashAccountsDetail || null,
+        cashAccountsJson,
         cardOwedTotal: breakdown.credit.owedTotal,
         cardCount: breakdown.credit.count,
         cardInstitutions: cardInstitutions.length > 0 ? cardInstitutions : null,
-        cardAccountsDetail: cardAccountsDetail || null,
+        cardAccountsJson,
         history,
         userText,
         profile,

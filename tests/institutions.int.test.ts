@@ -196,14 +196,18 @@ describe('institution names in balances breakdown', () => {
       cashTotal: 1200,
       cashCount: 1,
       cashInstitutions: ['Chase Bank'],
+      cashAccountsJson: JSON.stringify([{ name: 'Checking', institution: 'Chase Bank', mask: '1234' }]),
       cardOwedTotal: 500,
       cardCount: 1,
       cardInstitutions: ['Discover'],
+      cardAccountsJson: JSON.stringify([{ name: 'Credit Card', institution: 'Discover', mask: '4321' }]),
     });
 
     expect(capturedPrompt).toContain('cash_institutions=Chase Bank');
     expect(capturedPrompt).toContain('card_institutions=Discover');
     expect(capturedPrompt).toContain('If asked about which bank/institution');
+    expect(capturedPrompt).toContain('cash_accounts_json=[{"name":"Checking","institution":"Chase Bank","mask":"1234"}]');
+    expect(capturedPrompt).toContain('card_accounts_json=[{"name":"Credit Card","institution":"Discover","mask":"4321"}]');
   });
 
   it('handles empty institution arrays in prompt', async () => {
@@ -226,13 +230,17 @@ describe('institution names in balances breakdown', () => {
       cashTotal: 500,
       cashCount: 1,
       cashInstitutions: null,
+      cashAccountsJson: undefined,
       cardOwedTotal: 0,
       cardCount: 0,
       cardInstitutions: null,
+      cardAccountsJson: undefined,
     });
 
     expect(capturedPrompt).toContain('cash_institutions=unknown');
     expect(capturedPrompt).toContain('card_institutions=unknown');
+    expect(capturedPrompt).toContain('cash_accounts_json=[]');
+    expect(capturedPrompt).toContain('card_accounts_json=[]');
   });
 });
 

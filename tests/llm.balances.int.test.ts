@@ -37,6 +37,7 @@ describe('LLM balances prompt includes cash+cards fields', () => {
     expect(out).toBe('ok');
     expect(userContent).toContain('cash_total=1500');
     expect(userContent).toContain('cash_accounts=2');
+    expect(userContent).toContain('cash_accounts_json=[]');
     expect(userContent).toContain('cards_owed=1200');
     expect(userContent).toContain('cards=1');
   });
