@@ -23,6 +23,11 @@ export type GetBalancesResult = {
   count: number; // number of accounts included
 };
 
+export type BalancesBreakdown = {
+  cash: { accounts: BalanceAccount[]; total: number; count: number };
+  credit: { accounts: BalanceAccount[]; owedTotal: number; count: number };
+};
+
 /**
  * Fetch fresh balances from Plaid for all of a user's items, update cache, and return normalized balances.
  * Notes:
@@ -135,6 +140,47 @@ export async function getBalances(params: { userId: string }): Promise<GetBalanc
   }, 0);
 
   return { accounts: eligible, total, count: eligible.length };
+}
+
+/**
+ * Return cash (depository, USD, non-negative) and credit (owed amount) breakdowns.
+ */
+export async function getBalancesBreakdown(params: { userId: string }): Promise<BalancesBreakdown> {
+  const base = await getBalances(params); // cash portion per our filtering
+
+  const { userId } = params;
+  // Build credit side by querying latest cached accounts for the user items
+  const items = await prisma.plaidItem.findMany({ where: { userId }, select: { id: true, institutionName: true } });
+  const creditAccountsRows = await prisma.plaidAccount.findMany({
+    where: { itemId: { in: items.map(i => i.id) }, isActive: true, type: 'credit' },
+    select: { id: true, accountId: true, name: true, mask: true, subtype: true, currency: true, currentBalance: true, availableBalance: true },
+  });
+  const itemIdToInst = new Map(items.map(i => [i.id, i.institutionName || null] as const));
+
+  const creditAccounts: BalanceAccount[] = creditAccountsRows.map((row) => ({
+    id: row.id,
+    accountId: row.accountId,
+    name: row.name,
+    type: 'credit',
+    mask: row.mask,
+    subtype: row.subtype,
+    institution: null, // unknown from this select; optional enrichment later
+    currency: row.currency,
+    current: row.currentBalance,
+    available: row.availableBalance,
+    updatedAt: null,
+  }));
+
+  const owedTotal = creditAccounts.reduce((sum, a) => {
+    const raw = typeof a.current === 'number' ? a.current : 0;
+    const amt = Math.abs(Number.isFinite(raw) ? raw : 0);
+    return sum + amt;
+  }, 0);
+
+  return {
+    cash: { accounts: base.accounts, total: base.total, count: base.count },
+    credit: { accounts: creditAccounts, owedTotal, count: creditAccounts.length },
+  };
 }
 
 

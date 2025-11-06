@@ -169,10 +169,12 @@ behavior: answer directly; do NOT add a question at the end unless a question is
 
 function buildUserPrompt(tool: Intent, ctx: Record<string, unknown>): string {
   if (tool === 'balances') {
-    const total = (ctx.total as number) ?? 0;
-    const count = (ctx.count as number) ?? 0;
-    return `Write a single SMS about cash across accounts.
-Data: total=${Math.round(total)}, accounts=${count}`;
+    const cashTotal = (ctx.cashTotal as number) ?? (ctx.total as number) ?? 0;
+    const cashCount = (ctx.cashCount as number) ?? (ctx.count as number) ?? 0;
+    const cardOwed = (ctx.cardOwedTotal as number) ?? 0;
+    const cardCount = (ctx.cardCount as number) ?? 0;
+    return `Write a single SMS showing balances on two lines: first cash, then cards (owed). Prefer integers.
+Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cards_owed=${Math.round(cardOwed)}, cards=${cardCount}`;
   }
   if (tool === 'spend_7d') {
     const total = (ctx.total as number) ?? 0;

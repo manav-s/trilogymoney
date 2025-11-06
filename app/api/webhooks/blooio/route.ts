@@ -18,7 +18,7 @@ import { generateReply, chooseIntentFromText } from '@/lib/llm';
 import { z } from 'zod';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { RATE_LIMIT_WINDOW_MS, MAX_MESSAGES_PER_WINDOW } from '@/lib/constants';
-import { getBalances } from '@/lib/balances';
+import { getBalances, getBalancesBreakdown } from '@/lib/balances';
 
 const WEBHOOK_SECRET = process.env.BLOOIO_WEBHOOK_SECRET;
 
@@ -241,10 +241,12 @@ async function handleLLMConversation(phone: string, userText: string) {
     const profile = { name: user.name, timezone: user.timezone, preferredTime: user.preferredTime } as const;
     const intent = await chooseIntentFromText(userText);
     if (intent === 'balances') {
-      const bal = await getBalances({ userId: user.id });
+      const breakdown = await getBalancesBreakdown({ userId: user.id });
       body = await generateReply('balances', {
-        total: bal.total,
-        count: bal.count,
+        cashTotal: breakdown.cash.total,
+        cashCount: breakdown.cash.count,
+        cardOwedTotal: breakdown.credit.owedTotal,
+        cardCount: breakdown.credit.count,
         history,
         userText,
         profile,
