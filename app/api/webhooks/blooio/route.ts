@@ -232,8 +232,7 @@ async function handleLLMConversation(phone: string, userText: string) {
   if (!user) return;
   const isPaid = user.billingStatus === 'active' || user.billingStatus === 'trialing';
   const isActive = user.messagingStatus === 'active' && user.isActive !== false;
-  const isFinished = user.onboardingStatus === 'complete' || user.onboardingStatus === 'subscribed';
-  if (!(isPaid && isActive && isFinished)) return;
+  if (!(isPaid && isActive)) return;
 
   const history = await getRecentHistorySnippet(user.id, 30, 30);
   let body = '';
