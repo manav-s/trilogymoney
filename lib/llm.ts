@@ -173,10 +173,13 @@ function buildUserPrompt(tool: Intent, ctx: Record<string, unknown>): string {
     const cashCount = (ctx.cashCount as number) ?? (ctx.count as number) ?? 0;
     const cardOwed = (ctx.cardOwedTotal as number) ?? 0;
     const cardCount = (ctx.cardCount as number) ?? 0;
-    const institutions = (ctx.cardInstitutions as string[] | null) ?? null;
-    const instStr = institutions && institutions.length > 0 ? institutions.join(', ') : 'unknown';
+    const cashInsts = (ctx.cashInstitutions as string[] | null) ?? null;
+    const cardInsts = (ctx.cardInstitutions as string[] | null) ?? null;
+    const cashInstStr = cashInsts && cashInsts.length > 0 ? cashInsts.join(', ') : 'unknown';
+    const cardInstStr = cardInsts && cardInsts.length > 0 ? cardInsts.join(', ') : 'unknown';
     return `Write a single SMS showing balances on two lines: first cash, then cards (owed). Prefer integers.
-Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cards_owed=${Math.round(cardOwed)}, cards=${cardCount}, card_institutions=${instStr}`;
+If asked about specific banks/accounts, name the institutions you see in the data.
+Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_institutions=${cashInstStr}, cards_owed=${Math.round(cardOwed)}, cards=${cardCount}, card_institutions=${cardInstStr}`;
   }
   if (tool === 'spend_7d') {
     const total = (ctx.total as number) ?? 0;

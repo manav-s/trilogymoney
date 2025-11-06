@@ -242,10 +242,12 @@ async function handleLLMConversation(phone: string, userText: string) {
     const intent = await chooseIntentFromText(userText);
     if (intent === 'balances') {
       const breakdown = await getBalancesBreakdown({ userId: user.id });
-      const cardInstitutions = breakdown.credit.accounts.map(a => a.institution).filter(Boolean) as string[];
+      const cashInstitutions = [...new Set(breakdown.cash.accounts.map(a => a.institution).filter(Boolean))] as string[];
+      const cardInstitutions = [...new Set(breakdown.credit.accounts.map(a => a.institution).filter(Boolean))] as string[];
       body = await generateReply('balances', {
         cashTotal: breakdown.cash.total,
         cashCount: breakdown.cash.count,
+        cashInstitutions: cashInstitutions.length > 0 ? cashInstitutions : null,
         cardOwedTotal: breakdown.credit.owedTotal,
         cardCount: breakdown.credit.count,
         cardInstitutions: cardInstitutions.length > 0 ? cardInstitutions : null,
