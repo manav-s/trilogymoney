@@ -9,6 +9,13 @@ const MODEL = process.env.OPENAI_MODEL || 'gpt-5-mini';
 import { logError } from './logger';
 
 export async function chooseIntentFromText(userText: string): Promise<Intent> {
+  const lowered = (userText || '').toLowerCase();
+  const wantsInstitutions = /\b(institution|bank)\b/.test(lowered);
+  const wantsCards = /\bcard(s)?\b/.test(lowered) && /\b(what|which|list|show|tell|where)\b/.test(lowered);
+  if (wantsInstitutions || wantsCards) {
+    return 'balances';
+  }
+
   if (!OPENAI_API_KEY) {
     logError('llm.intent', undefined, { reason: 'missing_api_key' });
     return 'chat';
