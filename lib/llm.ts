@@ -186,8 +186,13 @@ function buildUserPrompt(tool: Intent, ctx: Record<string, unknown>): string {
     const cardAccountsJson = (ctx.cardAccountsJson as string) || '[]';
     const cashInstStr = cashInsts && cashInsts.length > 0 ? cashInsts.join(', ') : 'unknown';
     const cardInstStr = cardInsts && cardInsts.length > 0 ? cardInsts.join(', ') : 'unknown';
-    return `Write a single SMS showing balances on two lines: first cash, then cards (owed). Prefer integers.
-If asked about which bank/institution accounts belong to, read the JSON lists below and quote the institutions exactly; do not invent new names.
+    const question = ((ctx.userText as string) || '').trim();
+    const questionLine = question
+      ? `User question: "${question}".`
+      : 'User question: general balance check.';
+    return `Respond with a natural 1–2 sentence SMS in lowercase (no bullet lists or strict templates).
+${questionLine}
+Use the structured data below. Mention totals only if they help answer the question. If the user asks about banks or cards, name the institutions and account labels from the data—never guess. If information is missing, say you can’t see it.
 Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_institutions=${cashInstStr}, cash_accounts_json=${cashAccountsJson}, cards_owed=${Math.round(cardOwed)}, cards=${cardCount}, card_institutions=${cardInstStr}, card_accounts_json=${cardAccountsJson}`;
   }
   if (tool === 'spend_7d') {
