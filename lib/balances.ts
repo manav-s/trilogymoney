@@ -7,6 +7,7 @@ export type BalanceAccount = {
   id: string; // internal PlaidAccount.id
   accountId: string; // Plaid account_id
   name: string;
+  type?: string | null;
   mask?: string | null;
   subtype?: string | null;
   institution?: string | null;
@@ -89,6 +90,7 @@ export async function getBalances(params: { userId: string }): Promise<GetBalanc
               id: updated.id,
               accountId: updated.accountId,
               name: updated.name,
+              type: a.type || 'unknown',
               mask: updated.mask,
               subtype: updated.subtype,
               institution: item.institutionName || null,
@@ -123,13 +125,16 @@ export async function getBalances(params: { userId: string }): Promise<GetBalanc
     logError('balances.fetch_active_ids', e, { userId });
   }
 
-  const filtered = allAccounts.filter(a => activeIds.size === 0 || activeIds.has(a.accountId));
-  const total = filtered.reduce((sum, a) => {
-    const val = typeof a.available === 'number' ? a.available : (typeof a.current === 'number' ? a.current : 0);
-    return sum + (Number.isFinite(val) ? val : 0);
+  const active = allAccounts.filter(a => activeIds.size === 0 || activeIds.has(a.accountId));
+  const eligible = active.filter(a => (a.type === 'depository') && (!a.currency || a.currency === 'USD'));
+  const total = eligible.reduce((sum, a) => {
+    const raw = typeof a.available === 'number' ? a.available : (typeof a.current === 'number' ? a.current : 0);
+    const val = Number.isFinite(raw) ? raw : 0;
+    // Treat negatives as zero for cash summaries
+    return sum + (val > 0 ? val : 0);
   }, 0);
 
-  return { accounts: filtered, total, count: filtered.length };
+  return { accounts: eligible, total, count: eligible.length };
 }
 
 

@@ -155,11 +155,12 @@ describe('lib/balances getBalances integration (mocked Plaid + Prisma)', () => {
     const { getBalances } = await import('../lib/balances');
     const res = await getBalances({ userId: 'u1' });
 
-    expect(res.count).toBe(3);
-    // total = available(1000.00) + current(500.00) + current(-200.50) = 1299.5
-    expect(Math.round(res.total * 100)).toBe(129950);
+    expect(res.count).toBe(2);
+    // cash total counts only depository accounts: available(1000.00) + current(500.00) = 1500.00
+    expect(Math.round(res.total * 100)).toBe(150000);
     expect(res.accounts.find(a => a.accountId === 'a1')?.institution).toBe('Bank A');
-    expect(res.accounts.find(a => a.accountId === 'a3')?.institution).toBe('Bank B');
+    expect(res.accounts.find(a => a.accountId === 'a2')?.institution).toBe('Bank A');
+    expect(res.accounts.find(a => a.accountId === 'a3')).toBeUndefined();
   });
   
   // Additional edge-case tests (partial errors, inactive filters) can be added later.
