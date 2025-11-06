@@ -3,6 +3,8 @@
  * Docs: https://imessages.readme.io/reference
  */
 import { createHmac, timingSafeEqual } from 'crypto';
+import { prisma } from '@/lib/db';
+import { encryptMessage } from '@/lib/encryption';
 
 const BLOOIO_API_KEY = process.env.BLOOIO_API_KEY;
 const BLOOIO_BASE_URL = 'https://backend.blooio.com/v1/api';
@@ -13,6 +15,8 @@ export interface SendMessageOptions {
   to: string; // E.164 format: +15551234567
   body: string;
   mediaUrl?: string; // Optional attachment URL
+  userId?: string;
+  shouldPersist?: boolean;
 }
 
 export interface BlooioMessageResponse {
@@ -91,7 +95,7 @@ export async function sendMessage(options: SendMessageOptions): Promise<BlooioMe
       if (!id) {
         throw new Error('Blooio API response missing message id');
       }
-      return {
+      const result: BlooioMessageResponse = {
         id: data.id || data.messageId || data.message_id || 'unknown',
         status: 'sent',
         to: options.to,
@@ -99,6 +103,32 @@ export async function sendMessage(options: SendMessageOptions): Promise<BlooioMe
         direction: 'outbound',
         createdAt: new Date().toISOString(),
       };
+      if (options.shouldPersist) {
+        try {
+          let userId = options.userId || null;
+          if (!userId) {
+            const user = await prisma.user.findUnique({ where: { phone: options.to } });
+            userId = user?.id ?? null;
+          }
+          if (userId) {
+            await prisma.message.create({
+              data: {
+                userId,
+                direction: 'outbound',
+                content: encryptMessage(options.body),
+                status: 'sent',
+                provider: 'blooio',
+                providerId: result.id,
+                sentAt: new Date(),
+                expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+              },
+            });
+          }
+        } catch {
+          // ignore persistence issues; delivery already succeeded
+        }
+      }
+      return result;
     } catch (err) {
       lastError = err;
       if (attempt < 3) {
