@@ -124,20 +124,20 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
 
     // If paused/stopped
     if (user.messagingStatus === 'stopped' || user.isActive === false) {
-      await sendMessage({ to: phone, body: `you're paused. reply START to resume.`, userId: user.id });
+      await sendMessage({ to: phone, body: `you're paused. reply START to resume.` });
       return;
     }
 
     // If billing is active and messaging active → send sign-in link regardless of onboarding status
     if (isBillingOk && isMessagingActive) {
       const magicLink = await generateMagicLink(phone);
-      await sendMessage({ to: phone, body: `here's your sign-in link (expires in 10 min):\n\n${magicLink}`, userId: user.id });
+      await sendMessage({ to: phone, body: `here's your sign-in link (expires in 10 min):\n\n${magicLink}` });
       return;
     }
 
     // Billing not active/trialing → advise to re-subscribe
     if (!isBillingOk) {
-      await sendMessage({ to: phone, body: `your subscription isn't active. sign in from the link in your email or visit the billing portal to re-subscribe.`, userId: user.id });
+      await sendMessage({ to: phone, body: `your subscription isn't active. sign in from the link in your email or visit the billing portal to re-subscribe.` });
       return;
     }
 
@@ -150,7 +150,7 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
         magicLink.trim(),
       ];
       for (let i = 0; i < messages.length; i++) {
-        await sendMessage({ to: phone, body: messages[i], userId: user.id });
+        await sendMessage({ to: phone, body: messages[i] });
         if (i < messages.length - 1) await new Promise(r => setTimeout(r, 500));
       }
       return;
@@ -169,11 +169,11 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
       magicLink.trim(),
     ];
     for (let i = 0; i < messages.length; i++) {
-      await sendMessage({ to: phone, body: messages[i], userId: user.id });
+      await sendMessage({ to: phone, body: messages[i] });
       if (i < messages.length - 1) await new Promise(r => setTimeout(r, 500));
     }
   } else if (isOnboardingMessage && (user.onboardingStatus === 'complete' || user.onboardingStatus === 'subscribed')) {
-    await sendMessage({ to: phone, body: `you’re set up already my love, go away`, userId: user.id });
+    await sendMessage({ to: phone, body: `you’re set up already my love, go away` });
   } else {
     await handleExistingUser(user, event);
   }
@@ -192,13 +192,23 @@ async function handleNewUser(phone: string, _event: BlooioWebhookEvent) {
   ];
 
   for (let i = 0; i < messages.length; i++) {
-    await sendMessage({ to: phone, body: messages[i], userId: user.id });
+    await sendMessage({ to: phone, body: messages[i] });
+    await prisma.message.create({
+      data: {
+        userId: user.id,
+        direction: 'outbound',
+        content: encryptMessage(messages[i]),
+        status: 'sent',
+        provider: 'blooio',
+        sentAt: new Date(),
+        expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+      },
+    });
     if (i < messages.length - 1) await new Promise(r => setTimeout(r, 500));
   }
 }
 
 type ExistingUserContext = {
-  id: string;
   phone: string | null;
   onboardingStatus: string;
   preferredTime: string;
@@ -222,9 +232,9 @@ async function handleExistingUser(user: ExistingUserContext, event: BlooioWebhoo
     } else {
       if (body.includes('link') || body.includes('onboard') || body.includes('help')) {
         const magicLink = await generateMagicLink(user.phone);
-        await sendMessage({ to: user.phone, body: `Here's a fresh link to finish setup (expires in 10 min):\n\n${magicLink}`, userId: user.id });
+        await sendMessage({ to: user.phone, body: `Here's a fresh link to finish setup (expires in 10 min):\n\n${magicLink}` });
       } else {
-        await sendMessage({ to: user.phone, body: `You're almost there! Finish your setup to start getting your money pulse. Reply "link" for a fresh link.`, userId: user.id });
+        await sendMessage({ to: user.phone, body: `You're almost there! Finish your setup to start getting your money pulse. Reply "link" for a fresh link.` });
       }
     }
     return;
@@ -296,12 +306,12 @@ async function handleLLMConversation(phone: string, userText: string) {
   const parts = splitIntoSmsSegments(body);
 
   if (parts.length === 0) {
-    await sendMessage({ to: phone, body, userId: user.id });
+    await sendMessage({ to: phone, body });
     return;
   }
 
   for (const segment of parts) {
-    await sendMessage({ to: phone, body: segment, userId: user.id });
+    await sendMessage({ to: phone, body: segment });
   }
 }
 
@@ -325,8 +335,8 @@ async function getRecentHistorySnippet(userId: string, days = 30, limit = 30): P
 
 
 async function handleStopCommand(phone: string) {
-  const updated = await prisma.user.update({ where: { phone }, data: { messagingStatus: 'stopped', isActive: false } });
-  await sendMessage({ to: phone, body: `You've been unsubscribed from Trilogy. You won't receive any more messages. Reply START to re-subscribe anytime.`, userId: updated.id });
+  await prisma.user.update({ where: { phone }, data: { messagingStatus: 'stopped', isActive: false } });
+  await sendMessage({ to: phone, body: `You've been unsubscribed from Trilogy. You won't receive any more messages. Reply START to re-subscribe anytime.` });
 }
 
 async function handleStartCommand(phone: string) {
@@ -335,8 +345,8 @@ async function handleStartCommand(phone: string) {
     await handleNewUser(phone, { event: 'message.received', message_id: 'manual-start', external_id: phone, text: 'START', protocol: 'sms', timestamp: Date.now(), received_at: Date.now() });
     return;
   }
-  const updated = await prisma.user.update({ where: { phone }, data: { messagingStatus: 'active', isActive: true } });
-  await sendMessage({ to: phone, body: `Welcome back! You're re-subscribed to your daily money pulse. 🎉`, userId: updated.id });
+  await prisma.user.update({ where: { phone }, data: { messagingStatus: 'active', isActive: true } });
+  await sendMessage({ to: phone, body: `Welcome back! You're re-subscribed to your daily money pulse. 🎉` });
 }
 
 async function handleMessageStatus(event: BlooioWebhookEvent) {
