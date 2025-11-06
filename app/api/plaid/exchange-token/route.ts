@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPlaidClient } from '@/lib/plaid';
+import { getPlaidClient, getPlaidDefaults } from '@/lib/plaid';
 import { prisma } from '@/lib/db';
 import { z } from 'zod';
 import { encryptMessage } from '@/lib/encryption';
@@ -18,12 +18,25 @@ export async function POST(req: NextRequest) {
     const accessToken = exchange.data.access_token;
     const itemId = exchange.data.item_id;
 
+    // Try to resolve institution name for the Item
+    let institutionName: string | null = null;
+    try {
+      const itemResp = await client.itemGet({ access_token: accessToken });
+      const instId = itemResp.data.item.institution_id;
+      if (instId) {
+        const { countryCodes } = getPlaidDefaults();
+        const inst = await client.institutionsGetById({ institution_id: instId, country_codes: countryCodes });
+        institutionName = inst.data.institution?.name || null;
+      }
+    } catch {}
+
     // create PlaidItem
     const item = await prisma.plaidItem.create({
       data: {
         userId: user.id,
         itemId,
         accessToken: encryptMessage(accessToken),
+        institutionName,
       },
     });
 

@@ -153,7 +153,7 @@ export async function getBalancesBreakdown(params: { userId: string }): Promise<
   const items = await prisma.plaidItem.findMany({ where: { userId }, select: { id: true, institutionName: true } });
   const creditAccountsRows = await prisma.plaidAccount.findMany({
     where: { itemId: { in: items.map(i => i.id) }, isActive: true, type: 'credit' },
-    select: { id: true, accountId: true, name: true, mask: true, subtype: true, currency: true, currentBalance: true, availableBalance: true },
+    select: { id: true, itemId: true, accountId: true, name: true, mask: true, subtype: true, currency: true, currentBalance: true, availableBalance: true },
   });
   const itemIdToInst = new Map(items.map(i => [i.id, i.institutionName || null] as const));
 
@@ -164,7 +164,7 @@ export async function getBalancesBreakdown(params: { userId: string }): Promise<
     type: 'credit',
     mask: row.mask,
     subtype: row.subtype,
-    institution: null, // unknown from this select; optional enrichment later
+    institution: itemIdToInst.get((row as { itemId: string }).itemId) || null,
     currency: row.currency,
     current: row.currentBalance,
     available: row.availableBalance,
