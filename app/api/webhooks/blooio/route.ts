@@ -19,6 +19,7 @@ import { z } from 'zod';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { RATE_LIMIT_WINDOW_MS, MAX_MESSAGES_PER_WINDOW } from '@/lib/constants';
 import { getBalances, getBalancesBreakdown } from '@/lib/balances';
+import { splitIntoSmsSegments } from '@/lib/sms';
 
 const WEBHOOK_SECRET = process.env.BLOOIO_WEBHOOK_SECRET;
 
@@ -302,7 +303,16 @@ async function handleLLMConversation(phone: string, userText: string) {
       ? 'hey—what money thing can I help with today? balance, last‑week spend, or a recent charge?'
       : 'how can I help with money today? balance, last‑week spend, or a recent charge?';
   }
-  await sendMessage({ to: phone, body });
+  const parts = splitIntoSmsSegments(body);
+
+  if (parts.length === 0) {
+    await sendMessage({ to: phone, body });
+    return;
+  }
+
+  for (const segment of parts) {
+    await sendMessage({ to: phone, body: segment });
+  }
 }
 
 async function getRecentHistorySnippet(userId: string, days = 30, limit = 30): Promise<string> {
@@ -322,6 +332,7 @@ async function getRecentHistorySnippet(userId: string, days = 30, limit = 30): P
   }
   return lines.join('\n');
 }
+
 
 async function handleStopCommand(phone: string) {
   await prisma.user.update({ where: { phone }, data: { messagingStatus: 'stopped', isActive: false } });
