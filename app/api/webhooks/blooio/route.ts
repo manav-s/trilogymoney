@@ -208,17 +208,34 @@ async function handleNewUser(phone: string, _event: BlooioWebhookEvent) {
   }
 }
 
-async function handleExistingUser(user: { phone: string | null; onboardingStatus: string; preferredTime: string; messagingStatus?: string }, event: BlooioWebhookEvent) {
+type ExistingUserContext = {
+  phone: string | null;
+  onboardingStatus: string;
+  preferredTime: string;
+  messagingStatus?: string;
+  billingStatus?: string | null;
+  isActive?: boolean | null;
+};
+
+async function handleExistingUser(user: ExistingUserContext, event: BlooioWebhookEvent) {
   const body = event.text.toLowerCase().trim();
   if (user.messagingStatus === 'stopped') return;
   if (!user.phone) return;
 
-  if (!(user.onboardingStatus === 'complete' || user.onboardingStatus === 'subscribed')) {
-    if (body.includes('link') || body.includes('onboard') || body.includes('help')) {
-      const magicLink = await generateMagicLink(user.phone);
-      await sendMessage({ to: user.phone, body: `Here's a fresh link to finish setup (expires in 10 min):\n\n${magicLink}` });
+  const onboardingComplete = user.onboardingStatus === 'complete' || user.onboardingStatus === 'subscribed';
+  const isPaid = user.billingStatus === 'active' || user.billingStatus === 'trialing';
+  const isActive = user.messagingStatus === 'active' && user.isActive !== false;
+
+  if (!onboardingComplete) {
+    if (isPaid && isActive) {
+      await handleLLMConversation(user.phone, body);
     } else {
-      await sendMessage({ to: user.phone, body: `You're almost there! Finish your setup to start getting your money pulse. Reply "link" for a fresh link.` });
+      if (body.includes('link') || body.includes('onboard') || body.includes('help')) {
+        const magicLink = await generateMagicLink(user.phone);
+        await sendMessage({ to: user.phone, body: `Here's a fresh link to finish setup (expires in 10 min):\n\n${magicLink}` });
+      } else {
+        await sendMessage({ to: user.phone, body: `You're almost there! Finish your setup to start getting your money pulse. Reply "link" for a fresh link.` });
+      }
     }
     return;
   }
