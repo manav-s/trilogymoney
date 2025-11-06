@@ -14,10 +14,11 @@ import { BlooioWebhookEvent, formatE164 } from '@/lib/blooio';
 import { generateMagicLink } from '@/lib/magic-link';
 import { sendMessage } from '@/lib/blooio';
 import { encryptMessage, decryptMessage } from '@/lib/encryption';
-import { generateReply } from '@/lib/llm';
+import { generateReply, chooseIntentFromText } from '@/lib/llm';
 import { z } from 'zod';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { RATE_LIMIT_WINDOW_MS, MAX_MESSAGES_PER_WINDOW } from '@/lib/constants';
+import { getBalances } from '@/lib/balances';
 
 const WEBHOOK_SECRET = process.env.BLOOIO_WEBHOOK_SECRET;
 
@@ -238,13 +239,27 @@ async function handleLLMConversation(phone: string, userText: string) {
   let body = '';
   try {
     const profile = { name: user.name, timezone: user.timezone, preferredTime: user.preferredTime } as const;
-    body = await generateReply('chat', {
-      history,
-      userText,
-      quizAnswers: (user as unknown as { quizAnswers?: unknown }).quizAnswers ?? null,
-      analysisSummary: (user as unknown as { analysisSummary?: unknown }).analysisSummary ?? null,
-      profile,
-    });
+    const intent = await chooseIntentFromText(userText);
+    if (intent === 'balances') {
+      const bal = await getBalances({ userId: user.id });
+      body = await generateReply('balances', {
+        total: bal.total,
+        count: bal.count,
+        history,
+        userText,
+        profile,
+        quizAnswers: (user as unknown as { quizAnswers?: unknown }).quizAnswers ?? null,
+        analysisSummary: (user as unknown as { analysisSummary?: unknown }).analysisSummary ?? null,
+      });
+    } else {
+      body = await generateReply('chat', {
+        history,
+        userText,
+        quizAnswers: (user as unknown as { quizAnswers?: unknown }).quizAnswers ?? null,
+        analysisSummary: (user as unknown as { analysisSummary?: unknown }).analysisSummary ?? null,
+        profile,
+      });
+    }
   } catch {
     body = /^(hi|hey|hello|yo|sup|howdy)\b/i.test(userText)
       ? 'hey—what money thing can I help with today? balance, last‑week spend, or a recent charge?'
