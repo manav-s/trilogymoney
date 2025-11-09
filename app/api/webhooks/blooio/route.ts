@@ -15,6 +15,7 @@ import { generateMagicLink } from '@/lib/magic-link';
 import { sendMessage } from '@/lib/blooio';
 import { encryptMessage, decryptMessage } from '@/lib/encryption';
 import { generateReply, chooseIntentFromText } from '@/lib/llm';
+import { getTransactions } from '@/lib/transactions';
 import { z } from 'zod';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { RATE_LIMIT_WINDOW_MS, MAX_MESSAGES_PER_WINDOW } from '@/lib/constants';
@@ -302,13 +303,24 @@ async function handleLLMConversation(phone: string, userText: string) {
         analysisSummary: (user as unknown as { analysisSummary?: unknown }).analysisSummary ?? null,
       });
     } else {
-      body = await generateReply('chat', {
-        history,
-        userText,
-        quizAnswers: (user as unknown as { quizAnswers?: unknown }).quizAnswers ?? null,
-        analysisSummary: (user as unknown as { analysisSummary?: unknown }).analysisSummary ?? null,
-        profile,
-      });
+      if (intent === 'txns_3') {
+        const txns = await getTransactions({ userId: user.id, limit: 3 });
+        body = await generateReply('transactions', {
+          transactions: txns.transactions,
+          moreAvailable: txns.moreAvailable,
+          history,
+          userText,
+          profile,
+        });
+      } else {
+        body = await generateReply('chat', {
+          history,
+          userText,
+          quizAnswers: (user as unknown as { quizAnswers?: unknown }).quizAnswers ?? null,
+          analysisSummary: (user as unknown as { analysisSummary?: unknown }).analysisSummary ?? null,
+          profile,
+        });
+      }
     }
   } catch {
     body = /^(hi|hey|hello|yo|sup|howdy)\b/i.test(userText)

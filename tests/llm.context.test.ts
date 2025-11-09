@@ -66,6 +66,42 @@ describe('llm prompt includes onboarding context', () => {
     // should include an ellipsis to indicate truncation
     expect(capturedUserContent).toContain('…');
   });
+
+  it('formats transactions prompt with context', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'test');
+    let capturedUserContent = '';
+    mockFetchCapture((json) => {
+      const msgs = json?.messages ?? [];
+      const userMsg = msgs.find((m: any) => m.role === 'user');
+      capturedUserContent = userMsg?.content || '';
+    });
+
+    const { generateReply } = await import('../lib/llm');
+    const out = await generateReply('transactions' as any, {
+      transactions: [
+        {
+          id: 'tx-1',
+          date: '2025-11-05',
+        amount: 42.13,
+          currency: 'USD',
+          merchant: 'CVS',
+          description: 'CVS STORE',
+          category: 'HEALTHCARE',
+          pending: false,
+          account: { id: 'acc-1', name: 'Checking', institution: 'Bank', mask: '1234' },
+        },
+      ],
+      moreAvailable: true,
+      history: 'you: hi',
+      userText: 'show recent charges',
+      profile: { name: 'Alex' },
+    });
+
+    expect(out).toBe('ok');
+    expect(capturedUserContent).toContain('User question: "show recent charges".');
+    expect(capturedUserContent).toContain('2025-11-05: spent USD42.13 at CVS');
+    expect(capturedUserContent).toContain('More transactions available');
+  });
 });
 
 

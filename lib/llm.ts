@@ -1,12 +1,13 @@
 /**
  * Minimal LLM intent chooser using OpenAI
- * Returns one of: 'balances' | 'spend_7d' | 'txns_3' | 'help'
+ * Returns one of: 'balances' | 'spend_7d' | 'txns_3' | 'transactions' | 'chat'
  */
-export type Intent = 'balances' | 'spend_7d' | 'txns_3' | 'chat';
+export type Intent = 'balances' | 'spend_7d' | 'txns_3' | 'transactions' | 'chat';
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const MODEL = process.env.OPENAI_MODEL || 'gpt-5-mini';
 import { logError } from './logger';
+import { TransactionSummary } from './transactions';
 
 export async function chooseIntentFromText(userText: string): Promise<Intent> {
   const lowered = (userText || '').toLowerCase();
@@ -108,9 +109,13 @@ export async function generateReply(tool: Intent, context: Record<string, unknow
     return 'sorry the model is having trouble';
   }
   const system = `You are Trilogy, a concise, warm money coach over SMS.
-style: lowercase, short, playful, and sassy (never rude), no doom.
+style: lowercase, short, playful-but-respectful, no doom.
 format: default to one short line; use up to two lines only when presenting numbers or lists. put numbers first. plain language. no emojis.
-behavior: answer directly; do NOT add a question at the end unless a question is strictly required to proceed (e.g., choose dates). never append soft check‑ins like “does that help?”. avoid menus/boilerplate.`;
+behavior: answer directly; do NOT add a question at the end unless a question is strictly required to proceed (e.g., choose dates). never append soft check-ins like “does that help?”. avoid menus/boilerplate.
+tools you can call (server will provide data when needed):
+- balances: cash totals plus card owed amounts by institution.
+- spend_7d: last-week spend summary and top categories/merchants.
+- transactions: recent transactions with amount, merchant, date, and account. mention pending status if present and offer to fetch more when moreAvailable=true.`;
   const user = buildUserPrompt(tool, context);
   try {
     const controller = new AbortController();
@@ -201,6 +206,31 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
     const topLine = top.slice(0, 2).map(t => `${t.name} $${Math.round(t.amount)}`).join(', ');
     return `Write a single SMS about last 7 days spend.
 Data: total=${Math.round(total)}, top=${topLine}`;
+  }
+  if (tool === 'transactions') {
+    const txns = (ctx.transactions as TransactionSummary[]) ?? [];
+    const more = Boolean(ctx.moreAvailable);
+    const question = ((ctx.userText as string) || '').trim();
+    const questionLine = question ? `User question: "${question}".` : 'User question: transactions summary.';
+    const lines = txns.map((txn) => {
+      const date = txn.date;
+      const merchant = txn.merchant || txn.description || 'transaction';
+      const amount = txn.amount;
+      const currency = txn.currency || 'USD';
+      const direction = amount >= 0 ? 'spent' : 'received';
+      const abs = Math.abs(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const account = txn.account.institution
+        ? `${txn.account.institution.toLowerCase()} ${txn.account.name.toLowerCase()}`
+        : txn.account.name.toLowerCase();
+      const pending = txn.pending ? ' (pending)' : '';
+      return `${date}: ${direction} ${currency}${abs} at ${merchant}${pending} (${account})`;
+    });
+    const moreLine = more ? 'More transactions available beyond this list.' : 'No additional transactions beyond this list.';
+    return `Respond with a natural 1–2 sentence SMS summarizing the transactions below. Mention merchant and amount for each. If the user asked for more and more transactions are available, offer to fetch more.
+${questionLine}
+Transactions:
+${lines.join('\n') || 'none'}
+${moreLine}`;
   }
   if (tool === 'txns_3') {
     const list = (ctx.list as { date: string; merchant: string; amount: number }[]) ?? [];
