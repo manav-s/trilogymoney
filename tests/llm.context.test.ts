@@ -5,6 +5,9 @@ import type {
   TransactionsSummaryBucket,
 } from '../lib/transactions';
 
+const SUMMARY_TOKEN = 'Summary JSON:';
+const TRANSACTIONS_TOKEN = 'Transactions JSON:';
+
 function mockFetchCapture(bodyHandler: (json: any) => void) {
   const fn = vi.fn(async (_input: RequestInfo, init?: RequestInit) => {
     const json = init?.body ? JSON.parse(String(init.body)) : {};
@@ -254,6 +257,293 @@ function buildLargeTransactionFixture(): {
   return { transactions, summary };
 }
 
+function buildFixtureFromTransactions(
+  transactions: TransactionSummary[],
+  range: { from: string; to: string }
+): { transactions: TransactionSummary[]; summary: TransactionsSummary } {
+  const summary = computeSummaryForFixture(transactions, range);
+  return { transactions, summary };
+}
+
+function buildEmptyFixture(): { transactions: TransactionSummary[]; summary: TransactionsSummary } {
+  const range = { from: '2025-09-01', to: '2025-09-30' };
+  return buildFixtureFromTransactions([], range);
+}
+
+function buildExcludedOnlyFixture(): {
+  transactions: TransactionSummary[];
+  summary: TransactionsSummary;
+} {
+  const range = { from: '2025-09-01', to: '2025-09-30' };
+  const account = {
+    id: 'acct-ex',
+    name: 'Excluded Account',
+    institution: 'Test Institution',
+    mask: '7777',
+  };
+  const transactions: TransactionSummary[] = [
+    {
+      id: 'ex-1',
+      date: '2025-09-05',
+      amount: 500,
+      currency: 'USD',
+      merchant: 'Transfer Out',
+      description: 'Transfer Out',
+      category: 'TRANSFER_OUT',
+      pending: false,
+      account,
+    },
+    {
+      id: 'ex-2',
+      date: '2025-09-10',
+      amount: 200,
+      currency: 'USD',
+      merchant: 'Loan Payment',
+      description: 'Loan Payment',
+      category: 'LOAN_PAYMENTS',
+      pending: false,
+      account,
+    },
+    {
+      id: 'ex-3',
+      date: '2025-09-15',
+      amount: -150,
+      currency: 'USD',
+      merchant: 'Transfer In',
+      description: 'Transfer In',
+      category: 'TRANSFER_IN',
+      pending: false,
+      account,
+    },
+    {
+      id: 'ex-4',
+      date: '2025-09-20',
+      amount: 100,
+      currency: 'USD',
+      merchant: 'Credit Card Payment',
+      description: 'Credit Card Payment',
+      category: 'CREDIT_CARD_PAYMENT',
+      pending: true,
+      account,
+    },
+  ];
+  return buildFixtureFromTransactions(transactions, range);
+}
+
+function buildRefundHeavyFixture(): {
+  transactions: TransactionSummary[];
+  summary: TransactionsSummary;
+} {
+  const range = { from: '2025-09-01', to: '2025-09-30' };
+  const account = {
+    id: 'acct-rf',
+    name: 'Refund Account',
+    institution: 'Test Institution',
+    mask: '8888',
+  };
+  const transactions: TransactionSummary[] = [
+    {
+      id: 'rf-1',
+      date: '2025-09-03',
+      amount: 250,
+      currency: 'USD',
+      merchant: 'Mega Store',
+      description: 'Mega Store purchase',
+      category: 'GENERAL_MERCHANDISE',
+      pending: false,
+      account,
+    },
+    {
+      id: 'rf-2',
+      date: '2025-09-05',
+      amount: -80,
+      currency: 'USD',
+      merchant: 'Mega Store',
+      description: 'Mega Store refund',
+      category: 'GENERAL_MERCHANDISE',
+      pending: false,
+      account,
+    },
+    {
+      id: 'rf-3',
+      date: '2025-09-06',
+      amount: -20,
+      currency: 'USD',
+      merchant: 'Mega Store',
+      description: 'Mega Store pending refund',
+      category: 'GENERAL_MERCHANDISE',
+      pending: true,
+      account,
+    },
+    {
+      id: 'rf-4',
+      date: '2025-09-07',
+      amount: 90,
+      currency: 'USD',
+      merchant: 'Cafe Nova',
+      description: 'Cafe Nova lunch',
+      category: 'FOOD_AND_DRINK',
+      pending: true,
+      account,
+    },
+    {
+      id: 'rf-5',
+      date: '2025-09-08',
+      amount: -40,
+      currency: 'USD',
+      merchant: 'FixIt Services',
+      description: 'FixIt Services refund',
+      category: 'GENERAL_SERVICES',
+      pending: false,
+      account,
+    },
+    {
+      id: 'rf-6',
+      date: '2025-09-09',
+      amount: 120,
+      currency: 'USD',
+      merchant: 'Broker Transfer',
+      description: 'Transfer to brokerage',
+      category: 'TRANSFER_OUT',
+      pending: false,
+      account,
+    },
+  ];
+  return buildFixtureFromTransactions(transactions, range);
+}
+
+function buildPendingOnlyFixture(): {
+  transactions: TransactionSummary[];
+  summary: TransactionsSummary;
+} {
+  const range = { from: '2025-09-01', to: '2025-09-30' };
+  const account = {
+    id: 'acct-pd',
+    name: 'Pending Account',
+    institution: 'Test Institution',
+    mask: '6666',
+  };
+  const transactions: TransactionSummary[] = [
+    {
+      id: 'pd-1',
+      date: '2025-09-02',
+      amount: 120,
+      currency: 'USD',
+      merchant: 'Pending Grocer',
+      description: 'Pending grocer purchase',
+      category: 'FOOD_AND_DRINK',
+      pending: true,
+      account,
+    },
+    {
+      id: 'pd-2',
+      date: '2025-09-04',
+      amount: 85.5,
+      currency: 'USD',
+      merchant: 'Pending Gas',
+      description: 'Pending gas station',
+      category: 'TRANSPORTATION',
+      pending: true,
+      account,
+    },
+    {
+      id: 'pd-3',
+      date: '2025-09-06',
+      amount: 47.25,
+      currency: 'USD',
+      merchant: null,
+      description: 'Pending salon visit',
+      category: 'PERSONAL_CARE',
+      pending: true,
+      account,
+    },
+  ];
+  return buildFixtureFromTransactions(transactions, range);
+}
+
+async function expectTransactionsLLMFixture(
+  fixture: { transactions: TransactionSummary[]; summary: TransactionsSummary },
+  options?: {
+    userText?: string;
+    history?: string;
+    moreAvailable?: boolean;
+    buildReply?: (summary: TransactionsSummary) => string;
+    assertSummary?: (
+      summary: TransactionsSummary,
+      transactions: TransactionSummary[]
+    ) => void;
+  }
+) {
+  vi.stubEnv('OPENAI_API_KEY', 'test');
+  let expectedReply = '';
+  const fetchMock = vi.fn(async (_input: RequestInfo, init?: RequestInit) => {
+    const body = init?.body ? JSON.parse(String(init.body)) : {};
+    const msgs = body?.messages ?? [];
+    const userMsg = msgs.find((m: any) => m.role === 'user');
+    const content = userMsg?.content || '';
+
+    const summaryStart = content.indexOf(SUMMARY_TOKEN);
+    const transactionsStart = content.indexOf(TRANSACTIONS_TOKEN);
+    expect(summaryStart).toBeGreaterThan(-1);
+    expect(transactionsStart).toBeGreaterThan(summaryStart);
+
+    const summaryJsonStr = content
+      .slice(summaryStart + SUMMARY_TOKEN.length, transactionsStart)
+      .trim();
+    const transactionsJsonStr = content
+      .slice(transactionsStart + TRANSACTIONS_TOKEN.length)
+      .trim();
+
+    const parsedSummary: TransactionsSummary = JSON.parse(summaryJsonStr);
+    const parsedTransactions: TransactionSummary[] = JSON.parse(transactionsJsonStr);
+
+    const recomputed = computeSummaryForFixture(parsedTransactions, {
+      from: parsedSummary.from,
+      to: parsedSummary.to,
+    });
+    expect(parsedSummary).toEqual(recomputed);
+
+    if (options?.assertSummary) {
+      options.assertSummary(parsedSummary, parsedTransactions);
+    }
+
+    expectedReply =
+      options?.buildReply?.(parsedSummary) ??
+      `you spent $${parsedSummary.totalSpend.toFixed(2)} from ${parsedSummary.from} to ${parsedSummary.to} with $${parsedSummary.pendingSpend.toFixed(2)} pending and $${parsedSummary.totalRefund.toFixed(2)} refunded`;
+
+    return new Response(
+      JSON.stringify({ choices: [{ message: { content: expectedReply } }] }),
+      {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }
+    );
+  });
+  // @ts-expect-error test mutates global fetch
+  global.fetch = fetchMock;
+
+  const { generateReply } = await import('../lib/llm');
+  const reply = await generateReply('transactions' as any, {
+    transactions: fixture.transactions,
+    moreAvailable: options?.moreAvailable ?? false,
+    history: options?.history ?? 'user: how much?',
+    userText: options?.userText ?? 'how much did i spend?',
+    profile: { name: 'Test User' },
+    summaryJson: JSON.stringify(fixture.summary),
+    transactionsJson: JSON.stringify(fixture.transactions),
+    query: {
+      kind: 'merchantSpend',
+      limit: 100,
+      merchant: null,
+      from: fixture.summary.from,
+      to: fixture.summary.to,
+    },
+  });
+
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+  expect(reply).toBe(expectedReply);
+}
+
 describe('llm prompt includes onboarding context', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -388,61 +678,59 @@ describe('llm prompt includes onboarding context', () => {
   });
 
   it('ensures large transaction payload remains internally consistent', async () => {
-    vi.stubEnv('OPENAI_API_KEY', 'test');
-    const { transactions, summary } = buildLargeTransactionFixture();
-    let expectedReply = '';
-    const fetchMock = vi.fn(async (_input: RequestInfo, init?: RequestInit) => {
-      const body = init?.body ? JSON.parse(String(init.body)) : {};
-      const msgs = body?.messages ?? [];
-      const userMsg = msgs.find((m: any) => m.role === 'user');
-      const content = userMsg?.content || '';
-      const summaryMatch = content.match(/Summary JSON:\s*(.+)\n/);
-      const transactionsMatch = content.match(/Transactions JSON:\s*(.+)$/s);
-      expect(summaryMatch).toBeTruthy();
-      expect(transactionsMatch).toBeTruthy();
-      const parsedSummary: TransactionsSummary = JSON.parse(summaryMatch![1].trim());
-      const parsedTransactions: TransactionSummary[] = JSON.parse(
-        transactionsMatch![1].trim()
-      );
-      const recomputedSummary = computeSummaryForFixture(parsedTransactions, {
-        from: parsedSummary.from,
-        to: parsedSummary.to,
-      });
-      expect(parsedSummary).toEqual(recomputedSummary);
-
-      expectedReply = `you spent $${parsedSummary.totalSpend.toFixed(2)} from ${parsedSummary.from} to ${parsedSummary.to} with $${parsedSummary.pendingSpend.toFixed(2)} pending and $${parsedSummary.totalRefund.toFixed(2)} refunded`;
-
-      return new Response(
-        JSON.stringify({ choices: [{ message: { content: expectedReply } }] }),
-        {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }
-      );
-    });
-    // @ts-expect-error test mutates global fetch
-    global.fetch = fetchMock;
-
-    const { generateReply } = await import('../lib/llm');
-    const reply = await generateReply('transactions' as any, {
-      transactions,
-      moreAvailable: false,
-      history: 'user: how much did i spend?',
+    await expectTransactionsLLMFixture(buildLargeTransactionFixture(), {
       userText: 'how much did i spend this month?',
-      profile: { name: 'Test User' },
-      summaryJson: JSON.stringify(summary),
-      transactionsJson: JSON.stringify(transactions),
-      query: {
-        kind: 'merchantSpend',
-        limit: 100,
-        merchant: null,
-        from: summary.from,
-        to: summary.to,
+      history: 'user: how much did i spend?',
+    });
+  });
+
+  it('handles empty transaction set with zero totals', async () => {
+    await expectTransactionsLLMFixture(buildEmptyFixture(), {
+      userText: 'show me september spend',
+      assertSummary: (summary) => {
+        expect(summary.totalSpend).toBe(0);
+        expect(summary.totalRefund).toBe(0);
+        expect(summary.pendingSpend).toBe(0);
+        expect(summary.count).toBe(0);
       },
     });
+  });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(reply).toBe(expectedReply);
+  it('ignores excluded categories when summarizing', async () => {
+    await expectTransactionsLLMFixture(buildExcludedOnlyFixture(), {
+      userText: 'transactions in september',
+      assertSummary: (summary, transactions) => {
+        expect(summary.totalSpend).toBe(0);
+        expect(summary.totalRefund).toBe(0);
+        expect(summary.count).toBe(0);
+        expect(transactions.length).toBeGreaterThan(0);
+      },
+    });
+  });
+
+  it('captures refunds and pending refunds accurately', async () => {
+    await expectTransactionsLLMFixture(buildRefundHeavyFixture(), {
+      userText: 'show my spending with refunds',
+      assertSummary: (summary) => {
+        expect(summary.totalSpend).toBeCloseTo(340, 2);
+        expect(summary.totalRefund).toBeCloseTo(140, 2);
+        expect(summary.pendingSpend).toBeCloseTo(90, 2);
+        expect(summary.pendingRefund).toBeCloseTo(20, 2);
+        expect(summary.pendingCount).toBe(2);
+      },
+    });
+  });
+
+  it('reports spend entirely as pending when nothing has posted', async () => {
+    const fixture = buildPendingOnlyFixture();
+    await expectTransactionsLLMFixture(fixture, {
+      userText: 'what is pending this month?',
+      assertSummary: (summary) => {
+        expect(summary.totalSpend).toBeCloseTo(summary.pendingSpend, 6);
+        expect(summary.pendingSpend).toBeGreaterThan(0);
+        expect(summary.pendingCount).toBe(fixture.transactions.length);
+      },
+    });
   });
 });
 
