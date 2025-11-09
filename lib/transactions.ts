@@ -88,6 +88,11 @@ function normalizeCurrency(input?: string | null): string {
   return input ?? 'USD';
 }
 
+function maskString(value: string, maxLength = 200): string {
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, maxLength)}…`;
+}
+
 function matchesMerchant(summary: TransactionSummary, needle?: string): boolean {
   if (!needle) return true;
   const lower = needle.trim().toLowerCase();
@@ -478,8 +483,45 @@ export async function getTransactions(args: GetTransactionsArgs): Promise<GetTra
 
   const summary = buildTransactionsSummary(filtered, { from: startDate, to: endDate });
   const transactions = filtered.slice(0, targetRows);
+  const result: GetTransactionsResult = { transactions, moreAvailable, summary };
 
-  return { transactions, moreAvailable, summary };
+  if (process.env.PLAID_LOG_TRANSACTIONS === '1') {
+    const snapshot = {
+      userId,
+      range: { from: startDate, to: endDate },
+      filters: {
+        merchant: merchant ?? null,
+        category: category ?? null,
+        limit: limit ?? null,
+        maxRows,
+      },
+      moreAvailable,
+      summary,
+      transactions: transactions.slice(0, 50).map((txn) => ({
+        id: txn.id,
+        date: txn.date,
+        amount: txn.amount,
+        currency: txn.currency,
+        merchant: txn.merchant ? maskString(txn.merchant) : null,
+        description: txn.description ? maskString(txn.description) : null,
+        category: txn.category,
+        pending: txn.pending,
+        account: {
+          id: txn.account.id,
+          name: maskString(txn.account.name),
+          institution: txn.account.institution ? maskString(txn.account.institution) : null,
+          mask: txn.account.mask,
+        },
+      })),
+    };
+    try {
+      console.info('transactions.debug_result', JSON.stringify(snapshot));
+    } catch {
+      // ignore logging errors
+    }
+  }
+
+  return result;
 }
 
 
