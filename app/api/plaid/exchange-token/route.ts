@@ -92,8 +92,10 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // mark onboarding status
-    await prisma.user.update({ where: { id: user.id }, data: { onboardingStatus: 'plaid_connected' } });
+    // mark onboarding status only if the user isn't already complete/subscribed
+    if (user.onboardingStatus !== 'complete' && user.onboardingStatus !== 'subscribed') {
+      await prisma.user.update({ where: { id: user.id }, data: { onboardingStatus: 'plaid_connected' } });
+    }
 
     return NextResponse.json({ ok: true, itemId: item.id, accounts: accounts.map((a) => a.account_id) });
   } catch (e) {
