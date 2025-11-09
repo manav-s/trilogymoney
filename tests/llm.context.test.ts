@@ -96,15 +96,28 @@ describe('llm prompt includes onboarding context', () => {
       userText: 'show recent charges',
       profile: { name: 'Alex' },
       query: { kind: 'merchantSpend', limit: 100, merchant: 'Amazon', from: '2025-10-01', to: '2025-10-31' },
+      summaryJson: JSON.stringify({
+        from: '2025-10-01',
+        to: '2025-10-31',
+        totalAmount: 42.13,
+        pendingAmount: 0,
+        count: 1,
+        pendingCount: 0,
+        perMerchant: [{ label: 'CVS', amount: 42.13, pendingAmount: 0, count: 1, pendingCount: 0 }],
+        perCategory: [{ label: 'HEALTHCARE', amount: 42.13, pendingAmount: 0, count: 1, pendingCount: 0 }],
+      }),
     });
 
     expect(out).toBe('ok');
-    expect(capturedUserContent).toContain('total spend in that window');
-    expect(capturedUserContent).toContain('Focus on spend at "Amazon".');
-    expect(capturedUserContent).toContain('Date range: 2025-10-01 to 2025-10-31.');
+    expect(out).toBe('ok');
+    expect(capturedUserContent).toContain('Respond with 1–2 short sentences');
     expect(capturedUserContent).toContain('User question: "show recent charges".');
-    expect(capturedUserContent).toContain('2025-11-05: spent USD42.13 at CVS');
-    expect(capturedUserContent).toContain('More transactions exist beyond this list.');
+    expect(capturedUserContent).toContain('more_available: true');
+    expect(capturedUserContent).toContain('Query JSON: {"kind":"merchantSpend","limit":100,"merchant":"Amazon","from":"2025-10-01","to":"2025-10-31"}');
+    expect(capturedUserContent).toContain('Summary JSON:');
+    expect(capturedUserContent).toContain('"perMerchant"');
+    expect(capturedUserContent).toContain('Transactions JSON: ');
+    expect(capturedUserContent).toContain('"merchant":"CVS"');
   });
 });
 

@@ -77,6 +77,13 @@ describe('lib/transactions getTransactions', () => {
 
     expect(result.moreAvailable).toBe(false);
     expect(result.transactions).toHaveLength(1);
+    expect(result.summary).toMatchObject({
+      count: 1,
+      totalAmount: 42.13,
+      pendingAmount: 0,
+      perMerchant: expect.any(Array),
+      perCategory: expect.any(Array),
+    });
     const first = result.transactions[0];
     expect(first.id).toBe('tx-1');
     expect(first.amount).toBe(42.13);
@@ -131,6 +138,12 @@ describe('lib/transactions getTransactions', () => {
     const result = await getTransactions({ userId: 'user-1', limit: 5, merchant: 'star' });
 
     expect(result.transactions).toHaveLength(1);
+    expect(result.summary).toMatchObject({
+      count: 1,
+      perMerchant: expect.arrayContaining([
+        expect.objectContaining({ label: 'Starbucks', count: 1 }),
+      ]),
+    });
     expect(result.transactions[0].merchant).toBe('Starbucks');
     expect(result.moreAvailable).toBe(false);
   });
@@ -165,6 +178,7 @@ describe('lib/transactions getTransactions', () => {
     const result = await getTransactions({ userId: 'user-1', limit: 1 });
 
     expect(result.transactions).toHaveLength(1);
+    expect(result.summary.count).toBe(1);
     expect(result.moreAvailable).toBe(true);
   });
 
@@ -190,6 +204,11 @@ describe('lib/transactions getTransactions', () => {
     const result = await getTransactions({ userId: 'user-1' });
 
     expect(result.transactions).toHaveLength(0);
+    expect(result.summary).toMatchObject({
+      count: 0,
+      totalAmount: 0,
+      pendingAmount: 0,
+    });
     expect(result.moreAvailable).toBe(false);
     expect(logErrorMock).toHaveBeenCalled();
   });

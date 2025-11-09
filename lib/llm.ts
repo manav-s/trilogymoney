@@ -209,43 +209,31 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
 Data: total=${Math.round(total)}, top=${topLine}`;
   }
   if (tool === 'transactions') {
-    const txns = (ctx.transactions as TransactionSummary[]) ?? [];
+    const transactionsJson =
+      typeof ctx.transactionsJson === 'string'
+        ? ctx.transactionsJson
+        : JSON.stringify((ctx.transactions as TransactionSummary[]) ?? []);
+    const summaryJson =
+      typeof ctx.summaryJson === 'string'
+        ? ctx.summaryJson
+        : JSON.stringify(null);
     const more = Boolean(ctx.moreAvailable);
     const question = ((ctx.userText as string) || '').trim();
     const questionLine = question ? `User question: "${question}".` : 'User question: transactions summary.';
-    const query = (ctx.query as TransactionQuery | undefined) ?? undefined;
-    const merchantLine =
-      query && query.kind === 'merchantSpend' && query.merchant
-        ? `Focus on spend at "${query.merchant}".`
-        : '';
-    const rangeLine =
-      query && query.from && query.to ? `Date range: ${query.from} to ${query.to}.` : '';
-    const instructionLine =
-      query && query.kind === 'merchantSpend'
-        ? 'Respond with a natural 1–2 sentence SMS summarizing total spend in that window. Treat positive amounts as spend and negative amounts as refunds/income. Mention pending totals separately if greater than zero. If there is no spend in that range, say so plainly.'
-        : 'Respond with a natural 1–2 sentence SMS summarizing these recent transactions. Mention merchant and amount for each. If there are no transactions, state that clearly.';
-    const lines = txns.map((txn) => {
-      const date = txn.date;
-      const merchant = txn.merchant || txn.description || 'transaction';
-      const amount = txn.amount;
-      const currency = txn.currency || 'USD';
-      const direction = amount >= 0 ? 'spent' : 'received';
-      const abs = Math.abs(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const account = txn.account.institution
-        ? `${txn.account.institution.toLowerCase()} ${txn.account.name.toLowerCase()}`
-        : txn.account.name.toLowerCase();
-      const pending = txn.pending ? ' (pending)' : '';
-      return `${date}: ${direction} ${currency}${abs} at ${merchant}${pending} (${account})`;
-    });
-    const moreLine = more ? 'More transactions exist beyond this list.' : 'All matching transactions shown.';
-    const bodyLines = lines.length ? lines.join('\n') : 'none provided';
-    return `${instructionLine}
-${merchantLine}
-${rangeLine}
+    const query = (ctx.query as TransactionQuery | undefined) ?? null;
+    const queryJson = JSON.stringify(query);
+    const guidance = [
+      'Respond with 1–2 short sentences in lowercase using ONLY the JSON data provided.',
+      'Do not invent numbers. If the requested merchant/category/date is missing, say you can’t see it.',
+      'Mention pending totals separately when summary.pendingAmount is non-zero.',
+      more ? 'Note that more transactions are available and offer to pull them if needed.' : 'Do not offer to fetch more data.',
+    ].join(' ');
+    return `${guidance}
 ${questionLine}
-Transactions:
-${bodyLines}
-${moreLine}`;
+more_available: ${more ? 'true' : 'false'}
+Query JSON: ${queryJson}
+Summary JSON: ${summaryJson}
+Transactions JSON: ${transactionsJson}`;
   }
   const history = (ctx.history as string) || '';
   const userMsg = (ctx.userText as string) || '';

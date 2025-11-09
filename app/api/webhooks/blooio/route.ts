@@ -314,9 +314,13 @@ async function handleLLMConversation(phone: string, userText: string) {
         limit,
         maxRows: query.limit,
       });
+      const transactionsJson = JSON.stringify(txns.transactions);
+      const summaryJson = JSON.stringify(txns.summary);
       body = await generateReply('transactions', {
         transactions: txns.transactions,
         moreAvailable: txns.moreAvailable,
+        transactionsJson,
+        summaryJson,
         history,
         userText,
         profile,

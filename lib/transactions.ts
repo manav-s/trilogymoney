@@ -37,9 +37,29 @@ export type GetTransactionsArgs = {
   maxRows?: number;
 };
 
+export type TransactionsSummaryBucket = {
+  label: string;
+  amount: number;
+  pendingAmount: number;
+  count: number;
+  pendingCount: number;
+};
+
+export type TransactionsSummary = {
+  from: string;
+  to: string;
+  totalAmount: number;
+  pendingAmount: number;
+  count: number;
+  pendingCount: number;
+  perMerchant: TransactionsSummaryBucket[];
+  perCategory: TransactionsSummaryBucket[];
+};
+
 export type GetTransactionsResult = {
   transactions: TransactionSummary[];
   moreAvailable: boolean;
+  summary: TransactionsSummary;
 };
 
 function isoDate(date: Date): string {
@@ -78,6 +98,107 @@ function matchesCategory(summary: TransactionSummary, needle?: string): boolean 
   return summary.category?.toLowerCase().includes(lower) ?? false;
 }
 
+function accumulateBucket(
+  map: Map<string, TransactionsSummaryBucket>,
+  key: string,
+  label: string,
+  amount: number,
+  pendingAmount: number,
+  isPending: boolean
+) {
+  if (!map.has(key)) {
+    map.set(key, {
+      label,
+      amount: 0,
+      pendingAmount: 0,
+      count: 0,
+      pendingCount: 0,
+    });
+  }
+  const bucket = map.get(key)!;
+  bucket.amount += amount;
+  if (isPending) {
+    bucket.pendingAmount += pendingAmount;
+    bucket.pendingCount += 1;
+  }
+  bucket.count += 1;
+}
+
+function finalizeBuckets(map: Map<string, TransactionsSummaryBucket>): TransactionsSummaryBucket[] {
+  const buckets = Array.from(map.values());
+  buckets.sort((a, b) => {
+    const amountDelta = Math.abs(b.amount) - Math.abs(a.amount);
+    if (amountDelta !== 0) return amountDelta;
+    const countDelta = b.count - a.count;
+    if (countDelta !== 0) return countDelta;
+    return a.label.localeCompare(b.label);
+  });
+  const MAX_BUCKETS = 10;
+  if (buckets.length <= MAX_BUCKETS) {
+    return buckets;
+  }
+  const top = buckets.slice(0, MAX_BUCKETS);
+  const rest = buckets.slice(MAX_BUCKETS);
+  const other = rest.reduce<TransactionsSummaryBucket>(
+    (acc, bucket) => {
+      acc.amount += bucket.amount;
+      acc.pendingAmount += bucket.pendingAmount;
+      acc.count += bucket.count;
+      acc.pendingCount += bucket.pendingCount;
+      return acc;
+    },
+    { label: 'other', amount: 0, pendingAmount: 0, count: 0, pendingCount: 0 }
+  );
+  if (other.count > 0) {
+    top.push(other);
+  }
+  return top;
+}
+
+function buildTransactionsSummary(
+  transactions: TransactionSummary[],
+  params: { from: string; to: string }
+): TransactionsSummary {
+  let totalAmount = 0;
+  let pendingAmount = 0;
+  let pendingCount = 0;
+  const merchantMap = new Map<string, TransactionsSummaryBucket>();
+  const categoryMap = new Map<string, TransactionsSummaryBucket>();
+
+  for (const txn of transactions) {
+    totalAmount += txn.amount;
+    if (txn.pending) {
+      pendingAmount += txn.amount;
+      pendingCount += 1;
+    }
+
+    const baseAmount = txn.amount;
+    const pendingContribution = txn.pending ? txn.amount : 0;
+
+    const merchantKey =
+      txn.merchant?.trim().toLowerCase() ||
+      txn.description?.trim().toLowerCase() ||
+      'unknown';
+    const merchantLabel = txn.merchant?.trim() || txn.description?.trim() || 'unknown merchant';
+    accumulateBucket(merchantMap, merchantKey, merchantLabel, baseAmount, pendingContribution, txn.pending);
+
+    const categoryKey = txn.category?.trim().toLowerCase() || 'uncategorized';
+    const categoryLabel = txn.category?.trim() || 'uncategorized';
+    accumulateBucket(categoryMap, categoryKey, categoryLabel, baseAmount, pendingContribution, txn.pending);
+  }
+
+  return {
+    from: params.from,
+    to: params.to,
+    totalAmount,
+    pendingAmount,
+    count: transactions.length,
+    pendingCount,
+    perMerchant: finalizeBuckets(merchantMap),
+    perCategory: finalizeBuckets(categoryMap),
+  };
+}
+
 export async function getTransactions(args: GetTransactionsArgs): Promise<GetTransactionsResult> {
   const {
     userId,
@@ -106,7 +227,8 @@ export async function getTransactions(args: GetTransactionsArgs): Promise<GetTra
   const endDate = to ?? isoDate(new Date());
 
   if (new Date(startDate) > new Date(endDate)) {
-    return { transactions: [], moreAvailable: false };
+    const summary = buildTransactionsSummary([], { from: startDate, to: endDate });
+    return { transactions: [], moreAvailable: false, summary };
   }
 
   const limit = rawLimit ? Math.max(1, Math.min(rawLimit, 500)) : undefined;
@@ -120,7 +242,8 @@ export async function getTransactions(args: GetTransactionsArgs): Promise<GetTra
   });
 
   if (!items.length) {
-    return { transactions: [], moreAvailable: false };
+    const summary = buildTransactionsSummary([], { from: startDate, to: endDate });
+    return { transactions: [], moreAvailable: false, summary };
   }
 
   const activeAccountsRows = await prisma.plaidAccount.findMany({
@@ -252,9 +375,10 @@ export async function getTransactions(args: GetTransactionsArgs): Promise<GetTra
     moreAvailable = true;
   }
 
+  const summary = buildTransactionsSummary(filtered, { from: startDate, to: endDate });
   const transactions = filtered.slice(0, targetRows);
 
-  return { transactions, moreAvailable };
+  return { transactions, moreAvailable, summary };
 }
 
 
