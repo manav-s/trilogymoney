@@ -186,6 +186,71 @@ describe('lib/transactions getTransactions', () => {
     expect(result.moreAvailable).toBe(true);
   });
 
+  it('excludes transfer and payment categories from spend summary', async () => {
+    prismaMock.user.findUnique.mockResolvedValue({ id: 'user-1', billingStatus: 'active' });
+    prismaMock.plaidItem.findMany.mockResolvedValue([
+      { id: 'item-1', accessToken: 'enc-token-1', institutionName: 'Bank' },
+    ]);
+    prismaMock.plaidAccount.findMany.mockResolvedValue([{ accountId: 'acc-1' }]);
+    decryptMock.mockReturnValue('access-1');
+    plaidClientMock.transactionsGet.mockResolvedValue({
+      data: {
+        accounts: [
+          {
+            account_id: 'acc-1',
+            name: 'Checking',
+            mask: '1234',
+          },
+        ],
+        transactions: [
+          {
+            transaction_id: 'tx-1',
+            account_id: 'acc-1',
+            amount: 50,
+            iso_currency_code: 'USD',
+            merchant_name: 'Trader Joes',
+            name: 'TRADER JOES',
+            date: '2025-11-05',
+            pending: false,
+            personal_finance_category: { primary: 'FOOD_AND_DRINK' },
+          },
+          {
+            transaction_id: 'tx-2',
+            account_id: 'acc-1',
+            amount: 5000,
+            iso_currency_code: 'USD',
+            merchant_name: 'Discover',
+            name: 'DISCOVER E-PAYMENT',
+            date: '2025-11-04',
+            pending: false,
+            personal_finance_category: { primary: 'TRANSFER_OUT', detailed: 'TRANSFER_OUT_CREDIT_CARD' },
+          },
+        ],
+        total_transactions: 2,
+      },
+    });
+
+    const { getTransactions } = await import('../lib/transactions');
+    const result = await getTransactions({ userId: 'user-1', limit: 10 });
+
+    expect(result.transactions).toHaveLength(2);
+    expect(result.summary.totalSpend).toBe(50);
+    expect(result.summary.totalRefund).toBe(0);
+    expect(result.summary.count).toBe(1);
+    expect(result.summary.perMerchant).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: 'Trader Joes',
+          spendAmount: 50,
+          refundAmount: 0,
+        }),
+      ])
+    );
+    const categoryLabels = result.summary.perCategory.map((bucket) => bucket.label);
+    expect(categoryLabels).toContain('FOOD_AND_DRINK');
+    expect(categoryLabels).not.toContain('TRANSFER_OUT');
+  });
+
   it('throws for unpaid users', async () => {
     prismaMock.user.findUnique.mockResolvedValue({ id: 'user-1', billingStatus: 'inactive' });
 

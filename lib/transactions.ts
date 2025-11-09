@@ -106,6 +106,51 @@ function matchesCategory(summary: TransactionSummary, needle?: string): boolean 
   return summary.category?.toLowerCase().includes(lower) ?? false;
 }
 
+function normalizeCategoryKey(category?: string | null): string | null {
+  if (!category) return null;
+  const normalized = category.trim().toLowerCase();
+  return normalized || null;
+}
+
+const EXCLUDED_SUMMARY_CATEGORY_VALUES = new Set([
+  'transfer_in',
+  'transfer_out',
+  'loan_payments',
+  'bank_fees',
+  'service_charges',
+  'interest',
+  'income',
+  'payroll',
+  'investment_and_retirement_income',
+  'cash_advance',
+  'cash_withdrawal',
+  'credit_card_payment',
+  'credit_card_bill_payment',
+  'payment',
+  'mortgage',
+  'deposit',
+]);
+
+const EXCLUDED_SUMMARY_CATEGORY_PREFIXES = [
+  'transfer_in',
+  'transfer_out',
+  'loan_payments',
+  'cash_advance',
+  'cash_withdrawal',
+  'credit_card_payment',
+  'credit_card_bill_payment',
+  'investment_and_retirement_income',
+];
+
+function isExcludedFromSummary(txn: TransactionSummary): boolean {
+  const categoryKey = normalizeCategoryKey(txn.category);
+  if (!categoryKey) return false;
+  if (EXCLUDED_SUMMARY_CATEGORY_VALUES.has(categoryKey)) return true;
+  return EXCLUDED_SUMMARY_CATEGORY_PREFIXES.some((prefix) =>
+    categoryKey.startsWith(prefix)
+  );
+}
+
 function accumulateBucket(
   map: Map<string, TransactionsSummaryBucket>,
   key: string,
@@ -202,13 +247,18 @@ function buildTransactionsSummary(
   let pendingAmount = 0;
   let pendingSpend = 0;
   let pendingRefund = 0;
+  let count = 0;
   let pendingCount = 0;
   const merchantMap = new Map<string, TransactionsSummaryBucket>();
   const categoryMap = new Map<string, TransactionsSummaryBucket>();
 
   for (const txn of transactions) {
+    if (isExcludedFromSummary(txn)) {
+      continue;
+    }
+
     totalAmount += txn.amount;
-     if (txn.amount >= 0) {
+    if (txn.amount >= 0) {
       totalSpend += txn.amount;
       if (txn.pending) pendingSpend += txn.amount;
     } else {
@@ -220,6 +270,7 @@ function buildTransactionsSummary(
       pendingAmount += txn.amount;
       pendingCount += 1;
     }
+    count += 1;
 
     const merchantKey =
       txn.merchant?.trim().toLowerCase() ||
@@ -242,7 +293,7 @@ function buildTransactionsSummary(
     pendingAmount,
     pendingSpend,
     pendingRefund,
-    count: transactions.length,
+    count,
     pendingCount,
     perMerchant: finalizeBuckets(merchantMap),
     perCategory: finalizeBuckets(categoryMap),
