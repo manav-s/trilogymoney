@@ -224,8 +224,9 @@ Data: total=${Math.round(total)}, top=${topLine}`;
     const queryJson = JSON.stringify(query);
     const guidance = [
       'Respond with 1–2 short sentences in lowercase using ONLY the JSON data provided.',
+      'Use summary.totalSpend for spend totals and summary.totalRefund for refunds/credits; only use summary.totalAmount if the user explicitly asks for net spend.',
       'Do not invent numbers. If the requested merchant/category/date is missing, say you can’t see it.',
-      'Mention pending totals separately when summary.pendingAmount is non-zero.',
+      'Mention pending spend when summary.pendingSpend > 0 and pending refunds when summary.pendingRefund > 0.',
       more ? 'Note that more transactions are available and offer to pull them if needed.' : 'Do not offer to fetch more data.',
     ].join(' ');
     return `${guidance}

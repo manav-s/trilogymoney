@@ -100,17 +100,44 @@ describe('llm prompt includes onboarding context', () => {
         from: '2025-10-01',
         to: '2025-10-31',
         totalAmount: 42.13,
+        totalSpend: 42.13,
+        totalRefund: 0,
         pendingAmount: 0,
+        pendingSpend: 0,
+        pendingRefund: 0,
         count: 1,
         pendingCount: 0,
-        perMerchant: [{ label: 'CVS', amount: 42.13, pendingAmount: 0, count: 1, pendingCount: 0 }],
-        perCategory: [{ label: 'HEALTHCARE', amount: 42.13, pendingAmount: 0, count: 1, pendingCount: 0 }],
+        perMerchant: [{
+          label: 'CVS',
+          amount: 42.13,
+          spendAmount: 42.13,
+          refundAmount: 0,
+          pendingAmount: 0,
+          pendingSpendAmount: 0,
+          pendingRefundAmount: 0,
+          count: 1,
+          pendingCount: 0,
+        }],
+        perCategory: [{
+          label: 'HEALTHCARE',
+          amount: 42.13,
+          spendAmount: 42.13,
+          refundAmount: 0,
+          pendingAmount: 0,
+          pendingSpendAmount: 0,
+          pendingRefundAmount: 0,
+          count: 1,
+          pendingCount: 0,
+        }],
       }),
     });
 
     expect(out).toBe('ok');
     expect(out).toBe('ok');
     expect(capturedUserContent).toContain('Respond with 1–2 short sentences');
+    expect(capturedUserContent).toContain('summary.totalSpend');
+    expect(capturedUserContent).toContain('summary.totalRefund');
+    expect(capturedUserContent).toContain('summary.pendingSpend');
     expect(capturedUserContent).toContain('User question: "show recent charges".');
     expect(capturedUserContent).toContain('more_available: true');
     expect(capturedUserContent).toContain('Query JSON: {"kind":"merchantSpend","limit":100,"merchant":"Amazon","from":"2025-10-01","to":"2025-10-31"}');

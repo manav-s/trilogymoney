@@ -80,7 +80,11 @@ describe('lib/transactions getTransactions', () => {
     expect(result.summary).toMatchObject({
       count: 1,
       totalAmount: 42.13,
+      totalSpend: 42.13,
+      totalRefund: 0,
       pendingAmount: 0,
+      pendingSpend: 0,
+      pendingRefund: 0,
       perMerchant: expect.any(Array),
       perCategory: expect.any(Array),
     });
@@ -141,7 +145,7 @@ describe('lib/transactions getTransactions', () => {
     expect(result.summary).toMatchObject({
       count: 1,
       perMerchant: expect.arrayContaining([
-        expect.objectContaining({ label: 'Starbucks', count: 1 }),
+        expect.objectContaining({ label: 'Starbucks', count: 1, spendAmount: 10, refundAmount: 0 }),
       ]),
     });
     expect(result.transactions[0].merchant).toBe('Starbucks');
@@ -207,11 +211,77 @@ describe('lib/transactions getTransactions', () => {
     expect(result.summary).toMatchObject({
       count: 0,
       totalAmount: 0,
+      totalSpend: 0,
+      totalRefund: 0,
       pendingAmount: 0,
+      pendingSpend: 0,
+      pendingRefund: 0,
     });
     expect(result.moreAvailable).toBe(false);
     expect(logErrorMock).toHaveBeenCalled();
   });
+
+  it('separates spend and refund totals', async () => {
+    prismaMock.user.findUnique.mockResolvedValue({ id: 'user-1', billingStatus: 'active' });
+    prismaMock.plaidItem.findMany.mockResolvedValue([
+      { id: 'item-1', accessToken: 'enc-token-1', institutionName: 'Bank' },
+    ]);
+    prismaMock.plaidAccount.findMany.mockResolvedValue([{ accountId: 'acc-1' }]);
+    decryptMock.mockReturnValue('access-1');
+    plaidClientMock.transactionsGet.mockResolvedValue({
+      data: {
+        accounts: [
+          {
+            account_id: 'acc-1',
+            name: 'Checking',
+            mask: '1234',
+          },
+        ],
+        transactions: [
+          {
+            transaction_id: 'tx-1',
+            account_id: 'acc-1',
+            amount: 100,
+            iso_currency_code: 'USD',
+            merchant_name: 'Store',
+            name: 'STORE',
+            date: '2025-11-05',
+            pending: false,
+            personal_finance_category: { primary: 'SHOPPING' },
+          },
+          {
+            transaction_id: 'tx-2',
+            account_id: 'acc-1',
+            amount: -20,
+            iso_currency_code: 'USD',
+            merchant_name: 'Store',
+            name: 'STORE REFUND',
+            date: '2025-11-06',
+            pending: true,
+            personal_finance_category: { primary: 'SHOPPING' },
+          },
+        ],
+        total_transactions: 2,
+      },
+    });
+
+    const { getTransactions } = await import('../lib/transactions');
+    const result = await getTransactions({ userId: 'user-1', limit: 5 });
+
+    expect(result.summary.totalSpend).toBe(100);
+    expect(result.summary.totalRefund).toBe(20);
+    expect(result.summary.totalAmount).toBe(80);
+    expect(result.summary.pendingRefund).toBe(20);
+    expect(result.summary.pendingSpend).toBe(0);
+    expect(result.summary.perMerchant).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: 'Store',
+          spendAmount: 100,
+          refundAmount: 20,
+          pendingRefundAmount: 20,
+        }),
+      ])
+    );
+  });
 });
-
-

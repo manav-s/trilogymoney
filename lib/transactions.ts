@@ -40,7 +40,11 @@ export type GetTransactionsArgs = {
 export type TransactionsSummaryBucket = {
   label: string;
   amount: number;
+  spendAmount: number;
+  refundAmount: number;
   pendingAmount: number;
+  pendingSpendAmount: number;
+  pendingRefundAmount: number;
   count: number;
   pendingCount: number;
 };
@@ -49,7 +53,11 @@ export type TransactionsSummary = {
   from: string;
   to: string;
   totalAmount: number;
+  totalSpend: number;
+  totalRefund: number;
   pendingAmount: number;
+  pendingSpend: number;
+  pendingRefund: number;
   count: number;
   pendingCount: number;
   perMerchant: TransactionsSummaryBucket[];
@@ -102,23 +110,36 @@ function accumulateBucket(
   map: Map<string, TransactionsSummaryBucket>,
   key: string,
   label: string,
-  amount: number,
-  pendingAmount: number,
-  isPending: boolean
+  txn: TransactionSummary
 ) {
   if (!map.has(key)) {
     map.set(key, {
       label,
       amount: 0,
+      spendAmount: 0,
+      refundAmount: 0,
       pendingAmount: 0,
+      pendingSpendAmount: 0,
+      pendingRefundAmount: 0,
       count: 0,
       pendingCount: 0,
     });
   }
   const bucket = map.get(key)!;
-  bucket.amount += amount;
-  if (isPending) {
-    bucket.pendingAmount += pendingAmount;
+  const amt = txn.amount;
+  bucket.amount += amt;
+  if (amt >= 0) {
+    bucket.spendAmount += amt;
+  } else {
+    bucket.refundAmount += Math.abs(amt);
+  }
+  if (txn.pending) {
+    bucket.pendingAmount += amt;
+    if (amt >= 0) {
+      bucket.pendingSpendAmount += amt;
+    } else {
+      bucket.pendingRefundAmount += Math.abs(amt);
+    }
     bucket.pendingCount += 1;
   }
   bucket.count += 1;
@@ -127,8 +148,10 @@ function accumulateBucket(
 function finalizeBuckets(map: Map<string, TransactionsSummaryBucket>): TransactionsSummaryBucket[] {
   const buckets = Array.from(map.values());
   buckets.sort((a, b) => {
-    const amountDelta = Math.abs(b.amount) - Math.abs(a.amount);
-    if (amountDelta !== 0) return amountDelta;
+    const spendDelta = b.spendAmount - a.spendAmount;
+    if (spendDelta !== 0) return spendDelta;
+    const refundDelta = b.refundAmount - a.refundAmount;
+    if (refundDelta !== 0) return refundDelta;
     const countDelta = b.count - a.count;
     if (countDelta !== 0) return countDelta;
     return a.label.localeCompare(b.label);
@@ -142,12 +165,26 @@ function finalizeBuckets(map: Map<string, TransactionsSummaryBucket>): Transacti
   const other = rest.reduce<TransactionsSummaryBucket>(
     (acc, bucket) => {
       acc.amount += bucket.amount;
+      acc.spendAmount += bucket.spendAmount;
+      acc.refundAmount += bucket.refundAmount;
       acc.pendingAmount += bucket.pendingAmount;
+      acc.pendingSpendAmount += bucket.pendingSpendAmount;
+      acc.pendingRefundAmount += bucket.pendingRefundAmount;
       acc.count += bucket.count;
       acc.pendingCount += bucket.pendingCount;
       return acc;
     },
-    { label: 'other', amount: 0, pendingAmount: 0, count: 0, pendingCount: 0 }
+    {
+      label: 'other',
+      amount: 0,
+      spendAmount: 0,
+      refundAmount: 0,
+      pendingAmount: 0,
+      pendingSpendAmount: 0,
+      pendingRefundAmount: 0,
+      count: 0,
+      pendingCount: 0,
+    }
   );
   if (other.count > 0) {
     top.push(other);
@@ -160,38 +197,51 @@ function buildTransactionsSummary(
   params: { from: string; to: string }
 ): TransactionsSummary {
   let totalAmount = 0;
+  let totalSpend = 0;
+  let totalRefund = 0;
   let pendingAmount = 0;
+  let pendingSpend = 0;
+  let pendingRefund = 0;
   let pendingCount = 0;
   const merchantMap = new Map<string, TransactionsSummaryBucket>();
   const categoryMap = new Map<string, TransactionsSummaryBucket>();
 
   for (const txn of transactions) {
     totalAmount += txn.amount;
+     if (txn.amount >= 0) {
+      totalSpend += txn.amount;
+      if (txn.pending) pendingSpend += txn.amount;
+    } else {
+      const abs = Math.abs(txn.amount);
+      totalRefund += abs;
+      if (txn.pending) pendingRefund += abs;
+    }
     if (txn.pending) {
       pendingAmount += txn.amount;
       pendingCount += 1;
     }
-
-    const baseAmount = txn.amount;
-    const pendingContribution = txn.pending ? txn.amount : 0;
 
     const merchantKey =
       txn.merchant?.trim().toLowerCase() ||
       txn.description?.trim().toLowerCase() ||
       'unknown';
     const merchantLabel = txn.merchant?.trim() || txn.description?.trim() || 'unknown merchant';
-    accumulateBucket(merchantMap, merchantKey, merchantLabel, baseAmount, pendingContribution, txn.pending);
+    accumulateBucket(merchantMap, merchantKey, merchantLabel, txn);
 
     const categoryKey = txn.category?.trim().toLowerCase() || 'uncategorized';
     const categoryLabel = txn.category?.trim() || 'uncategorized';
-    accumulateBucket(categoryMap, categoryKey, categoryLabel, baseAmount, pendingContribution, txn.pending);
+    accumulateBucket(categoryMap, categoryKey, categoryLabel, txn);
   }
 
   return {
     from: params.from,
     to: params.to,
     totalAmount,
+    totalSpend,
+    totalRefund,
     pendingAmount,
+    pendingSpend,
+    pendingRefund,
     count: transactions.length,
     pendingCount,
     perMerchant: finalizeBuckets(merchantMap),
