@@ -271,7 +271,7 @@ async function handleLLMConversation(phone: string, userText: string) {
     const profile = { name: user.name, timezone: user.timezone, preferredTime: user.preferredTime } as const;
     const intent = await chooseIntentFromText(userText);
     const query = parseTransactionsQuery(userText);
-    const shouldUseTransactions = intent === 'txns_3' || query.kind === 'merchantSpend';
+    const shouldUseTransactions = query.kind === 'merchantSpend' || intent === 'transactions';
     if (intent === 'balances') {
       const breakdown = await getBalancesBreakdown({ userId: user.id });
       const cashInstitutions = [...new Set(breakdown.cash.accounts.map(a => a.institution).filter(Boolean))] as string[];

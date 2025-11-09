@@ -1,8 +1,8 @@
 /**
  * Minimal LLM intent chooser using OpenAI
- * Returns one of: 'balances' | 'spend_7d' | 'txns_3' | 'transactions' | 'chat'
+ * Returns one of: 'balances' | 'spend_7d' | 'transactions' | 'chat'
  */
-export type Intent = 'balances' | 'spend_7d' | 'txns_3' | 'transactions' | 'chat';
+export type Intent = 'balances' | 'spend_7d' | 'transactions' | 'chat';
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const MODEL = process.env.OPENAI_MODEL || 'gpt-5-mini';
@@ -23,10 +23,10 @@ export async function chooseIntentFromText(userText: string): Promise<Intent> {
     return 'chat';
   }
 
-  const system = `Classify a short SMS into EXACTLY ONE of: balances | spend_7d | txns_3 | chat.
+  const system = `Classify a short SMS into EXACTLY ONE of: balances | spend_7d | transactions | chat.
 
 Use balances for cash/balance requests. Use spend_7d for weekly/spend/last 7 days.
-Use txns_3 for recent/transactions/charges.
+Use transactions for transactions/charges (recent or merchant-specific).
 Use chat for greetings, opinions, budgeting questions, general advice, or anything that does not clearly require a tool.
 Return the bare token ONLY.`;
 
@@ -91,7 +91,7 @@ Return the bare token ONLY.`;
       return 'chat';
     }
     const text: string = rawText.toLowerCase();
-    if (text === 'balances' || text === 'spend_7d' || text === 'txns_3' || text === 'chat') return text as Intent;
+    if (text === 'balances' || text === 'spend_7d' || text === 'transactions' || text === 'chat') return text as Intent;
     return 'chat';
   } catch (e) {
     const name = (e as Error)?.name;
@@ -246,12 +246,6 @@ ${questionLine}
 Transactions:
 ${bodyLines}
 ${moreLine}`;
-  }
-  if (tool === 'txns_3') {
-    const list = (ctx.list as { date: string; merchant: string; amount: number }[]) ?? [];
-    const line = list.map(t => `$${t.amount.toFixed(2)} ${t.merchant} (${t.date})`).join('; ');
-    return `Write a single SMS listing recent transactions.
-Data: ${line}`;
   }
   const history = (ctx.history as string) || '';
   const userMsg = (ctx.userText as string) || '';

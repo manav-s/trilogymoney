@@ -1,5 +1,16 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+function mockFetch(response: unknown) {
+  const body = JSON.stringify(response);
+  const fn = vi.fn(async () => new Response(body, {
+    status: 200,
+    headers: { 'content-type': 'application/json' },
+  }));
+  // @ts-expect-error mutate global
+  global.fetch = fn;
+  return fn;
+}
+
 describe('chooseIntentFromText heuristics', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -30,6 +41,14 @@ describe('chooseIntentFromText heuristics', () => {
     const intent = await chooseIntentFromText('which card do i use?');
     expect(intent).toBe('balances');
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('routes general transaction questions to transactions intent', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'test');
+    mockFetch({ choices: [{ message: { content: 'transactions' } }] });
+    const { chooseIntentFromText } = await import('../lib/llm');
+    const intent = await chooseIntentFromText('show me my transactions');
+    expect(intent).toBe('transactions');
   });
 });
 
