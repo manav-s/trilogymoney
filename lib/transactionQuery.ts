@@ -16,20 +16,27 @@ function daysAgo(days: number, now = new Date()): Date {
   return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 }
 
-function getDefaultRange(now = new Date()): { from: string; to: string } {
+type DateRange = { from: string; to: string };
+
+function getDefaultRange(now = new Date()): DateRange {
   const to = isoDate(now);
   const from = isoDate(daysAgo(DEFAULT_LOOKBACK_DAYS, now));
   return { from, to };
 }
 
-function getLastMonthRange(now = new Date()): { from: string; to: string } {
+function getLastMonthRange(now = new Date()): DateRange {
   const firstOfCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
   const lastDayPrev = new Date(firstOfCurrent.getTime() - 24 * 60 * 60 * 1000);
   const firstPrev = new Date(lastDayPrev.getFullYear(), lastDayPrev.getMonth(), 1);
   return { from: isoDate(firstPrev), to: isoDate(lastDayPrev) };
 }
 
-function getPastDaysRange(days: number, now = new Date()): { from: string; to: string } {
+function getCurrentMonthRange(now = new Date()): DateRange {
+  const firstOfCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
+  return { from: isoDate(firstOfCurrent), to: isoDate(now) };
+}
+
+function getPastDaysRange(days: number, now = new Date()): DateRange {
   return { from: isoDate(daysAgo(days, now)), to: isoDate(now) };
 }
 
@@ -48,7 +55,7 @@ const MONTHS = [
   'december',
 ];
 
-function parseSinceMonth(text: string, now = new Date()): { from: string; to: string } | null {
+function parseSinceMonth(text: string, now = new Date()): DateRange | null {
   const match = text.match(/since\s+([a-z]+)(?:\s+(\d{1,2}))?/i);
   if (!match) return null;
   const monthName = match[1].toLowerCase();
@@ -60,6 +67,40 @@ function parseSinceMonth(text: string, now = new Date()): { from: string; to: st
     fromDate.setFullYear(fromDate.getFullYear() - 1);
   }
   return { from: isoDate(fromDate), to: isoDate(now) };
+}
+
+function getMonthRange(monthIndex: number, year: number, now = new Date()): DateRange {
+  const start = new Date(year, monthIndex, 1);
+  let end: Date;
+  const isCurrentMonth = year === now.getFullYear() && monthIndex === now.getMonth();
+  if (isCurrentMonth) {
+    end = now;
+  } else {
+    end = new Date(year, monthIndex + 1, 0);
+  }
+  return { from: isoDate(start), to: isoDate(end) };
+}
+
+function parseSingleMonth(text: string, now = new Date()): DateRange | null {
+  const MONTH_PATTERN = new RegExp(`\\b(${MONTHS.join('|')})(?:\\s+(\\d{4}))?\\b`, 'gi');
+  const matches: { monthIndex: number; year?: number }[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = MONTH_PATTERN.exec(text)) !== null) {
+    const monthName = match[1].toLowerCase();
+    const monthIndex = MONTHS.indexOf(monthName);
+    if (monthIndex === -1) continue;
+    const year = match[2] ? parseInt(match[2], 10) : undefined;
+    matches.push({ monthIndex, year });
+  }
+  if (!matches.length) return null;
+  const uniqueMonths = new Set(matches.map((m) => m.monthIndex));
+  if (uniqueMonths.size !== 1) return null;
+  const target = matches[0];
+  let year = target.year ?? now.getFullYear();
+  if (target.year == null && target.monthIndex > now.getMonth()) {
+    year -= 1;
+  }
+  return getMonthRange(target.monthIndex, year, now);
 }
 
 function clampDays(value: number, min = 1, max = 365): number {
@@ -104,9 +145,11 @@ export function parseTransactionsQuery(userText: string, now = new Date()): Tran
   const defaultRange = getDefaultRange(now);
   const merchant = extractMerchant(userText);
 
-  let range: { from: string; to: string } | null = null;
+  let range: DateRange | null = null;
 
-  if (/\blast month\b/.test(lower)) {
+  if (/\bthis month\b/.test(lower) || /\bcurrent month\b/.test(lower)) {
+    range = getCurrentMonthRange(now);
+  } else if (/\blast month\b/.test(lower)) {
     range = getLastMonthRange(now);
   } else if (/\blast week\b/.test(lower)) {
     range = getPastDaysRange(7, now);
@@ -124,7 +167,14 @@ export function parseTransactionsQuery(userText: string, now = new Date()): Tran
     range = getPastDaysRange(30, now);
   } else {
     const sinceRange = parseSinceMonth(lower, now);
-    if (sinceRange) range = sinceRange;
+    if (sinceRange) {
+      range = sinceRange;
+    } else {
+      const monthRange = parseSingleMonth(lower, now);
+      if (monthRange) {
+        range = monthRange;
+      }
+    }
   }
 
   const wantsSpend =
