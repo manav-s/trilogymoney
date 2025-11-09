@@ -5,7 +5,7 @@
 export type Intent = 'balances' | 'spend_7d' | 'transactions' | 'chat';
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const MODEL = process.env.OPENAI_MODEL || 'gpt-5-mini';
+const MODEL = 'gpt-5-mini';
 import { logError } from './logger';
 import { TransactionSummary } from './transactions';
 import { TransactionQuery } from './transactionQuery';
