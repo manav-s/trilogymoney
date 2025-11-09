@@ -6,6 +6,7 @@ import { logError } from '@/lib/logger';
 const DEFAULT_LOOKBACK_DAYS = 30;
 const MAX_LIMIT = 20;
 const PLAID_MAX_COUNT = 100;
+const DEFAULT_MAX_ROWS = 120;
 
 export type TransactionAccountSummary = {
   id: string;
@@ -33,6 +34,7 @@ export type GetTransactionsArgs = {
   limit?: number;
   merchant?: string;
   category?: string;
+  maxRows?: number;
 };
 
 export type GetTransactionsResult = {
@@ -84,6 +86,7 @@ export async function getTransactions(args: GetTransactionsArgs): Promise<GetTra
     limit: rawLimit,
     merchant,
     category,
+    maxRows: rawMaxRows,
   } = args;
 
   const user = await prisma.user.findUnique({
@@ -106,8 +109,10 @@ export async function getTransactions(args: GetTransactionsArgs): Promise<GetTra
     return { transactions: [], moreAvailable: false };
   }
 
-  const limit = Math.max(1, Math.min(rawLimit ?? 3, MAX_LIMIT));
-  const fetchCount = Math.min(limit * 5, PLAID_MAX_COUNT);
+  const limit = rawLimit ? Math.max(1, Math.min(rawLimit, 500)) : undefined;
+  const maxRows = Math.max(1, Math.min(rawMaxRows ?? DEFAULT_MAX_ROWS, 500));
+  const targetRows = limit ?? maxRows;
+  const fetchCount = Math.min(Math.max(targetRows, MAX_LIMIT), PLAID_MAX_COUNT);
 
   const items = await prisma.plaidItem.findMany({
     where: { userId },
@@ -139,16 +144,17 @@ export async function getTransactions(args: GetTransactionsArgs): Promise<GetTra
       continue;
     }
 
-    const options: Record<string, unknown> = {
-      count: fetchCount,
-      offset: 0,
-      include_personal_finance_category: true,
-    };
-
+    let offset = 0;
     let attempt = 0;
-    // eslint-disable-next-line no-constant-condition
+
     while (true) {
       try {
+        const options: Record<string, unknown> = {
+          count: fetchCount,
+          offset,
+          include_personal_finance_category: true,
+        };
+
         const resp = await client.transactionsGet({
           access_token: accessToken,
           start_date: startDate,
@@ -170,9 +176,6 @@ export async function getTransactions(args: GetTransactionsArgs): Promise<GetTra
 
         const transactions = resp.data.transactions ?? [];
         const totalTransactions = resp.data.total_transactions ?? transactions.length;
-        if (totalTransactions > transactions.length) {
-          moreAvailable = true;
-        }
 
         for (const txn of transactions) {
           if (filterInactive && !activeAccountIds.has(txn.account_id)) continue;
@@ -205,9 +208,19 @@ export async function getTransactions(args: GetTransactionsArgs): Promise<GetTra
           };
 
           allSummaries.push(summary);
+          if (allSummaries.length >= targetRows) break;
         }
 
-        break;
+        if (allSummaries.length >= targetRows) {
+          moreAvailable = allSummaries.length < totalTransactions;
+          break;
+        }
+
+        if (transactions.length === 0) break;
+
+        offset += transactions.length;
+        if (offset >= totalTransactions) break;
+        continue;
       } catch (error) {
         attempt += 1;
         logError('transactions.plaid_error', error, { attempt, itemId: item.id, userId });
@@ -235,11 +248,11 @@ export async function getTransactions(args: GetTransactionsArgs): Promise<GetTra
     return b.date.localeCompare(a.date);
   });
 
-  if (filtered.length > limit) {
+  if (filtered.length > targetRows) {
     moreAvailable = true;
   }
 
-  const transactions = filtered.slice(0, limit);
+  const transactions = filtered.slice(0, targetRows);
 
   return { transactions, moreAvailable };
 }

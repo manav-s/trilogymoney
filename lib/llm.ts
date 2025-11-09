@@ -8,6 +8,7 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const MODEL = process.env.OPENAI_MODEL || 'gpt-5-mini';
 import { logError } from './logger';
 import { TransactionSummary } from './transactions';
+import { TransactionQuery } from './transactionQuery';
 
 export async function chooseIntentFromText(userText: string): Promise<Intent> {
   const lowered = (userText || '').toLowerCase();
@@ -212,6 +213,17 @@ Data: total=${Math.round(total)}, top=${topLine}`;
     const more = Boolean(ctx.moreAvailable);
     const question = ((ctx.userText as string) || '').trim();
     const questionLine = question ? `User question: "${question}".` : 'User question: transactions summary.';
+    const query = (ctx.query as TransactionQuery | undefined) ?? undefined;
+    const merchantLine =
+      query && query.kind === 'merchantSpend' && query.merchant
+        ? `Focus on spend at "${query.merchant}".`
+        : '';
+    const rangeLine =
+      query && query.from && query.to ? `Date range: ${query.from} to ${query.to}.` : '';
+    const instructionLine =
+      query && query.kind === 'merchantSpend'
+        ? 'Respond with a natural 1–2 sentence SMS summarizing total spend in that window. Treat positive amounts as spend and negative amounts as refunds/income. Mention pending totals separately if greater than zero. If there is no spend in that range, say so plainly.'
+        : 'Respond with a natural 1–2 sentence SMS summarizing these recent transactions. Mention merchant and amount for each. If there are no transactions, state that clearly.';
     const lines = txns.map((txn) => {
       const date = txn.date;
       const merchant = txn.merchant || txn.description || 'transaction';
@@ -225,11 +237,14 @@ Data: total=${Math.round(total)}, top=${topLine}`;
       const pending = txn.pending ? ' (pending)' : '';
       return `${date}: ${direction} ${currency}${abs} at ${merchant}${pending} (${account})`;
     });
-    const moreLine = more ? 'More transactions available beyond this list.' : 'No additional transactions beyond this list.';
-    return `Respond with a natural 1–2 sentence SMS summarizing the transactions below. Mention merchant and amount for each. If the user asked for more and more transactions are available, offer to fetch more.
+    const moreLine = more ? 'More transactions exist beyond this list.' : 'All matching transactions shown.';
+    const bodyLines = lines.length ? lines.join('\n') : 'none provided';
+    return `${instructionLine}
+${merchantLine}
+${rangeLine}
 ${questionLine}
 Transactions:
-${lines.join('\n') || 'none'}
+${bodyLines}
 ${moreLine}`;
   }
   if (tool === 'txns_3') {

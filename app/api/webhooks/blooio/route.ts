@@ -20,6 +20,7 @@ import { z } from 'zod';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { RATE_LIMIT_WINDOW_MS, MAX_MESSAGES_PER_WINDOW } from '@/lib/constants';
 import { getBalances, getBalancesBreakdown } from '@/lib/balances';
+import { parseTransactionsQuery, TransactionQuery } from '@/lib/transactionQuery';
 import { splitIntoSmsSegments } from '@/lib/sms';
 
 const WEBHOOK_SECRET = process.env.BLOOIO_WEBHOOK_SECRET;
@@ -269,6 +270,8 @@ async function handleLLMConversation(phone: string, userText: string) {
   try {
     const profile = { name: user.name, timezone: user.timezone, preferredTime: user.preferredTime } as const;
     const intent = await chooseIntentFromText(userText);
+    const query = parseTransactionsQuery(userText);
+    const shouldUseTransactions = intent === 'txns_3' || query.kind === 'merchantSpend';
     if (intent === 'balances') {
       const breakdown = await getBalancesBreakdown({ userId: user.id });
       const cashInstitutions = [...new Set(breakdown.cash.accounts.map(a => a.institution).filter(Boolean))] as string[];
@@ -302,25 +305,31 @@ async function handleLLMConversation(phone: string, userText: string) {
         quizAnswers: (user as unknown as { quizAnswers?: unknown }).quizAnswers ?? null,
         analysisSummary: (user as unknown as { analysisSummary?: unknown }).analysisSummary ?? null,
       });
+    } else if (shouldUseTransactions) {
+      const limit = query.limit;
+      const txns = await getTransactions({
+        userId: user.id,
+        from: query.from,
+        to: query.to,
+        limit,
+        maxRows: query.limit,
+      });
+      body = await generateReply('transactions', {
+        transactions: txns.transactions,
+        moreAvailable: txns.moreAvailable,
+        history,
+        userText,
+        profile,
+        query,
+      });
     } else {
-      if (intent === 'txns_3') {
-        const txns = await getTransactions({ userId: user.id, limit: 3 });
-        body = await generateReply('transactions', {
-          transactions: txns.transactions,
-          moreAvailable: txns.moreAvailable,
-          history,
-          userText,
-          profile,
-        });
-      } else {
-        body = await generateReply('chat', {
-          history,
-          userText,
-          quizAnswers: (user as unknown as { quizAnswers?: unknown }).quizAnswers ?? null,
-          analysisSummary: (user as unknown as { analysisSummary?: unknown }).analysisSummary ?? null,
-          profile,
-        });
-      }
+      body = await generateReply('chat', {
+        history,
+        userText,
+        quizAnswers: (user as unknown as { quizAnswers?: unknown }).quizAnswers ?? null,
+        analysisSummary: (user as unknown as { analysisSummary?: unknown }).analysisSummary ?? null,
+        profile,
+      });
     }
   } catch {
     body = /^(hi|hey|hello|yo|sup|howdy)\b/i.test(userText)

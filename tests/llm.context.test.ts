@@ -82,7 +82,7 @@ describe('llm prompt includes onboarding context', () => {
         {
           id: 'tx-1',
           date: '2025-11-05',
-        amount: 42.13,
+          amount: 42.13,
           currency: 'USD',
           merchant: 'CVS',
           description: 'CVS STORE',
@@ -95,12 +95,16 @@ describe('llm prompt includes onboarding context', () => {
       history: 'you: hi',
       userText: 'show recent charges',
       profile: { name: 'Alex' },
+      query: { kind: 'merchantSpend', limit: 100, merchant: 'Amazon', from: '2025-10-01', to: '2025-10-31' },
     });
 
     expect(out).toBe('ok');
+    expect(capturedUserContent).toContain('total spend in that window');
+    expect(capturedUserContent).toContain('Focus on spend at "Amazon".');
+    expect(capturedUserContent).toContain('Date range: 2025-10-01 to 2025-10-31.');
     expect(capturedUserContent).toContain('User question: "show recent charges".');
     expect(capturedUserContent).toContain('2025-11-05: spent USD42.13 at CVS');
-    expect(capturedUserContent).toContain('More transactions available');
+    expect(capturedUserContent).toContain('More transactions exist beyond this list.');
   });
 });
 
