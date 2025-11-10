@@ -104,15 +104,26 @@ export default function OnboardWithIdPage() {
               this link isn&apos;t valid. maybe you already used it, or it got corrupted?
             </p>
             <a
-              href="https://shorturl.at/KGbiL"
+              href="/signin"
               className="inline-flex items-center px-10 py-5 text-xl font-semibold rounded-full bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-600/20 transition-all lowercase shadow-lg"
             >
-              start over 💬
+              go to sign in
             </a>
+            <p className="text-sm text-gray-500 lowercase">
+              starting fresh?{" "}
+              <a
+                href="https://shorturl.at/KGbiL"
+                className="text-indigo-600 hover:text-indigo-700 underline"
+              >
+                text us for a new link
+              </a>
+              .
+            </p>
           </>
         )}
       </div>
     </div>
   );
 }
+
 
