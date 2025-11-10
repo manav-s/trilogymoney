@@ -337,8 +337,8 @@ async function handleLLMConversation(phone: string, userText: string) {
     }
   } catch {
     body = /^(hi|hey|hello|yo|sup|howdy)\b/i.test(userText)
-      ? 'hey—what money thing can I help with today? balance, last‑week spend, or a recent charge?'
-      : 'how can I help with money today? balance, last‑week spend, or a recent charge?';
+      ? 'hey—what money thing can I help with today? balance or a recent charge?'
+      : 'how can I help with money today? balance or a recent charge?';
   }
   const parts = splitIntoSmsSegments(body);
 

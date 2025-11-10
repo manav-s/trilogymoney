@@ -1,8 +1,8 @@
 /**
  * Minimal LLM intent chooser using OpenAI
- * Returns one of: 'balances' | 'spend_7d' | 'transactions' | 'chat'
+ * Returns one of: 'balances' | 'transactions' | 'chat'
  */
-export type Intent = 'balances' | 'spend_7d' | 'transactions' | 'chat';
+export type Intent = 'balances' | 'transactions' | 'chat';
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const MODEL = 'gpt-4.1-mini';
@@ -23,9 +23,9 @@ export async function chooseIntentFromText(userText: string): Promise<Intent> {
     return 'chat';
   }
 
-  const system = `Classify a short SMS into EXACTLY ONE of: balances | spend_7d | transactions | chat.
+  const system = `Classify a short SMS into EXACTLY ONE of: balances | transactions | chat.
 
-Use balances for cash/balance requests. Use spend_7d for weekly/spend/last 7 days.
+Use balances for cash/balance requests.
 Use transactions for transactions/charges (recent or merchant-specific).
 Use chat for greetings, opinions, budgeting questions, general advice, or anything that does not clearly require a tool.
 Return the bare token ONLY.`;
@@ -91,7 +91,7 @@ Return the bare token ONLY.`;
       return 'chat';
     }
     const text: string = rawText.toLowerCase();
-    if (text === 'balances' || text === 'spend_7d' || text === 'transactions' || text === 'chat') return text as Intent;
+    if (text === 'balances' || text === 'transactions' || text === 'chat') return text as Intent;
     return 'chat';
   } catch (e) {
     const name = (e as Error)?.name;
@@ -109,13 +109,12 @@ export async function generateReply(tool: Intent, context: Record<string, unknow
     logError('llm.reply', undefined, { reason: 'missing_api_key' });
     return 'sorry the model is having trouble';
   }
-  const system = `You are Trilogy, a concise, warm money coach over SMS.
+const system = `You are Trilogy, a concise, warm money coach over SMS.
 style: lowercase, short, playful-but-respectful, no doom.
 format: default to one short line; use up to two lines only when presenting numbers or lists. put numbers first. plain language. no emojis.
 behavior: answer directly; do NOT add a question at the end unless a question is strictly required to proceed (e.g., choose dates). never append soft check-ins like “does that help?”. avoid menus/boilerplate.
 tools you can call (server will provide data when needed):
 - balances: cash totals plus card owed amounts by institution.
-- spend_7d: last-week spend summary and top categories/merchants.
 - transactions: recent transactions with amount, merchant, date, and account. mention pending status if present and offer to fetch more when moreAvailable=true.`;
   const user = buildUserPrompt(tool, context);
   try {
@@ -201,13 +200,6 @@ ${questionLine}
 Use the structured data below. Mention totals only if they help answer the question. If the user asks about banks or cards, name the institutions and account labels from the data—never guess. If information is missing, say you can’t see it.
 Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_institutions=${cashInstStr}, cash_accounts_json=${cashAccountsJson}, cards_owed=${Math.round(cardOwed)}, cards=${cardCount}, card_institutions=${cardInstStr}, card_accounts_json=${cardAccountsJson}`;
   }
-  if (tool === 'spend_7d') {
-    const total = (ctx.total as number) ?? 0;
-    const top = (ctx.top as { name: string; amount: number }[]) ?? [];
-    const topLine = top.slice(0, 2).map(t => `${t.name} $${Math.round(t.amount)}`).join(', ');
-    return `Write a single SMS about last 7 days spend.
-Data: total=${Math.round(total)}, top=${topLine}`;
-  }
   if (tool === 'transactions') {
     const transactionsJson =
       typeof ctx.transactionsJson === 'string'
@@ -251,9 +243,7 @@ Transactions JSON: ${transactionsJson}`;
   const quizStr = toShortJson(quiz);
   const analysisStr = toShortJson(analysis);
   const balances = ctx.balances as { total: number; count: number } | undefined;
-  const spend = ctx.spend as { total: number; top: { name: string; amount: number }[] } | undefined;
   const txns = ctx.txns as { date: string; merchant: string; amount: number }[] | undefined;
-  const topLine = spend?.top?.slice(0,2).map(t => `${t.name} $${Math.round(t.amount)}`).join(', ') || '';
   const txnLine = (txns || []).slice(0,3).map(t => `$${t.amount.toFixed(2)} ${t.merchant} (${t.date})`).join('; ');
   return `You are chatting over SMS. Give ONE concise reply.
 Default for casual/small‑talk: one very short line (≈3–7 words). Use ≤2 lines only when showing numbers.
@@ -261,7 +251,6 @@ Do not include a question unless you truly cannot proceed without a specific det
 If the message clearly asks for balances/spend/transactions, write the answer using the data. Otherwise, reply conversationally in one short line. Avoid generic menus; tailor to the latest user message and recent history.
 Data (may be partial):
 balances: total=${balances ? Math.round(balances.total) : 'n/a'}, accounts=${balances?.count ?? 'n/a'}
-spend_7d: total=${spend ? Math.round(spend.total) : 'n/a'}, top=${topLine}
 txns_3: ${txnLine}
  Recent messages:\n${history}
   Latest user message: ${userMsg}
