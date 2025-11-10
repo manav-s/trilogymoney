@@ -669,7 +669,7 @@ describe('llm prompt includes onboarding context', () => {
     expect(capturedUserContent).toContain('summary.totalRefund');
     expect(capturedUserContent).toContain('summary.pendingSpend');
     expect(capturedUserContent).toContain('User question: "show recent charges".');
-    expect(capturedUserContent).toContain('more_available: true');
+    expect(capturedUserContent).not.toContain('more_available');
     expect(capturedUserContent).toContain('Query JSON: {"kind":"merchantSpend","limit":100,"merchant":"Amazon","from":"2025-10-01","to":"2025-10-31"}');
     expect(capturedUserContent).toContain('Summary JSON:');
     expect(capturedUserContent).toContain('"perMerchant"');

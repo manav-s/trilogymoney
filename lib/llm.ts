@@ -115,7 +115,7 @@ format: default to one short line; use up to two lines only when presenting numb
 behavior: answer directly; do NOT add a question at the end unless a question is strictly required to proceed (e.g., choose dates). never append soft check-ins like “does that help?”. avoid menus/boilerplate.
 tools you can call (server will provide data when needed):
 - balances: cash totals plus card owed amounts by institution.
-- transactions: recent transactions with amount, merchant, date, and account. mention pending status if present and offer to fetch more when moreAvailable=true.`;
+- transactions: recent transactions with amount, merchant, date, and account. mention pending status if present.`;
   const user = buildUserPrompt(tool, context);
   try {
     const controller = new AbortController();
@@ -209,7 +209,6 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
       typeof ctx.summaryJson === 'string'
         ? ctx.summaryJson
         : JSON.stringify(null);
-    const more = Boolean(ctx.moreAvailable);
     const question = ((ctx.userText as string) || '').trim();
     const questionLine = question ? `User question: "${question}".` : 'User question: transactions summary.';
     const query = (ctx.query as TransactionQuery | undefined) ?? null;
@@ -219,11 +218,10 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
       'Use summary.totalSpend for spend totals and summary.totalRefund for refunds/credits; only use summary.totalAmount if the user explicitly asks for net spend.',
       'Do not invent numbers. If the requested merchant/category/date is missing, say you can’t see it.',
       'Mention pending spend when summary.pendingSpend > 0 and pending refunds when summary.pendingRefund > 0.',
-      more ? 'Note that more transactions are available and offer to pull them if needed.' : 'Do not offer to fetch more data.',
+      'Do not offer to fetch more data.',
     ].join(' ');
     return `${guidance}
 ${questionLine}
-more_available: ${more ? 'true' : 'false'}
 Query JSON: ${queryJson}
 Summary JSON: ${summaryJson}
 Transactions JSON: ${transactionsJson}`;
