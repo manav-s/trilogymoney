@@ -45,7 +45,7 @@ Return the bare token ONLY.`;
           { role: 'system', content: system },
           { role: 'user', content: String(userText || '') },
         ],
-        max_completion_tokens: 5,
+        max_tokens: 5,
       }),
       signal: controller.signal,
     });
@@ -129,7 +129,7 @@ tools you can call (server will provide data when needed):
       body: JSON.stringify({
         model: MODEL,
         messages: [ { role: 'system', content: system }, { role: 'user', content: user } ],
-        max_completion_tokens: 120,
+        max_tokens: 120,
       }),
       signal: controller.signal,
     });
