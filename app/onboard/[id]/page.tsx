@@ -83,13 +83,13 @@ export default function OnboardWithIdPage() {
               link expired
             </h1>
             <p className="text-xl text-gray-600 lowercase">
-              authentication links expire after 10 minutes. text us again and we&apos;ll send you a fresh one!
+              authentication links expire after 10 minutes. head to sign in to get a fresh link.
             </p>
             <a
-              href="https://shorturl.at/KGbiL"
+              href="/signin"
               className="inline-flex items-center px-10 py-5 text-xl font-semibold rounded-full bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-600/20 transition-all lowercase shadow-lg"
             >
-              text for new link 💬
+              go to sign in
             </a>
           </>
         )}
