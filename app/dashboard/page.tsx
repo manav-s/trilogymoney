@@ -145,11 +145,17 @@ export default function DashboardPage() {
           </button>
         </div>
 
+        {(() => {
+          const visibleItems = items.map((it) => ({
+            ...it,
+            accounts: it.accounts.filter(Boolean),
+          })).filter((it) => it.accounts.length > 0);
+          return (
         <div className="space-y-4">
-          {items.flatMap((it) => it.accounts).length === 0 ? (
+          {visibleItems.flatMap((it) => it.accounts).length === 0 ? (
             <p className="text-gray-600 lowercase">no accounts linked yet</p>
           ) : (
-            items.map((it) => (
+            visibleItems.map((it) => (
               <div key={it.id} className="border rounded-2xl p-4">
                 {it.institutionName ? (
                   <div className="font-semibold mb-2 lowercase">{it.institutionName}</div>
@@ -169,6 +175,8 @@ export default function DashboardPage() {
             ))
           )}
         </div>
+          );
+        })()}
       </div>
       </main>
 
