@@ -347,11 +347,21 @@ export async function handleLLMConversation(phone: string, userText: string) {
       const transactionsJson = JSON.stringify(txns.transactions);
       const summaryJson = JSON.stringify(txns.summary);
       const queryForPrompt: TransactionQuery = effectiveQuery;
+      const categorySummaryLines = txns.summary.perCategory.map((bucket) => {
+        const spend = Math.round(bucket.spendAmount);
+        const refunds = Math.round(bucket.refundAmount);
+        if (refunds > 0) {
+          return `${bucket.label}: $${spend} spend, $${refunds} refunds`;
+        }
+        return `${bucket.label}: $${spend} spend`;
+      });
+
       body = await generateReply('transactions', {
         transactions: txns.transactions,
         moreAvailable: txns.moreAvailable,
         transactionsJson,
         summaryJson,
+        categorySummaryLines,
         history,
         userText,
         profile,

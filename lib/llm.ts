@@ -213,17 +213,27 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
     const questionLine = question ? `User question: "${question}".` : 'User question: transactions summary.';
     const query = (ctx.query as TransactionQuery | undefined) ?? null;
     const queryJson = JSON.stringify(query);
+    const categorySummaryLines =
+      Array.isArray(ctx.categorySummaryLines) && (ctx.categorySummaryLines as string[]).length > 0
+        ? (ctx.categorySummaryLines as string[])
+        : null;
     const guidance = [
       'Respond with 1–2 short sentences in lowercase using ONLY the JSON data provided.',
       'Use summary.totalSpend for overall spend and summary.totalRefund for refunds/credits.',
-      'When mentioning category totals, read them from summary.perCategory (do not recompute from raw transactions).',
+      categorySummaryLines
+        ? 'When mentioning category totals, quote from categorySummaryLines exactly (do not recompute).'
+        : 'When mentioning category totals, read them from summary.perCategory (do not recompute from raw transactions).',
       'When mentioning merchant totals, use summary.perMerchant when available.',
       'Do not invent numbers. If the requested merchant/category/date is missing, say you can’t see it.',
       'Mention pending spend when summary.pendingSpend > 0 and pending refunds when summary.pendingRefund > 0.',
       'Do not offer to fetch more data.',
     ].join(' ');
+    const categoriesLine = categorySummaryLines
+      ? `Category summary lines: ${JSON.stringify(categorySummaryLines)}`
+      : '';
     return `${guidance}
 ${questionLine}
+${categoriesLine}
 Query JSON: ${queryJson}
 Summary JSON: ${summaryJson}
 Transactions JSON: ${transactionsJson}`;
