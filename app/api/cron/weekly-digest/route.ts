@@ -49,8 +49,15 @@ async function authorize(req: NextRequest): Promise<boolean> {
     console.error('weekly-digest.cron_missing_secret');
     return false;
   }
-  const provided = req.headers.get('x-cron-secret');
-  return secret === provided;
+  const providedHeader = req.headers.get('x-cron-secret');
+  if (providedHeader && providedHeader === secret) {
+    return true;
+  }
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader) return false;
+  if (!authHeader.toLowerCase().startsWith('bearer ')) return false;
+  const token = authHeader.slice(7).trim();
+  return token === secret;
 }
 
 export async function POST(req: NextRequest) {
