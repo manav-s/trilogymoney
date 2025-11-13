@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/weekly-digest",
-      "schedule": "0 16 * * MON",
+      "schedule": "0 16 * * 1",
       "headers": {
         "x-cron-secret": "@cron_secret"
       }
