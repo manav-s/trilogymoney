@@ -268,7 +268,7 @@ async function handleExistingUser(user: ExistingUserContext, event: BlooioWebhoo
   return;
 }
 
-async function handleLLMConversation(phone: string, userText: string) {
+export async function handleLLMConversation(phone: string, userText: string) {
   const user = await prisma.user.findUnique({ where: { phone } });
   if (!user) return;
   const isPaid = user.billingStatus === 'active' || user.billingStatus === 'trialing';
