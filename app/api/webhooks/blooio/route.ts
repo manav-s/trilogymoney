@@ -20,8 +20,18 @@ import { z } from 'zod';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { RATE_LIMIT_WINDOW_MS, MAX_MESSAGES_PER_WINDOW } from '@/lib/constants';
 import { getBalances, getBalancesBreakdown } from '@/lib/balances';
-import { parseTransactionsQuery, TransactionQuery } from '@/lib/transactionQuery';
+import {
+  parseTransactionsQuery,
+  TransactionQuery,
+  RECENT_FALLBACK_LIMIT,
+} from '@/lib/transactionQuery';
 import { splitIntoSmsSegments } from '@/lib/sms';
+import {
+  buildStoredTransactionsQuery,
+  shouldReuseStoredQuery,
+  storedQueryToTransactionQuery,
+  StoredTransactionsQuery,
+} from '@/lib/transactionsContext';
 
 const WEBHOOK_SECRET = process.env.BLOOIO_WEBHOOK_SECRET;
 
@@ -270,8 +280,13 @@ async function handleLLMConversation(phone: string, userText: string) {
   try {
     const profile = { name: user.name, timezone: user.timezone, preferredTime: user.preferredTime } as const;
     const intent = await chooseIntentFromText(userText);
-    const query = parseTransactionsQuery(userText);
-    const shouldUseTransactions = query.kind === 'merchantSpend' || intent === 'transactions';
+    const parsedQuery = parseTransactionsQuery(userText);
+    const storedQueryRaw = (user.lastTransactionsQuery as StoredTransactionsQuery | null) ?? null;
+    const effectiveQuery = shouldReuseStoredQuery(parsedQuery, storedQueryRaw)
+      ? storedQueryToTransactionQuery(storedQueryRaw)
+      : parsedQuery;
+    const shouldUseTransactions =
+      effectiveQuery.kind === 'merchantSpend' || intent === 'transactions';
     if (intent === 'balances') {
       const breakdown = await getBalancesBreakdown({ userId: user.id });
       const cashInstitutions = [...new Set(breakdown.cash.accounts.map(a => a.institution).filter(Boolean))] as string[];
@@ -306,16 +321,20 @@ async function handleLLMConversation(phone: string, userText: string) {
         analysisSummary: (user as unknown as { analysisSummary?: unknown }).analysisSummary ?? null,
       });
     } else if (shouldUseTransactions) {
-      const limit = query.limit;
+      const limit = effectiveQuery.limit;
       const txns = await getTransactions({
         userId: user.id,
-        from: query.from,
-        to: query.to,
+        from: effectiveQuery.from,
+        to: effectiveQuery.to,
         limit,
-        maxRows: query.limit,
+        maxRows: effectiveQuery.limit,
+        ...(effectiveQuery.kind === 'merchantSpend' && effectiveQuery.merchant
+          ? { merchant: effectiveQuery.merchant }
+          : {}),
       });
       const transactionsJson = JSON.stringify(txns.transactions);
       const summaryJson = JSON.stringify(txns.summary);
+      const queryForPrompt: TransactionQuery = effectiveQuery;
       body = await generateReply('transactions', {
         transactions: txns.transactions,
         moreAvailable: txns.moreAvailable,
@@ -324,8 +343,20 @@ async function handleLLMConversation(phone: string, userText: string) {
         history,
         userText,
         profile,
-        query,
+        query: queryForPrompt,
       });
+
+      if (
+        (queryForPrompt.kind === 'merchantSpend' && queryForPrompt.merchant) ||
+        queryForPrompt.limit > RECENT_FALLBACK_LIMIT
+      ) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            lastTransactionsQuery: buildStoredTransactionsQuery(queryForPrompt),
+          },
+        });
+      }
     } else {
       body = await generateReply('chat', {
         history,

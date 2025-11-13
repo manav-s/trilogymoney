@@ -29,6 +29,7 @@ model User {
   isActive          Boolean        @default(true)
   messagingStatus   String         @default("inactive") // inactive, active, stopped
   lastWeeklyDigestAt DateTime?
+  lastTransactionsQuery Json?
 
   // Plaid
   items             PlaidItem[]

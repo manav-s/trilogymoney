@@ -9,6 +9,8 @@ import { logError } from '@/lib/logger';
 import { generateWeeklyDigestMessage } from '@/lib/llm';
 import { getTransactions } from '@/lib/transactions';
 import { buildWeeklyDigestContext, extractHighlights } from '@/lib/weeklyDigest';
+import { TransactionQuery } from '@/lib/transactionQuery';
+import { buildStoredTransactionsQuery } from '@/lib/transactionsContext';
 
 const DEFAULT_BATCH_LIMIT = 10;
 const MAX_BATCH_LIMIT = 50;
@@ -243,8 +245,20 @@ async function sendWeeklyDigestCandidate(
   }
 
   const now = new Date();
+  const digestQuery: TransactionQuery = {
+    kind: 'recent',
+    from: digestRange.from,
+    to: digestRange.to,
+    limit: MAX_TRANSACTIONS_FOR_DIGEST,
+  };
   try {
-    await prisma.$executeRaw`UPDATE "User" SET "lastWeeklyDigestAt" = ${now}, "updatedAt" = ${now} WHERE "id" = ${user.id}`;
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        lastWeeklyDigestAt: now,
+        lastTransactionsQuery: buildStoredTransactionsQuery(digestQuery, now),
+      },
+    });
   } catch (error) {
     logError('weekly-digest.persist', error, {
       userId: user.id,
