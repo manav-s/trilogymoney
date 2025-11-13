@@ -257,6 +257,129 @@ txns_3: ${txnLine}
   Analysis: ${analysisStr}`;
 }
 
+export type WeeklyDigestContext = {
+  week: { from: string; to: string };
+  timezone: string;
+  spendSummary: {
+    totalSpend: number;
+    totalRefund: number;
+    pendingSpend: number;
+    pendingRefund: number;
+    count: number;
+    pendingCount: number;
+    topCategories: Array<{ label: string; spendAmount: number; refundAmount: number; count: number }>;
+    topMerchants: Array<{ label: string; spendAmount: number; refundAmount: number; count: number }>;
+    topTransactions: Array<{ merchant: string; amount: number; date: string; category: string | null; pending: boolean }>;
+    refunds: Array<{ merchant: string; amount: number; date: string; category: string | null }>;
+  };
+  balances: {
+    cashTotal: number;
+    cashCount: number;
+    cashAccounts: Array<{ name: string; institution: string | null; available: number | null; current: number | null; mask: string | null }>;
+    creditOwedTotal: number;
+    creditCount: number;
+    creditAccounts: Array<{ name: string; institution: string | null; balance: number | null; mask: string | null }>;
+  };
+  highlights: string[];
+};
+
+export async function generateWeeklyDigestMessage(context: WeeklyDigestContext): Promise<string | null> {
+  if (!OPENAI_API_KEY) {
+    logError('llm.weekly_digest', undefined, { reason: 'missing_api_key' });
+    return null;
+  }
+
+  const instructions = [
+    'Write a weekly money digest SMS in lowercase with a playful gen z tone.',
+    'Write a short paragraph (3-5 sentences).',
+    'Mention the covered date range and any standout categories or merchants.',
+    'If there were refunds or pending spend, call them out briefly.',
+    'If spend was zero, reassure the user instead of forcing amounts.',
+    'Do not ask questions or offer to fetch more data.',
+    'Use only the numbers from the JSON. Round to whole dollars when quoting amounts.',
+  ].join(' ');
+
+  const userContent = `${instructions}
+JSON: ${JSON.stringify(context)}`;
+
+  const system = `You are Trilogy, a weekly "money pulse" writer for SMS.
+voice: breezy gen z, lowercase, celebratory when things go well, supportive otherwise.
+format: short paragraph (3-5 sentences), no emojis, no bullet lists, no sign-offs.`;
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    let res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: userContent },
+        ],
+        max_tokens: 200,
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    if (!res.ok) {
+      let errText = '';
+      try {
+        errText = await res.text();
+      } catch {}
+      logError('llm.weekly_digest', undefined, {
+        reason: 'openai_error',
+        status: res.status,
+        model: MODEL,
+        body: errText?.slice(0, 200),
+      });
+      return null;
+    }
+    let data = await res.json();
+    let rawText = extractTextFromOpenAI(data);
+    if (!rawText) {
+      try {
+        const controller2 = new AbortController();
+        const timeout2 = setTimeout(() => controller2.abort(), 5000);
+        res = await fetch('https://api.openai.com/v1/responses', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: MODEL,
+            input: [
+              { role: 'system', content: system },
+              { role: 'user', content: userContent },
+            ],
+            max_output_tokens: 200,
+          }),
+          signal: controller2.signal,
+        });
+        clearTimeout(timeout2);
+        if (res.ok) {
+          data = await res.json();
+          rawText = extractTextFromOpenAI(data);
+        }
+      } catch {}
+    }
+    if (!rawText) {
+      logError('llm.weekly_digest', undefined, { reason: 'empty_completion', model: MODEL });
+      return null;
+    }
+    return rawText;
+  } catch (error) {
+    const name = (error as Error)?.name;
+    logError('llm.weekly_digest', error, { model: MODEL, error: name || 'unknown' });
+    return null;
+  }
+}
+
 function extractTextFromOpenAI(data: unknown): string | null {
   try {
     // Chat Completions classic shape
