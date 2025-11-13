@@ -282,9 +282,21 @@ async function handleLLMConversation(phone: string, userText: string) {
     const intent = await chooseIntentFromText(userText);
     const parsedQuery = parseTransactionsQuery(userText);
     const storedQueryRaw = (user.lastTransactionsQuery as StoredTransactionsQuery | null) ?? null;
-    const effectiveQuery = shouldReuseStoredQuery(parsedQuery, storedQueryRaw)
-      ? storedQueryToTransactionQuery(storedQueryRaw)
-      : parsedQuery;
+    const genericCategoryRegex = /\b(food|drink|dining|restaurant|restaurants|grocery|groceries|coffee|meal|meals)\b/i;
+    const parsedCategoryHint =
+      parsedQuery.kind === 'merchantSpend' && parsedQuery.merchant
+        ? parsedQuery.merchant
+        : null;
+    const useStoredBecauseGenericCategory =
+      parsedCategoryHint !== null &&
+      genericCategoryRegex.test(parsedCategoryHint) &&
+      storedQueryRaw !== null;
+    let effectiveQuery: TransactionQuery = parsedQuery;
+    if (shouldReuseStoredQuery(parsedQuery, storedQueryRaw)) {
+      effectiveQuery = storedQueryToTransactionQuery(storedQueryRaw);
+    } else if (useStoredBecauseGenericCategory) {
+      effectiveQuery = storedQueryToTransactionQuery(storedQueryRaw as StoredTransactionsQuery);
+    }
     const shouldUseTransactions =
       effectiveQuery.kind === 'merchantSpend' || intent === 'transactions';
     if (intent === 'balances') {
