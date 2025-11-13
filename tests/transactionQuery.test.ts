@@ -21,7 +21,7 @@ describe('parseTransactionsQuery', () => {
     expect(result.kind).toBe('merchantSpend');
     if (result.kind === 'merchantSpend') {
       expect(result.merchant).toBeNull();
-      expect(result.from).toBe('2025-10-10');
+      expect(result.from).toBe('2025-11-02');
       expect(result.to).toBe('2025-11-09');
     }
   });

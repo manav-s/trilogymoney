@@ -1,10 +1,10 @@
-const DEFAULT_LOOKBACK_DAYS = 30;
+const DEFAULT_LOOKBACK_DAYS = 7;
 
 export type TransactionQuery =
   | { kind: 'recent'; limit: number; from: string; to: string }
   | { kind: 'merchantSpend'; limit: number; merchant: string | null; from: string; to: string };
 
-export const RECENT_FALLBACK_LIMIT = 3;
+export const RECENT_FALLBACK_LIMIT = 50;
 
 function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
