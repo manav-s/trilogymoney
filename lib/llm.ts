@@ -290,8 +290,9 @@ export async function generateWeeklyDigestMessage(context: WeeklyDigestContext):
   }
 
   const instructions = [
-    'Write a weekly money digest SMS in lowercase with a playful gen z tone.',
-    'Write a short paragraph (3-5 sentences).',
+    'Write a weekly money digest SMS in lowercase with a warm, confident, professional tone (no slang or filler).',
+    'Start the message with a heading line formatted exactly as "weekly summary: {from} → {to}".',
+    'Follow with three concise sentences, each on its own line (newline separated, no run-ons).',
     'Mention the covered date range and any standout categories or merchants.',
     "Include a sentence with an explicit category breakdown formatted like \"category breakdown: category ($amount), ...\" using up to the top 3 categories by spend.",
     'If there were refunds or pending spend, call them out briefly.',
@@ -304,8 +305,8 @@ export async function generateWeeklyDigestMessage(context: WeeklyDigestContext):
 JSON: ${JSON.stringify(context)}`;
 
   const system = `You are Trilogy, a weekly "money pulse" writer for SMS.
-voice: breezy gen z, lowercase, celebratory when things go well, supportive otherwise.
-format: short paragraph (3-5 sentences), no emojis, no bullet lists, no sign-offs.`;
+voice: confident, encouraging, lowercase, professional.
+format: heading line + three newline-separated sentences, no emojis, no bullet lists, no sign-offs.`;
 
   try {
     const controller = new AbortController();
