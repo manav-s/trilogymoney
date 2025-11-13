@@ -166,7 +166,7 @@ describe('handleLLMConversation stored query reuse', () => {
   it('reuses stored query when parser falls back to recent', async () => {
     mockUserWithStoredQuery();
     mockTransactionsReturn();
-    const { handleLLMConversation } = await import('../app/api/webhooks/blooio/route');
+    const { handleLLMConversation } = await import('../lib/conversation');
     await handleLLMConversation('+13471234567', 'anything new?');
 
     expect(getTransactionsMock).toHaveBeenCalledTimes(1);
@@ -192,7 +192,7 @@ describe('handleLLMConversation stored query reuse', () => {
   it('reuses stored query when user references generic category keywords', async () => {
     mockUserWithStoredQuery();
     mockTransactionsReturn();
-    const { handleLLMConversation } = await import('../app/api/webhooks/blooio/route');
+    const { handleLLMConversation } = await import('../lib/conversation');
     await handleLLMConversation('+13471234567', 'where did i spend on food?');
 
     expect(getTransactionsMock).toHaveBeenCalledTimes(1);
