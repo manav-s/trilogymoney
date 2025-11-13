@@ -293,6 +293,7 @@ export async function generateWeeklyDigestMessage(context: WeeklyDigestContext):
     'Write a weekly money digest SMS in lowercase with a playful gen z tone.',
     'Write a short paragraph (3-5 sentences).',
     'Mention the covered date range and any standout categories or merchants.',
+    "Include a sentence with an explicit category breakdown formatted like \"category breakdown: category ($amount), ...\" using up to the top 3 categories by spend.",
     'If there were refunds or pending spend, call them out briefly.',
     'If spend was zero, reassure the user instead of forcing amounts.',
     'Do not ask questions or offer to fetch more data.',
