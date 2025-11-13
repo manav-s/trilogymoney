@@ -215,7 +215,9 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
     const queryJson = JSON.stringify(query);
     const guidance = [
       'Respond with 1–2 short sentences in lowercase using ONLY the JSON data provided.',
-      'Use summary.totalSpend for spend totals and summary.totalRefund for refunds/credits; only use summary.totalAmount if the user explicitly asks for net spend.',
+      'Use summary.totalSpend for overall spend and summary.totalRefund for refunds/credits.',
+      'When mentioning category totals, read them from summary.perCategory (do not recompute from raw transactions).',
+      'When mentioning merchant totals, use summary.perMerchant when available.',
       'Do not invent numbers. If the requested merchant/category/date is missing, say you can’t see it.',
       'Mention pending spend when summary.pendingSpend > 0 and pending refunds when summary.pendingRefund > 0.',
       'Do not offer to fetch more data.',
