@@ -168,8 +168,8 @@ describe('weekly digest helpers', () => {
     expect(context.spendSummary.topMerchants).toHaveLength(5);
     expect(context.spendSummary.topTransactions).toHaveLength(5);
     expect(context.spendSummary.topTransactions[0].amount).toBe(200);
-    expect(context.balances.cashAccounts).toHaveLength(5);
-    expect(context.balances.creditAccounts).toHaveLength(5);
+    expect(context.balances.cashAccounts).toHaveLength(balances.cash.accounts.length);
+    expect(context.balances.creditAccounts).toHaveLength(balances.credit.accounts.length);
     expect(context.balances.cashTotal).toBeCloseTo(4321.99);
     expect(context.balances.creditOwedTotal).toBeCloseTo(987.65);
     expect(context.highlights).toEqual(['amazon']);
@@ -217,6 +217,7 @@ describe('generateWeeklyDigestMessage', () => {
       expect(prompt).toContain('Add a blank line after the heading');
       expect(prompt).toContain('category breakdown:');
       expect(prompt).toContain('pending to watch');
+      expect(prompt).toContain('write "balances:" on its own line');
       expect(prompt).toContain('lowercase with spaces instead of underscores');
       expect(prompt).toContain('judgy poke');
       return new Response(

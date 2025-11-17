@@ -59,14 +59,14 @@ export function buildWeeklyDigestContext(input: {
     count: bucket.count,
   }));
   const topTransactions = pickTopTransactions(transactions, 5);
-  const cashAccounts = balances.cash.accounts.slice(0, 5).map((account) => ({
+  const cashAccounts = balances.cash.accounts.map((account) => ({
     name: account.name,
     institution: account.institution ?? null,
     available: typeof account.available === 'number' ? roundCurrency(account.available) : null,
     current: typeof account.current === 'number' ? roundCurrency(account.current) : null,
     mask: account.mask ?? null,
   }));
-  const creditAccounts = balances.credit.accounts.slice(0, 5).map((account) => ({
+  const creditAccounts = balances.credit.accounts.map((account) => ({
     name: account.name,
     institution: account.institution ?? null,
     balance: typeof account.current === 'number' ? roundCurrency(Math.abs(account.current)) : null,
