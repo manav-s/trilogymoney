@@ -8,7 +8,10 @@ export async function POST(req: NextRequest) {
     const token = await createLinkToken({ clientUserId: phone, clientName: "Trilogy" });
     return NextResponse.json({ link_token: token });
   } catch (e) {
-    console.error('add-link-token.error', e);
+    console.error('add-link-token.error', {
+      message: e instanceof Error ? e.message : e,
+      response: (e as any)?.response?.data ?? null,
+    });
     return NextResponse.json({ error: "failed to create link token" }, { status: 400 });
   }
 }
