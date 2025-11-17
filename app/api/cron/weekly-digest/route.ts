@@ -10,7 +10,7 @@ import { generateWeeklyDigestMessage } from '@/lib/llm';
 import { getTransactions } from '@/lib/transactions';
 import { buildWeeklyDigestContext, extractHighlights } from '@/lib/weeklyDigest';
 import { TransactionQuery } from '@/lib/transactionQuery';
-import { buildStoredTransactionsQuery } from '@/lib/transactionsContext';
+import { buildStoredTransactionsQuery, formatRangeLabel } from '@/lib/transactionsContext';
 
 const DEFAULT_BATCH_LIMIT = 10;
 const MAX_BATCH_LIMIT = 50;
@@ -256,7 +256,10 @@ async function sendWeeklyDigestCandidate(
       where: { id: user.id },
       data: {
         lastWeeklyDigestAt: now,
-        lastTransactionsQuery: buildStoredTransactionsQuery(digestQuery, now),
+        lastTransactionsQuery: buildStoredTransactionsQuery(digestQuery, now, {
+          source: 'weekly_digest',
+          label: formatRangeLabel(digestRange, { prefix: 'weekly digest' }),
+        }),
       },
     });
   } catch (error) {

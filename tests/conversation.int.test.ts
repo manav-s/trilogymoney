@@ -17,27 +17,48 @@ const generateReplyMock = vi.fn();
 const sendMessageMock = vi.fn();
 
 vi.mock('@/lib/db', () => ({ prisma: prismaMock }));
-vi.mock('@/lib/transactionQuery', () => ({
-  RECENT_FALLBACK_LIMIT: 50,
-  parseTransactionsQuery: (text: string) => {
+vi.mock('@/lib/transactionQuery', () => {
+  const parse = (text: string) => {
     const lower = text.toLowerCase();
+    if (lower.includes('today')) {
+      return {
+        query: {
+          kind: 'recent',
+          from: '2025-11-10',
+          to: '2025-11-10',
+          limit: 50,
+        },
+        overrideRange: true,
+      };
+    }
     if (lower.includes('food')) {
       return {
-        kind: 'merchantSpend',
-        merchant: 'food',
-        from: '2025-11-08',
-        to: '2025-11-09',
-        limit: 50,
+        query: {
+          kind: 'merchantSpend',
+          merchant: 'food',
+          from: '2025-11-08',
+          to: '2025-11-09',
+          limit: 100,
+        },
+        overrideRange: false,
       };
     }
     return {
-      kind: 'recent',
-      from: '2025-11-08',
-      to: '2025-11-09',
-      limit: 50,
+      query: {
+        kind: 'recent',
+        from: '2025-11-08',
+        to: '2025-11-09',
+        limit: 50,
+      },
+      overrideRange: false,
     };
-  },
-}));
+  };
+  return {
+    RECENT_FALLBACK_LIMIT: 50,
+    parseTransactionsQuery: (text: string) => parse(text).query,
+    parseTransactionsQueryWithOverrides: parse,
+  };
+});
 vi.mock('@/lib/llm', () => ({
   chooseIntentFromText: chooseIntentMock,
   generateReply: generateReplyMock,
@@ -64,22 +85,22 @@ vi.mock('@/lib/balances', () => ({
   getBalancesBreakdown: vi.fn(),
 }));
 vi.mock('@/lib/transactionsContext', () => {
-  const TTL = 1000 * 60 * 60 * 48;
   return {
-    buildStoredTransactionsQuery: (query: any, now: Date = new Date()) => ({
+    formatRangeLabel: ({ from, to }: { from: string; to: string }) => `${from} → ${to}`,
+    buildStoredTransactionsQuery: (query: any, now: Date = new Date(), meta: any = {}) => ({
       kind: query.kind,
       from: query.from,
       to: query.to,
       limit: query.limit,
       merchant: query.kind === 'merchantSpend' ? query.merchant ?? null : null,
       storedAt: now.toISOString(),
+      source: meta.source ?? 'adhoc',
+      label: meta.label ?? `${query.from} → ${query.to}`,
     }),
-    shouldReuseStoredQuery: (parsed: any, stored: any, now: Date = new Date()) => {
+    shouldReuseStoredQuery: (parsedResult: any, stored: any) => {
       if (!stored) return false;
-      const storedTime = Date.parse(stored.storedAt ?? '');
-      if (!Number.isFinite(storedTime)) return false;
-      if (now.getTime() - storedTime > TTL) return false;
-      return parsed.kind === 'recent' && parsed.limit === 50;
+      if (parsedResult.overrideRange) return false;
+      return true;
     },
     storedQueryToTransactionQuery: (stored: any) => {
       if (stored.kind === 'merchantSpend') {
@@ -125,6 +146,8 @@ describe('handleLLMConversation stored query reuse', () => {
       limit: 500,
       merchant: null,
       storedAt: new Date().toISOString(),
+      source: 'weekly_digest',
+      label: 'weekly digest nov 3 → nov 9',
       ...overrides,
     };
     prismaMock.user.findUnique.mockResolvedValue({
@@ -180,6 +203,7 @@ describe('handleLLMConversation stored query reuse', () => {
     expect(generateReplyMock).toHaveBeenCalledWith(
       'transactions',
       expect.objectContaining({
+        rangeLabel: 'weekly digest nov 3 → nov 9',
         query: expect.objectContaining({
           from: '2025-11-03',
           to: '2025-11-09',
@@ -200,9 +224,26 @@ describe('handleLLMConversation stored query reuse', () => {
       userId: 'user-1',
       from: '2025-11-03',
       to: '2025-11-09',
-      limit: 500,
-      maxRows: 500,
+      limit: 100,
+      maxRows: 100,
+      merchant: 'food',
     });
+  });
+
+  it('stores override context when user specifies a new range', async () => {
+    mockUserWithStoredQuery();
+    mockTransactionsReturn();
+    const { handleLLMConversation } = await import('../lib/conversation');
+    await handleLLMConversation('+13471234567', 'what did i spend today?');
+
+    expect(getTransactionsMock).toHaveBeenCalledWith({
+      userId: 'user-1',
+      from: '2025-11-10',
+      to: '2025-11-10',
+      limit: 50,
+      maxRows: 50,
+    });
+    expect(prismaMock.user.update).toHaveBeenCalled();
   });
 });
 
@@ -213,5 +254,7 @@ type StoredTransactionsQuery = {
   limit: number;
   merchant: string | null;
   storedAt: string;
+  source: string;
+  label: string;
 };
 

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { parseTransactionsQuery } from '../lib/transactionQuery';
+import { parseTransactionsQuery, parseTransactionsQueryWithOverrides } from '../lib/transactionQuery';
 
 describe('parseTransactionsQuery', () => {
   const fixedNow = new Date('2025-11-09T12:00:00Z');
@@ -18,39 +18,30 @@ describe('parseTransactionsQuery', () => {
 
   it('uses merchant spend when spend keywords present even without explicit merchant', () => {
     const result = parseTransactionsQuery('Show me my recent charges', fixedNow);
-    expect(result.kind).toBe('merchantSpend');
-    if (result.kind === 'merchantSpend') {
-      expect(result.merchant).toBeNull();
-      expect(result.from).toBe('2025-11-02');
-      expect(result.to).toBe('2025-11-09');
-    }
+    expect(result.kind).toBe('recent');
+    expect(result.from).toBe('2025-11-02');
+    expect(result.to).toBe('2025-11-09');
   });
 
   it('detects current month when user asks for just that month', () => {
     const result = parseTransactionsQuery('just november spending', fixedNow);
-    expect(result.kind).toBe('merchantSpend');
-    if (result.kind === 'merchantSpend') {
-      expect(result.from).toBe('2025-11-01');
-      expect(result.to).toBe('2025-11-09');
-    }
+    expect(result.kind).toBe('recent');
+    expect(result.from).toBe('2025-11-01');
+    expect(result.to).toBe('2025-11-09');
   });
 
   it('handles "this month" phrasing', () => {
     const result = parseTransactionsQuery('how much did i spend this month?', fixedNow);
-    expect(result.kind).toBe('merchantSpend');
-    if (result.kind === 'merchantSpend') {
-      expect(result.from).toBe('2025-11-01');
-      expect(result.to).toBe('2025-11-09');
-    }
+    expect(result.kind).toBe('recent');
+    expect(result.from).toBe('2025-11-01');
+    expect(result.to).toBe('2025-11-09');
   });
 
   it('handles month references with explicit year', () => {
     const result = parseTransactionsQuery('show october 2024 purchases', fixedNow);
-    expect(result.kind).toBe('merchantSpend');
-    if (result.kind === 'merchantSpend') {
-      expect(result.from).toBe('2024-10-01');
-      expect(result.to).toBe('2024-10-31');
-    }
+    expect(result.kind).toBe('recent');
+    expect(result.from).toBe('2024-10-01');
+    expect(result.to).toBe('2024-10-31');
   });
 
   it('handles past weeks phrasing', () => {
@@ -65,11 +56,16 @@ describe('parseTransactionsQuery', () => {
 
   it('still handles "since" phrasing with month', () => {
     const result = parseTransactionsQuery('spending since october 5', fixedNow);
-    expect(result.kind).toBe('merchantSpend');
-    if (result.kind === 'merchantSpend') {
-      expect(result.from).toBe('2025-10-05');
-      expect(result.to).toBe('2025-11-09');
-    }
+    expect(result.kind).toBe('recent');
+    expect(result.from).toBe('2025-10-05');
+    expect(result.to).toBe('2025-11-09');
+  });
+
+  it('marks override when user explicitly asks for today', () => {
+    const { query, overrideRange } = parseTransactionsQueryWithOverrides('what did i spend today?', fixedNow);
+    expect(query.from).toBe('2025-11-09');
+    expect(query.to).toBe('2025-11-09');
+    expect(overrideRange).toBe(true);
   });
 });
 

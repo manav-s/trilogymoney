@@ -1,21 +1,44 @@
 import type { TransactionQuery } from './transactionQuery';
 import { RECENT_FALLBACK_LIMIT } from './transactionQuery';
 
+export type StoredQuerySource = 'weekly_digest' | 'monthly_digest' | 'adhoc';
+
 export type StoredTransactionsQuery = {
-  kind: 'merchantSpend' | 'recent';
+  kind: TransactionQuery['kind'];
   from: string;
   to: string;
   limit: number;
   merchant: string | null;
   storedAt: string;
+  source: StoredQuerySource;
+  label: string;
 };
 
-export const STORED_QUERY_TTL_MS = 1000 * 60 * 60 * 48; // 48 hours
+const SOURCE_TTL_MS: Record<StoredQuerySource, number> = {
+  weekly_digest: 1000 * 60 * 60 * 72, // 72h
+  monthly_digest: 1000 * 60 * 60 * 24 * 10, // ~10 days
+  adhoc: 1000 * 60 * 60 * 48, // 48h
+};
+
+type RangeLike = { from: string; to: string };
+
+export function formatRangeLabel(range: RangeLike, options?: { prefix?: string }): string {
+  const fromDate = new Date(range.from);
+  const toDate = new Date(range.to);
+  const sameDay = range.from === range.to;
+  const fmt = (date: Date) =>
+    date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const label = sameDay ? fmt(fromDate) : `${fmt(fromDate)} → ${fmt(toDate)}`;
+  return options?.prefix ? `${options.prefix} ${label}` : label;
+}
 
 export function buildStoredTransactionsQuery(
   query: TransactionQuery,
-  now = new Date()
+  now = new Date(),
+  meta?: { source?: StoredQuerySource; label?: string }
 ): StoredTransactionsQuery {
+  const baseRange = { from: query.from, to: query.to };
+  const label = meta?.label ?? formatRangeLabel(baseRange);
   return {
     kind: query.kind,
     from: query.from,
@@ -23,6 +46,8 @@ export function buildStoredTransactionsQuery(
     limit: query.limit,
     merchant: query.kind === 'merchantSpend' ? query.merchant ?? null : null,
     storedAt: now.toISOString(),
+    source: meta?.source ?? 'adhoc',
+    label,
   };
 }
 
@@ -48,18 +73,25 @@ export function storedQueryToTransactionQuery(
 }
 
 export function shouldReuseStoredQuery(
-  parsed: TransactionQuery,
+  parsedMeta: { query: TransactionQuery; overrideRange: boolean },
   stored: StoredTransactionsQuery | null | undefined,
   now = new Date()
 ): stored is StoredTransactionsQuery {
   if (!stored) return false;
+  if (parsedMeta.overrideRange) return false;
 
   const storedTime = Date.parse(stored.storedAt);
   if (!Number.isFinite(storedTime)) return false;
-  if (now.getTime() - storedTime > STORED_QUERY_TTL_MS) return false;
+  const ttl = SOURCE_TTL_MS[stored.source] ?? SOURCE_TTL_MS.adhoc;
+  if (now.getTime() - storedTime > ttl) return false;
 
-  const parserIsFallback =
+  // Allow reuse when parser fell back to generic windows (recent/merchant hints without explicit dates).
+  const parsed = parsedMeta.query;
+  const parserIsFallbackRecent =
     parsed.kind === 'recent' && parsed.limit === RECENT_FALLBACK_LIMIT;
-  return parserIsFallback;
+  const parserIsGenericMerchant =
+    parsed.kind === 'merchantSpend' && parsed.limit === 100 && parsed.merchant != null;
+
+  return parserIsFallbackRecent || parserIsGenericMerchant;
 }
 

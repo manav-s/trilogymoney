@@ -3,7 +3,7 @@ import { chooseIntentFromText, generateReply } from '@/lib/llm';
 import { getBalancesBreakdown } from '@/lib/balances';
 import { getTransactions } from '@/lib/transactions';
 import {
-  parseTransactionsQuery,
+  parseTransactionsQueryWithOverrides,
   TransactionQuery,
   RECENT_FALLBACK_LIMIT,
 } from '@/lib/transactionQuery';
@@ -11,6 +11,8 @@ import {
   buildStoredTransactionsQuery,
   shouldReuseStoredQuery,
   storedQueryToTransactionQuery,
+  formatRangeLabel,
+  type StoredTransactionsQuery,
 } from '@/lib/transactionsContext';
 import { splitIntoSmsSegments } from '@/lib/sms';
 import { sendMessage } from '@/lib/blooio';
@@ -28,25 +30,31 @@ export async function handleLLMConversation(phone: string, userText: string) {
   try {
     const profile = { name: user.name, timezone: user.timezone, preferredTime: user.preferredTime } as const;
     const intent = await chooseIntentFromText(userText);
-    const parsedQuery = parseTransactionsQuery(userText);
+    const parsedResult = parseTransactionsQueryWithOverrides(userText);
     const storedQueryRaw = (user.lastTransactionsQuery as StoredTransactionsQuery | null) ?? null;
-    const storedQueryFresh = storedQueryRaw && shouldReuseStoredQuery(parsedQuery, storedQueryRaw);
+    const storedQueryFresh = storedQueryRaw
+      ? shouldReuseStoredQuery(parsedResult, storedQueryRaw)
+      : false;
 
-    const genericCategoryRegex = /\b(food|drink|dining|restaurant|restaurants|grocery|groceries|coffee|meal|meals)\b/i;
-    const parsedCategoryHint =
-      parsedQuery.kind === 'merchantSpend' && parsedQuery.merchant
-        ? parsedQuery.merchant
-        : null;
-    const useStoredBecauseGenericCategory =
-      parsedCategoryHint !== null &&
-      genericCategoryRegex.test(parsedCategoryHint) &&
-      storedQueryRaw !== null;
+    let effectiveQuery: TransactionQuery = parsedResult.query;
+    let rangeLabel = formatRangeLabel({ from: effectiveQuery.from, to: effectiveQuery.to });
+    let shouldPersistContext = parsedResult.overrideRange;
 
-    let effectiveQuery: TransactionQuery = parsedQuery;
-    if (storedQueryFresh) {
-      effectiveQuery = storedQueryToTransactionQuery(storedQueryRaw as StoredTransactionsQuery);
-    } else if (useStoredBecauseGenericCategory) {
-      effectiveQuery = storedQueryToTransactionQuery(storedQueryRaw as StoredTransactionsQuery);
+    if (storedQueryFresh && storedQueryRaw) {
+      const baseRange = storedQueryToTransactionQuery(storedQueryRaw);
+      if (parsedResult.query.kind === 'merchantSpend' && parsedResult.query.merchant) {
+        effectiveQuery = {
+          kind: 'merchantSpend',
+          limit: parsedResult.query.limit,
+          merchant: parsedResult.query.merchant,
+          from: baseRange.from,
+          to: baseRange.to,
+        };
+      } else {
+        effectiveQuery = baseRange;
+      }
+      rangeLabel = storedQueryRaw.label;
+      shouldPersistContext = false;
     }
 
     const shouldUseTransactions =
@@ -118,16 +126,17 @@ export async function handleLLMConversation(phone: string, userText: string) {
         userText,
         profile,
         query: queryForPrompt,
+        rangeLabel,
       });
 
-      if (
-        (queryForPrompt.kind === 'merchantSpend' && queryForPrompt.merchant) ||
-        queryForPrompt.limit > RECENT_FALLBACK_LIMIT
-      ) {
+      if (shouldPersistContext) {
         await prisma.user.update({
           where: { id: user.id },
           data: {
-            lastTransactionsQuery: buildStoredTransactionsQuery(queryForPrompt),
+            lastTransactionsQuery: buildStoredTransactionsQuery(queryForPrompt, new Date(), {
+              source: 'adhoc',
+              label: rangeLabel,
+            }),
           },
         });
       }
@@ -156,15 +165,6 @@ export async function handleLLMConversation(phone: string, userText: string) {
     await sendMessage({ to: phone, body: segment, userId: user.id, shouldPersist: true });
   }
 }
-
-type StoredTransactionsQuery = {
-  kind: 'merchantSpend' | 'recent';
-  from: string;
-  to: string;
-  limit: number;
-  merchant: string | null;
-  storedAt: string;
-};
 
 async function getRecentHistorySnippet(userId: string, days = 30, limit = 30): Promise<string> {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);

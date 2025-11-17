@@ -217,6 +217,7 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
       Array.isArray(ctx.categorySummaryLines) && (ctx.categorySummaryLines as string[]).length > 0
         ? (ctx.categorySummaryLines as string[])
         : null;
+    const rangeLabel = (ctx.rangeLabel as string) || '';
     const guidance = [
       'Respond with 1–2 short sentences in lowercase using ONLY the JSON data provided.',
       'Use summary.totalSpend for overall spend and summary.totalRefund for refunds/credits.',
@@ -227,7 +228,12 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
       'Do not invent numbers. If the requested merchant/category/date is missing, say you can’t see it.',
       'Mention pending spend when summary.pendingSpend > 0 and pending refunds when summary.pendingRefund > 0.',
       'Do not offer to fetch more data.',
-    ].join(' ');
+      rangeLabel
+        ? `Unless the user clearly asked for different dates, keep all amounts scoped to ${rangeLabel} and start your answer with "for ${rangeLabel},".`
+        : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
     const categoriesLine = categorySummaryLines
       ? `Category summary lines: ${JSON.stringify(categorySummaryLines)}`
       : '';

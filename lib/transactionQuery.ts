@@ -26,6 +26,24 @@ function getDefaultRange(now = new Date()): DateRange {
   return { from, to };
 }
 
+function getTodayRange(now = new Date()): DateRange {
+  const day = isoDate(now);
+  return { from: day, to: day };
+}
+
+function getYesterdayRange(now = new Date()): DateRange {
+  const yesterday = daysAgo(1, now);
+  const day = isoDate(yesterday);
+  return { from: day, to: day };
+}
+
+function getCurrentWeekRange(now = new Date()): DateRange {
+  const day = now.getDay(); // 0 Sunday
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + mondayOffset);
+  return { from: isoDate(monday), to: isoDate(now) };
+}
+
 function getLastMonthRange(now = new Date()): DateRange {
   const firstOfCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
   const lastDayPrev = new Date(firstOfCurrent.getTime() - 24 * 60 * 60 * 1000);
@@ -142,39 +160,61 @@ function extractMerchant(original: string): string | null {
   return null;
 }
 
-export function parseTransactionsQuery(userText: string, now = new Date()): TransactionQuery {
+export type ParsedTransactionsQueryResult = {
+  query: TransactionQuery;
+  overrideRange: boolean;
+};
+
+export function parseTransactionsQueryWithOverrides(
+  userText: string,
+  now = new Date()
+): ParsedTransactionsQueryResult {
   const lower = userText.toLowerCase();
   const defaultRange = getDefaultRange(now);
   const merchant = extractMerchant(userText);
 
   let range: DateRange | null = null;
+  let explicitRange = false;
 
-  if (/\bthis month\b/.test(lower) || /\bcurrent month\b/.test(lower)) {
-    range = getCurrentMonthRange(now);
+  function setRange(next: DateRange | null) {
+    if (next) {
+      range = next;
+      explicitRange = true;
+    }
+  }
+
+  if (/\btoday\b/.test(lower)) {
+    setRange(getTodayRange(now));
+  } else if (/\byesterday\b/.test(lower)) {
+    setRange(getYesterdayRange(now));
+  } else if (/\bthis week\b/.test(lower)) {
+    setRange(getCurrentWeekRange(now));
+  } else if (/\bthis month\b/.test(lower) || /\bcurrent month\b/.test(lower)) {
+    setRange(getCurrentMonthRange(now));
   } else if (/\blast month\b/.test(lower)) {
-    range = getLastMonthRange(now);
+    setRange(getLastMonthRange(now));
   } else if (/\blast week\b/.test(lower)) {
-    range = getPastDaysRange(7, now);
+    setRange(getPastDaysRange(7, now));
   } else if (/\bpast\s+(\d+)\s+days?\b/.test(lower)) {
     const days = clampDays(parseInt(RegExp.$1, 10));
-    range = getPastDaysRange(days, now);
+    setRange(getPastDaysRange(days, now));
   } else if (/\bpast\s+(\d+)\s+weeks?\b/.test(lower)) {
     const weeks = clampDays(parseInt(RegExp.$1, 10) * 7, 7, 365);
-    range = getPastDaysRange(weeks, now);
+    setRange(getPastDaysRange(weeks, now));
   } else if (/\bpast\s+(\d+)\s+months?\b/.test(lower)) {
     const months = clampDays(parseInt(RegExp.$1, 10), 1, 12);
     const start = new Date(now.getFullYear(), now.getMonth() - months + 1, 1);
-    range = { from: isoDate(start), to: isoDate(now) };
+    setRange({ from: isoDate(start), to: isoDate(now) });
   } else if (/\b(?:past|last)\s+30\s+days\b/.test(lower)) {
-    range = getPastDaysRange(30, now);
+    setRange(getPastDaysRange(30, now));
   } else {
     const sinceRange = parseSinceMonth(lower, now);
     if (sinceRange) {
-      range = sinceRange;
+      setRange(sinceRange);
     } else {
       const monthRange = parseSingleMonth(lower, now);
       if (monthRange) {
-        range = monthRange;
+        setRange(monthRange);
       }
     }
   }
@@ -185,23 +225,34 @@ export function parseTransactionsQuery(userText: string, now = new Date()): Tran
     /\bpurchase(?:s|d)?\b/.test(lower) ||
     /\bcharges?\b/.test(lower);
 
+  const finalRange = range ?? defaultRange;
+
   if (merchant || wantsSpend || range) {
-    const finalRange = range ?? defaultRange;
     return {
-      kind: 'merchantSpend',
-      limit: 100,
-      merchant: merchant,
+      query: {
+        kind: merchant ? 'merchantSpend' : 'recent',
+        limit: merchant ? 100 : RECENT_FALLBACK_LIMIT,
+        merchant: merchant ?? null,
       from: finalRange.from,
       to: finalRange.to,
+      },
+      overrideRange: explicitRange,
     };
   }
 
   return {
-    kind: 'recent',
-    limit: RECENT_FALLBACK_LIMIT,
-    from: defaultRange.from,
-    to: defaultRange.to,
+    query: {
+      kind: 'recent',
+      limit: RECENT_FALLBACK_LIMIT,
+      from: finalRange.from,
+      to: finalRange.to,
+    },
+    overrideRange: explicitRange,
   };
+}
+
+export function parseTransactionsQuery(userText: string, now = new Date()): TransactionQuery {
+  return parseTransactionsQueryWithOverrides(userText, now).query;
 }
 
 
