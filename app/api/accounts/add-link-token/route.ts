@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     console.error('add-link-token.error', {
       message: e instanceof Error ? e.message : e,
-      response: (e as any)?.response?.data ?? null,
+      response: (typeof e === 'object' && e && 'response' in e) ? (e as { response?: unknown }).response : null,
     });
     return NextResponse.json({ error: "failed to create link token" }, { status: 400 });
   }
