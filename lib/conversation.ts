@@ -17,6 +17,7 @@ import {
 import { splitIntoSmsSegments } from '@/lib/sms';
 import { sendMessage } from '@/lib/blooio';
 import { decryptMessage, encryptMessage } from '@/lib/encryption';
+import { getRecurringTransactions } from '@/lib/recurring';
 
 export async function handleLLMConversation(phone: string, userText: string) {
   const user = await prisma.user.findUnique({ where: { phone } });
@@ -91,6 +92,14 @@ export async function handleLLMConversation(phone: string, userText: string) {
         profile,
         quizAnswers: (user as unknown as { quizAnswers?: unknown }).quizAnswers ?? null,
         analysisSummary: (user as unknown as { analysisSummary?: unknown }).analysisSummary ?? null,
+      });
+    } else if (intent === 'recurring') {
+      const recurringSeries = await getRecurringTransactions(user.id);
+      body = await generateReply('recurring', {
+        recurringSeries,
+        history,
+        userText,
+        profile,
       });
     } else if (shouldUseTransactions) {
       const limit = effectiveQuery.limit;

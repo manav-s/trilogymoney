@@ -1,21 +1,28 @@
 /**
  * Minimal LLM intent chooser using OpenAI
- * Returns one of: 'balances' | 'transactions' | 'chat'
+ * Returns one of: 'balances' | 'transactions' | 'recurring' | 'chat'
  */
-export type Intent = 'balances' | 'transactions' | 'chat';
+export type Intent = 'balances' | 'transactions' | 'recurring' | 'chat';
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const MODEL = 'gpt-4.1-mini';
 import { logError } from './logger';
 import { TransactionSummary } from './transactions';
 import { TransactionQuery } from './transactionQuery';
+import type { RecurringSeries } from './recurring';
 
 export async function chooseIntentFromText(userText: string): Promise<Intent> {
   const lowered = (userText || '').toLowerCase();
   const wantsInstitutions = /\b(institution|bank)\b/.test(lowered);
   const wantsCards = /\bcard(s)?\b/.test(lowered) && /\b(what|which|list|show|tell|where)\b/.test(lowered);
+  const wantsRecurring =
+    /\b(subscription|subscriptions|recurring|autopay|auto[-\s]?pay|bills?)\b/.test(lowered) ||
+    /\b(coming up|upcoming)\b/.test(lowered) && /\b(bill|charge|payment)\b/.test(lowered);
   if (wantsInstitutions || wantsCards) {
     return 'balances';
+  }
+  if (wantsRecurring) {
+    return 'recurring';
   }
 
   if (!OPENAI_API_KEY) {
@@ -23,10 +30,11 @@ export async function chooseIntentFromText(userText: string): Promise<Intent> {
     return 'chat';
   }
 
-  const system = `Classify a short SMS into EXACTLY ONE of: balances | transactions | chat.
+  const system = `Classify a short SMS into EXACTLY ONE of: balances | transactions | recurring | chat.
 
 Use balances for cash/balance requests.
 Use transactions for transactions/charges (recent or merchant-specific).
+Use recurring for subscriptions, recurring payments, bills, or upcoming automatic charges.
 Use chat for greetings, opinions, budgeting questions, general advice, or anything that does not clearly require a tool.
 Return the bare token ONLY.`;
 
@@ -91,7 +99,9 @@ Return the bare token ONLY.`;
       return 'chat';
     }
     const text: string = rawText.toLowerCase();
-    if (text === 'balances' || text === 'transactions' || text === 'chat') return text as Intent;
+    if (text === 'balances' || text === 'transactions' || text === 'recurring' || text === 'chat') {
+      return text as Intent;
+    }
     return 'chat';
   } catch (e) {
     const name = (e as Error)?.name;
@@ -115,7 +125,8 @@ format: default to one short line; use up to two lines only when presenting numb
 behavior: answer directly; do NOT add a question at the end unless a question is strictly required to proceed (e.g., choose dates). never append soft check-ins like “does that help?”. avoid menus/boilerplate.
 tools you can call (server will provide data when needed):
 - balances: cash totals plus card owed amounts by institution.
-- transactions: recent transactions with amount, merchant, date, and account. mention pending status if present.`;
+- transactions: recent transactions with amount, merchant, date, and account. mention pending status if present.
+- recurring: recurring payments/subscriptions with average amount, frequency, and next due date.`;
   const user = buildUserPrompt(tool, context);
   try {
     const controller = new AbortController();
