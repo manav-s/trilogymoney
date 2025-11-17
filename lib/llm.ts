@@ -300,15 +300,17 @@ export async function generateWeeklyDigestMessage(context: WeeklyDigestContext):
 
   const instructions = [
     'Write a weekly money digest SMS in lowercase with a warm, confident, professional tone (no slang or filler).',
-    'Start the message with a heading line formatted exactly as "weekly summary: {from} → {to}".',
-    'Follow with three concise sentences, each on its own line (newline separated, no run-ons).',
-    'Mention the covered date range and any standout categories or merchants.',
-    "Include a sentence with an explicit category breakdown formatted like \"category breakdown: category ($amount), ...\" using up to the top 3 categories by spend.",
-    'If there is pending spend, call it out briefly; otherwise omit.',
+    'Start with a heading line formatted exactly as "weekly summary: {from} → {to}".',
+    'After the heading, write one sentence summarizing total spend and any standout merchants.',
+    'Insert a blank line, then write "category breakdown:" on its own line.',
+    'On the next lines list up to the first three items from spendSummary.topCategories in the format "{emoji} {label} $amount", choosing a fitting emoji yourself (common lifestyle/finance emoji only) and rounding amounts to whole dollars with no comma separators.',
+    'After the category block, add a blank line.',
+    'If pending spend exists, write "pending to watch: $X still clearing." (rounded whole dollars); otherwise omit this line.',
+    'Finish with one short, witty observation about the week (no labels like "quip").',
     'Do not mention refunds or credits.',
     'If spend was zero, reassure the user instead of forcing amounts.',
     'Do not ask questions or offer to fetch more data.',
-    'Use only the numbers from the JSON. Round to whole dollars when quoting amounts.',
+    'Use only the numbers from the JSON when quoting amounts.',
   ].join(' ');
 
   const userContent = `${instructions}
@@ -316,7 +318,7 @@ JSON: ${JSON.stringify(context)}`;
 
   const system = `You are Trilogy, a weekly "money pulse" writer for SMS.
 voice: confident, encouraging, lowercase, professional.
-format: heading line + three newline-separated sentences, no emojis, no bullet lists, no sign-offs.`;
+format: heading + short paragraphs. keep output compact, no bullet characters other than the emoji list.`;
 
   try {
     const controller = new AbortController();

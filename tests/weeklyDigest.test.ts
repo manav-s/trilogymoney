@@ -211,8 +211,11 @@ describe('generateWeeklyDigestMessage', () => {
 
     const fetchMock = vi.fn(async (_url: RequestInfo, init?: RequestInit) => {
       const body = init?.body ? JSON.parse(String(init.body)) : {};
-      expect(body.messages?.[1]?.content).toContain('JSON:');
-      expect(body.messages?.[1]?.content).toContain('"totalSpend":200');
+      const prompt = body.messages?.[1]?.content ?? '';
+      expect(prompt).toContain('JSON:');
+      expect(prompt).toContain('"totalSpend":200');
+      expect(prompt).toContain('category breakdown:');
+      expect(prompt).toContain('pending to watch');
       return new Response(
         JSON.stringify({ choices: [{ message: { content: 'weekly vibe secured' } }] }),
         { status: 200, headers: { 'content-type': 'application/json' } }
