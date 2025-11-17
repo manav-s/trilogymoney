@@ -2,7 +2,6 @@ import { getPlaidClient } from '@/lib/plaid';
 import { prisma } from '@/lib/db';
 import { decryptMessage } from '@/lib/encryption';
 import { logError } from '@/lib/logger';
-import type { TransactionsRecurringGetResponse } from 'plaid';
 
 export type RecurringSeries = {
   merchant: string;
@@ -23,9 +22,8 @@ export async function getRecurringTransactions(userId: string): Promise<Recurrin
     try {
       const accessToken = decryptMessage(item.accessToken);
       const resp = await client.transactionsRecurringGet({ access_token: accessToken });
-      const data = resp.data as TransactionsRecurringGetResponse;
-      const inflows = data.inflows ?? [];
-      const outflows = data.outflows ?? [];
+      const inflows = resp.data.inflows ?? [];
+      const outflows = resp.data.outflows ?? [];
 
       for (const s of [...inflows, ...outflows]) {
         series.push({
