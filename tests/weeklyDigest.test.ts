@@ -214,8 +214,10 @@ describe('generateWeeklyDigestMessage', () => {
       const prompt = body.messages?.[1]?.content ?? '';
       expect(prompt).toContain('JSON:');
       expect(prompt).toContain('"totalSpend":200');
+      expect(prompt).toContain('Add a blank line after the heading');
       expect(prompt).toContain('category breakdown:');
       expect(prompt).toContain('pending to watch');
+      expect(prompt).toContain('give doordash a break');
       return new Response(
         JSON.stringify({ choices: [{ message: { content: 'weekly vibe secured' } }] }),
         { status: 200, headers: { 'content-type': 'application/json' } }
