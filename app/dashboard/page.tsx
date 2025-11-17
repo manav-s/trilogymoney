@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PlaidLink } from "react-plaid-link";
+import { usePlaidLink } from "react-plaid-link";
 
 const ONBOARDING_PHONE_KEY = "onboarding_phone";
 
@@ -30,6 +30,7 @@ export default function DashboardPage() {
   const [phone, setPhone] = useState<string | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [linkToken, setLinkToken] = useState<string | null>(null);
+  const [linking, setLinking] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -56,14 +57,20 @@ export default function DashboardPage() {
   }, [router]);
 
   const createLinkToken = async () => {
-    if (!phone) return;
+    if (!phone || linking) return;
+    setLinking(true);
     const res = await fetch("/api/accounts/add-link-token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone }),
     });
     const data = await res.json();
-    if (data.link_token) setLinkToken(data.link_token);
+    if (data.link_token) {
+      setLinkToken(data.link_token);
+    } else {
+      setLinking(false);
+      alert(data.error || "failed to create link token");
+    }
   };
 
   const onLinkSuccess = async (public_token: string) => {
@@ -73,7 +80,14 @@ export default function DashboardPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone, public_token }),
     });
+    setLinkToken(null);
+    setLinking(false);
     location.reload();
+  };
+
+  const onLinkExit = () => {
+    setLinkToken(null);
+    setLinking(false);
   };
 
   const deleteAccount = async (accountId: string) => {
@@ -119,13 +133,16 @@ export default function DashboardPage() {
         <h1 className="text-4xl font-bold text-gray-900 mb-6 lowercase">dashboard</h1>
 
         <div className="mb-8 flex flex-wrap gap-3">
+          <button
+            onClick={createLinkToken}
+            disabled={linking}
+            className="px-5 py-3 rounded-full bg-indigo-600 text-white lowercase disabled:opacity-50"
+          >
+            {linking ? 'opening link…' : 'add account'}
+          </button>
           {linkToken ? (
-            <PlaidLink token={linkToken} onSuccess={onLinkSuccess}>
-              <button className="px-5 py-3 rounded-full bg-indigo-600 text-white lowercase">add another account</button>
-            </PlaidLink>
-          ) : (
-            <button onClick={createLinkToken} className="px-5 py-3 rounded-full bg-indigo-600 text-white lowercase">add account</button>
-          )}
+            <PlaidLinkLauncher token={linkToken} onSuccess={onLinkSuccess} onExit={onLinkExit} />
+          ) : null}
 
           <button onClick={openPortal} disabled={!customerId} className="px-5 py-3 rounded-full bg-gray-900 text-white lowercase disabled:opacity-50">manage subscription</button>
           {!confirmingDelete ? (
@@ -201,6 +218,22 @@ export default function DashboardPage() {
       </footer>
     </div>
   );
+}
+
+function PlaidLinkLauncher({
+  token,
+  onSuccess,
+  onExit,
+}: {
+  token: string;
+  onSuccess: (public_token: string) => void;
+  onExit: () => void;
+}) {
+  const { open, ready } = usePlaidLink({ token, onSuccess, onExit });
+  useEffect(() => {
+    if (ready) open();
+  }, [ready, open]);
+  return null;
 }
 
 
