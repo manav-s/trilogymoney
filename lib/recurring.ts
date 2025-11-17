@@ -28,8 +28,8 @@ export async function getRecurringTransactions(userId: string): Promise<Recurrin
       for (const s of [...inflows, ...outflows]) {
         series.push({
           merchant: s.merchant_name ?? s.personal_finance_category?.primary ?? 'unknown merchant',
-          frequency: s.frequency ?? 'unknown',
-          averageAmount: typeof s.average_amount === 'number' ? Math.round(s.average_amount) : 0,
+          frequency: s.frequency,
+          averageAmount: Math.round(s.average_amount),
           nextDate: s.next_date ?? null,
           lastDate: s.last_date ?? null,
           category: s.personal_finance_category?.primary ?? null,
