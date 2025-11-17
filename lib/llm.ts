@@ -313,7 +313,7 @@ export async function generateWeeklyDigestMessage(context: WeeklyDigestContext):
     'On the next lines list up to the first three items from spendSummary.topCategories in the format "{emoji} {label} $amount", choosing a fitting emoji yourself (common lifestyle/finance emoji only), rendering labels in lowercase with spaces instead of underscores, and rounding amounts to whole dollars with no comma separators.',
     'After the category block, add a blank line.',
     'If pending spend exists, write "pending to watch: $X still clearing." (rounded whole dollars); otherwise omit this line.',
-    'Finish with one short, sass-forward riff about the top merchant or category (no labels like "quip") that throws a playful challenge (e.g., "amazon’s holding the crown—side-eye it for a week?").',
+    'Finish with one short, sass-forward riff about the top merchant or category (no labels like "quip") that reads like a judgy poke (e.g., "amazon’s got the spotlight—still calling that ‘needs only’?").',
     'Do not mention refunds or credits.',
     'If spend was zero, reassure the user instead of forcing amounts.',
     'Do not ask questions or offer to fetch more data.',

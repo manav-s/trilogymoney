@@ -218,7 +218,7 @@ describe('generateWeeklyDigestMessage', () => {
       expect(prompt).toContain('category breakdown:');
       expect(prompt).toContain('pending to watch');
       expect(prompt).toContain('lowercase with spaces instead of underscores');
-      expect(prompt).toContain('side-eye it for a week');
+      expect(prompt).toContain('judgy poke');
       return new Response(
         JSON.stringify({ choices: [{ message: { content: 'weekly vibe secured' } }] }),
         { status: 200, headers: { 'content-type': 'application/json' } }
