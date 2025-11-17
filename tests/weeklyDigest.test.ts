@@ -165,6 +165,7 @@ describe('weekly digest helpers', () => {
     expect(context.spendSummary.totalSpend).toBeCloseTo(123.46);
     expect(context.spendSummary.pendingSpend).toBeCloseTo(5.56);
     expect(context.spendSummary.topCategories).toHaveLength(5);
+    expect(context.spendSummary.topCategories[0]).toHaveProperty('emoji');
     expect(context.spendSummary.topMerchants).toHaveLength(5);
     expect(context.spendSummary.topTransactions).toHaveLength(5);
     expect(context.spendSummary.topTransactions[0].amount).toBe(200);
@@ -194,7 +195,9 @@ describe('generateWeeklyDigestMessage', () => {
         pendingSpend: 0,
         count: 4,
         pendingCount: 0,
-        topCategories: [{ label: 'FOOD_AND_DRINK', spendAmount: 120, refundAmount: 10, count: 2 }],
+        topCategories: [
+          { label: 'FOOD_AND_DRINK', spendAmount: 120, refundAmount: 10, count: 2, emoji: '🍽️' },
+        ],
         topMerchants: [{ label: 'Starbucks', spendAmount: 60, refundAmount: 0, count: 2 }],
         topTransactions: [{ merchant: 'Starbucks', amount: 30, date: '2025-10-10', category: 'FOOD_AND_DRINK', pending: false }],
       },
@@ -213,6 +216,8 @@ describe('generateWeeklyDigestMessage', () => {
       const body = init?.body ? JSON.parse(String(init.body)) : {};
       expect(body.messages?.[1]?.content).toContain('JSON:');
       expect(body.messages?.[1]?.content).toContain('"totalSpend":200');
+      expect(body.messages?.[1]?.content).toContain('"emoji":"');
+      expect(body.messages?.[1]?.content).toContain('category breakdown:');
       return new Response(
         JSON.stringify({ choices: [{ message: { content: 'weekly vibe secured' } }] }),
         { status: 200, headers: { 'content-type': 'application/json' } }
