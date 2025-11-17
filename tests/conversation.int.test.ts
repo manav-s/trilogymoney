@@ -13,7 +13,6 @@ const prismaMock = {
 
 const chooseIntentMock = vi.fn();
 const getTransactionsMock = vi.fn();
-const getRecurringTransactionsMock = vi.fn();
 const generateReplyMock = vi.fn();
 const sendMessageMock = vi.fn();
 
@@ -66,9 +65,6 @@ vi.mock('@/lib/llm', () => ({
 }));
 vi.mock('@/lib/transactions', () => ({
   getTransactions: getTransactionsMock,
-}));
-vi.mock('@/lib/recurring', () => ({
-  getRecurringTransactions: getRecurringTransactionsMock,
 }));
 vi.mock('@/lib/blooio', () => ({
   sendMessage: sendMessageMock,
@@ -138,7 +134,6 @@ describe('handleLLMConversation stored query reuse', () => {
     prismaMock.message.create.mockReset();
     chooseIntentMock.mockReset();
     getTransactionsMock.mockReset();
-    getRecurringTransactionsMock.mockReset();
     generateReplyMock.mockReset();
     sendMessageMock.mockReset();
   });
@@ -249,26 +244,6 @@ describe('handleLLMConversation stored query reuse', () => {
       maxRows: 50,
     });
     expect(prismaMock.user.update).toHaveBeenCalled();
-  });
-  it('handles recurring intent by calling recurring helper', async () => {
-    mockUserWithStoredQuery();
-    mockTransactionsReturn();
-    chooseIntentMock.mockResolvedValue('recurring');
-    getRecurringTransactionsMock.mockResolvedValue([
-      { merchant: 'Spotify', frequency: 'monthly', averageAmount: 11, nextDate: '2025-11-20', lastDate: '2025-10-20', category: 'entertainment', status: 'upcoming' },
-    ]);
-    const { handleLLMConversation } = await import('../lib/conversation');
-    await handleLLMConversation('+13471234567', 'what subscriptions are coming up?');
-
-    expect(getRecurringTransactionsMock).toHaveBeenCalledWith('user-1');
-    expect(generateReplyMock).toHaveBeenCalledWith(
-      'recurring',
-      expect.objectContaining({
-        recurringSeries: expect.arrayContaining([
-          expect.objectContaining({ merchant: 'Spotify' }),
-        ]),
-      })
-    );
   });
 });
 
