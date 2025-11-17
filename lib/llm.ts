@@ -274,15 +274,12 @@ export type WeeklyDigestContext = {
   timezone: string;
   spendSummary: {
     totalSpend: number;
-    totalRefund: number;
     pendingSpend: number;
-    pendingRefund: number;
     count: number;
     pendingCount: number;
     topCategories: Array<{ label: string; spendAmount: number; refundAmount: number; count: number }>;
     topMerchants: Array<{ label: string; spendAmount: number; refundAmount: number; count: number }>;
     topTransactions: Array<{ merchant: string; amount: number; date: string; category: string | null; pending: boolean }>;
-    refunds: Array<{ merchant: string; amount: number; date: string; category: string | null }>;
   };
   balances: {
     cashTotal: number;
@@ -307,7 +304,8 @@ export async function generateWeeklyDigestMessage(context: WeeklyDigestContext):
     'Follow with three concise sentences, each on its own line (newline separated, no run-ons).',
     'Mention the covered date range and any standout categories or merchants.',
     "Include a sentence with an explicit category breakdown formatted like \"category breakdown: category ($amount), ...\" using up to the top 3 categories by spend.",
-    'If there were refunds or pending spend, call them out briefly.',
+    'If there is pending spend, call it out briefly; otherwise omit.',
+    'Do not mention refunds or credits.',
     'If spend was zero, reassure the user instead of forcing amounts.',
     'Do not ask questions or offer to fetch more data.',
     'Use only the numbers from the JSON. Round to whole dollars when quoting amounts.',

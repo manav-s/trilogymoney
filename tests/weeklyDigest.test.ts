@@ -164,12 +164,10 @@ describe('weekly digest helpers', () => {
     expect(context.week).toEqual(range);
     expect(context.spendSummary.totalSpend).toBeCloseTo(123.46);
     expect(context.spendSummary.pendingSpend).toBeCloseTo(5.56);
-    expect(context.spendSummary.totalRefund).toBeCloseTo(7.89);
     expect(context.spendSummary.topCategories).toHaveLength(5);
     expect(context.spendSummary.topMerchants).toHaveLength(5);
     expect(context.spendSummary.topTransactions).toHaveLength(5);
     expect(context.spendSummary.topTransactions[0].amount).toBe(200);
-    expect(context.spendSummary.refunds).toHaveLength(3);
     expect(context.balances.cashAccounts).toHaveLength(5);
     expect(context.balances.creditAccounts).toHaveLength(5);
     expect(context.balances.cashTotal).toBeCloseTo(4321.99);
@@ -193,15 +191,12 @@ describe('generateWeeklyDigestMessage', () => {
       timezone: 'America/Los_Angeles',
       spendSummary: {
         totalSpend: 200,
-        totalRefund: 20,
         pendingSpend: 0,
-        pendingRefund: 0,
         count: 4,
         pendingCount: 0,
         topCategories: [{ label: 'FOOD_AND_DRINK', spendAmount: 120, refundAmount: 10, count: 2 }],
         topMerchants: [{ label: 'Starbucks', spendAmount: 60, refundAmount: 0, count: 2 }],
         topTransactions: [{ merchant: 'Starbucks', amount: 30, date: '2025-10-10', category: 'FOOD_AND_DRINK', pending: false }],
-        refunds: [{ merchant: 'Retailer', amount: 10, date: '2025-10-11', category: 'GENERAL_MERCHANDISE' }],
       },
       balances: {
         cashTotal: 1500,

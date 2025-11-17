@@ -59,7 +59,6 @@ export function buildWeeklyDigestContext(input: {
     count: bucket.count,
   }));
   const topTransactions = pickTopTransactions(transactions, 5);
-  const refunds = pickTopRefunds(transactions, 3);
   const cashAccounts = balances.cash.accounts.slice(0, 5).map((account) => ({
     name: account.name,
     institution: account.institution ?? null,
@@ -79,15 +78,12 @@ export function buildWeeklyDigestContext(input: {
     timezone,
     spendSummary: {
       totalSpend: roundCurrency(summary.totalSpend),
-      totalRefund: roundCurrency(summary.totalRefund),
       pendingSpend: roundCurrency(summary.pendingSpend),
-      pendingRefund: roundCurrency(summary.pendingRefund),
       count: summary.count,
       pendingCount: summary.pendingCount,
       topCategories,
       topMerchants,
       topTransactions,
-      refunds,
     },
     balances: {
       cashTotal: roundCurrency(balances.cash.total),
@@ -115,22 +111,6 @@ export function pickTopTransactions(
     date: txn.date,
     category: txn.category,
     pending: txn.pending,
-  }));
-}
-
-export function pickTopRefunds(
-  transactions: TransactionSummary[],
-  limit: number
-): Array<{ merchant: string; amount: number; date: string; category: string | null }> {
-  const refundTxns = transactions
-    .filter((txn) => txn.amount < 0)
-    .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
-    .slice(0, limit);
-  return refundTxns.map((txn) => ({
-    merchant: txn.merchant || txn.description || 'unknown',
-    amount: roundCurrency(Math.abs(txn.amount)),
-    date: txn.date,
-    category: txn.category,
   }));
 }
 
