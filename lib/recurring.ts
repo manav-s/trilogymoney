@@ -38,7 +38,6 @@ export async function getRecurringTransactions(userId: string): Promise<Recurrin
       const resp = await client.transactionsRecurringGet({ access_token: accessToken });
       const data = resp.data as PlaidRecurringResponse;
       console.info('recurring.raw_response', { userId, itemId: item.id, data });
-      logDebug('recurring.raw_response', { userId, itemId: item.id, data });
       const inflows = data.inflows ?? [];
       const outflows = data.outflows ?? [];
 
