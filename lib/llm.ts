@@ -277,13 +277,7 @@ export type WeeklyDigestContext = {
     pendingSpend: number;
     count: number;
     pendingCount: number;
-    topCategories: Array<{
-      label: string;
-      spendAmount: number;
-      refundAmount: number;
-      count: number;
-      emoji: string;
-    }>;
+    topCategories: Array<{ label: string; spendAmount: number; refundAmount: number; count: number }>;
     topMerchants: Array<{ label: string; spendAmount: number; refundAmount: number; count: number }>;
     topTransactions: Array<{ merchant: string; amount: number; date: string; category: string | null; pending: boolean }>;
   };
@@ -307,10 +301,10 @@ export async function generateWeeklyDigestMessage(context: WeeklyDigestContext):
   const instructions = [
     'Write a weekly money digest SMS in lowercase with a warm, confident, professional tone (no slang or filler).',
     'Start the message with a heading line formatted exactly as "weekly summary: {from} → {to}".',
-    'Follow with one sentence summarizing total spend and standout merchants.',
-    'Insert a blank line, then write "category breakdown:" on its own line followed by up to the first three categories from spendSummary.topCategories, one per line, formatted exactly as "{emoji} {label} $amount" with whole-dollar amounts (no commas or extra symbols).',
-    'After the category block, add a blank line, write "pending to watch: $X still clearing." if pending spend exists, otherwise skip that sentence.',
-    'End with a short witty observation about the week (do not prefix it with labels like "quip").',
+    'Follow with three concise sentences, each on its own line (newline separated, no run-ons).',
+    'Mention the covered date range and any standout categories or merchants.',
+    "Include a sentence with an explicit category breakdown formatted like \"category breakdown: category ($amount), ...\" using up to the top 3 categories by spend.",
+    'If there is pending spend, call it out briefly; otherwise omit.',
     'Do not mention refunds or credits.',
     'If spend was zero, reassure the user instead of forcing amounts.',
     'Do not ask questions or offer to fetch more data.',

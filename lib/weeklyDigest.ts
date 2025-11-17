@@ -37,28 +37,6 @@ export function extractHighlights(summary: TransactionsSummary): string[] {
   return Array.from(found);
 }
 
-const CATEGORY_EMOJI_MAP: Record<string, string> = {
-  general_merchandise: '🛒',
-  food_and_drink: '🍽️',
-  groceries: '🥕',
-  personal_care: '💄',
-  health_and_personal_care: '💊',
-  transportation: '🚗',
-  travel: '✈️',
-  restaurants: '🍽️',
-  entertainment: '🎬',
-  shopping: '🛍️',
-  services: '🧰',
-  government_and_non_profit: '🏛️',
-  home_improvement: '🧱',
-  utilities: '💡',
-};
-
-function pickCategoryEmoji(label?: string | null): string {
-  const normalized = label?.trim().toLowerCase().replace(/\s+/g, '_') ?? '';
-  return CATEGORY_EMOJI_MAP[normalized] ?? '📦';
-}
-
 export function buildWeeklyDigestContext(input: {
   summary: TransactionsSummary;
   transactions: TransactionSummary[];
@@ -73,7 +51,6 @@ export function buildWeeklyDigestContext(input: {
     spendAmount: roundCurrency(bucket.spendAmount),
     refundAmount: roundCurrency(bucket.refundAmount),
     count: bucket.count,
-    emoji: pickCategoryEmoji(bucket.label),
   }));
   const topMerchants = summary.perMerchant.slice(0, 5).map((bucket) => ({
     label: bucket.label,
