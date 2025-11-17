@@ -349,4 +349,28 @@ describe('lib/transactions getTransactions', () => {
       ])
     );
   });
+
+  it('skips Plaid items that have no active accounts', async () => {
+    prismaMock.user.findUnique.mockResolvedValue({ id: 'user-1', billingStatus: 'active' });
+    prismaMock.plaidItem.findMany.mockResolvedValue([]);
+
+    const { getTransactions } = await import('../lib/transactions');
+    const result = await getTransactions({ userId: 'user-1' });
+
+    expect(result.transactions).toHaveLength(0);
+    expect(result.summary.count).toBe(0);
+    expect(prismaMock.plaidAccount.findMany).not.toHaveBeenCalled();
+    expect(plaidClientMock.transactionsGet).not.toHaveBeenCalled();
+    expect(prismaMock.plaidItem.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          userId: 'user-1',
+          accounts: {
+            some: { isActive: true },
+          },
+        },
+        select: { id: true, accessToken: true, institutionName: true },
+      })
+    );
+  });
 });

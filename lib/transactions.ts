@@ -343,7 +343,12 @@ export async function getTransactions(args: GetTransactionsArgs): Promise<GetTra
   const fetchCount = Math.min(Math.max(targetRows, MAX_LIMIT), PLAID_MAX_COUNT);
 
   const items = await prisma.plaidItem.findMany({
-    where: { userId },
+    where: {
+      userId,
+      accounts: {
+        some: { isActive: true },
+      },
+    },
     select: { id: true, accessToken: true, institutionName: true },
   });
 
