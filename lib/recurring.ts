@@ -1,7 +1,7 @@
 import { getPlaidClient } from '@/lib/plaid';
 import { prisma } from '@/lib/db';
 import { decryptMessage } from '@/lib/encryption';
-import { logError } from '@/lib/logger';
+import { logError, logDebug } from '@/lib/logger';
 type PlaidRecurringStream = {
   merchant_name?: string | null;
   frequency?: string | null;
@@ -37,7 +37,6 @@ export async function getRecurringTransactions(userId: string): Promise<Recurrin
       const accessToken = decryptMessage(item.accessToken);
       const resp = await client.transactionsRecurringGet({ access_token: accessToken });
       const data = resp.data as PlaidRecurringResponse;
-      console.info('recurring.raw_response', { userId, itemId: item.id, data });
       logDebug('recurring.raw_response', { userId, itemId: item.id, data });
       const inflows = data.inflows ?? [];
       const outflows = data.outflows ?? [];
