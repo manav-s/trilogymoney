@@ -23,9 +23,10 @@ export async function getRecurringTransactions(userId: string): Promise<Recurrin
     try {
       const accessToken = decryptMessage(item.accessToken);
       const resp = await client.transactionsRecurringGet({ access_token: accessToken });
-      const data = resp.data as TransactionsRecurringGetResponse;
-      const inflows = data.inflows ?? [];
-      const outflows = data.outflows ?? [];
+      const { inflows = [], outflows = [] } = resp.data as {
+        inflows?: TransactionsRecurringGetResponse['inflows'];
+        outflows?: TransactionsRecurringGetResponse['outflows'];
+      };
 
       for (const s of [...inflows, ...outflows]) {
         series.push({
