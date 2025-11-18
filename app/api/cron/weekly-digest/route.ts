@@ -278,11 +278,16 @@ async function sendWeeklyDigestCandidate(
     });
 
     try {
+      const restoredLastTransactionsQuery: Prisma.JsonNullValueInput | Prisma.InputJsonValue =
+        previousState.lastTransactionsQuery === null
+          ? Prisma.JsonNull
+          : (previousState.lastTransactionsQuery as Prisma.InputJsonValue);
+
       await prisma.user.update({
         where: { id: user.id },
         data: {
           lastWeeklyDigestAt: previousState.lastWeeklyDigestAt,
-          lastTransactionsQuery: previousState.lastTransactionsQuery as unknown as Prisma.JsonValue | null,
+          lastTransactionsQuery: restoredLastTransactionsQuery,
         },
       });
     } catch (restoreError) {
