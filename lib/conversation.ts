@@ -20,7 +20,7 @@ import { decryptMessage, encryptMessage } from '@/lib/encryption';
 
 const WEEKLY_DIGEST_STICKY_MS = 1000 * 60 * 60 * 72;
 const WEEKLY_DIGEST_DEFAULT_LIMIT = 500;
-const DIGEST_FOLLOWUP_REGEX =
+const DIGEST_FOLLOWUP_BASE_REGEX =
   /\b(?:category|categories|break ?down|food|drink|pending|balance|balances|weekly\s+summary|weekly\s+digest|top\s+merchant|merchant)\b/i;
 
 export async function handleLLMConversation(phone: string, userText: string) {
@@ -222,7 +222,8 @@ function getWeeklyDigestRangeOverride(args: {
 
   const normalizedText = (userText ?? '').toLowerCase();
   if (!normalizedText) return null;
-  if (!DIGEST_FOLLOWUP_REGEX.test(normalizedText)) return null;
+  const digestLabels = collectDigestCategoryLabels(history, storedQuery);
+  if (!matchesDigestFollowup(normalizedText, digestLabels)) return null;
 
   if (storedQuery?.source === 'weekly_digest') {
     return {
@@ -264,6 +265,86 @@ function getUtcWeekStart(base: Date): Date {
 
 function toIsoDay(date: Date): string {
   return date.toISOString().slice(0, 10);
+}
+
+function collectDigestCategoryLabels(history: string, storedQuery: StoredTransactionsQuery | null): string[] {
+  const labels = new Set<string>();
+  if (Array.isArray(storedQuery?.tags)) {
+    for (const tag of storedQuery.tags) {
+      const normalized = normalizeLabel(tag);
+      if (normalized) labels.add(normalized);
+    }
+  }
+  for (const label of extractCategoryLabelsFromHistory(history)) {
+    if (label) labels.add(label);
+  }
+  return Array.from(labels);
+}
+
+function extractCategoryLabelsFromHistory(history: string): string[] {
+  if (!history) return [];
+  const labels = new Set<string>();
+  const lines = history.split('\n');
+  let capture = false;
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) {
+      capture = false;
+      continue;
+    }
+    const lowerLine = line.toLowerCase();
+    if (lowerLine.includes('category breakdown')) {
+      capture = true;
+      continue;
+    }
+    if (!capture) continue;
+    if (lowerLine.startsWith('pending to watch') || lowerLine.startsWith('balances:')) {
+      capture = false;
+      continue;
+    }
+    const isTrilogy = lowerLine.startsWith('trilogy:');
+    if (!isTrilogy) {
+      capture = false;
+      continue;
+    }
+    const colonIndex = line.indexOf(':');
+    const content = colonIndex >= 0 ? line.slice(colonIndex + 1).trim() : line;
+    if (!content) continue;
+    const sanitized = content.replace(/^[^A-Za-z0-9]+/, '');
+    const amountIndex = sanitized.lastIndexOf('$');
+    if (amountIndex === -1) continue;
+    const labelRaw = sanitized.slice(0, amountIndex).trim();
+    const normalized = normalizeLabel(labelRaw);
+    if (normalized) {
+      labels.add(normalized);
+    }
+  }
+  return Array.from(labels);
+}
+
+function matchesDigestFollowup(normalizedText: string, labels: string[]): boolean {
+  if (DIGEST_FOLLOWUP_BASE_REGEX.test(normalizedText)) return true;
+  for (const label of labels) {
+    if (!label) continue;
+    const escaped = escapeRegex(label);
+    const regex = new RegExp(`\\b${escaped}\\b`, 'i');
+    if (regex.test(normalizedText)) return true;
+  }
+  return false;
+}
+
+function normalizeLabel(label: string | null | undefined): string | null {
+  if (!label) return null;
+  const normalized = label
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return normalized || null;
+}
+
+function escapeRegex(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 async function getRecentHistorySnippet(userId: string, days = 30, limit = 30): Promise<string> {

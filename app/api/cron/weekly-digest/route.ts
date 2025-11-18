@@ -38,6 +38,16 @@ function toIsoDay(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+function normalizeCategoryLabel(label: string | null | undefined): string | null {
+  if (!label) return null;
+  const normalized = label
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return normalized || null;
+}
+
 function parseLimit(req: NextRequest): number {
   const raw = req.nextUrl.searchParams.get('limit');
   if (!raw) return DEFAULT_BATCH_LIMIT;
@@ -212,6 +222,9 @@ async function sendWeeklyDigestCandidate(
     range: digestRange,
     highlights,
   });
+  const digestCategoryLabels = digestContext.spendSummary.topCategories
+    .map((cat) => normalizeCategoryLabel(cat.label))
+    .filter((label): label is string => Boolean(label));
 
   const message = await generateWeeklyDigestMessage(digestContext);
   if (!message) {
@@ -253,6 +266,7 @@ async function sendWeeklyDigestCandidate(
         lastTransactionsQuery: buildStoredTransactionsQuery(digestQuery, now, {
           source: 'weekly_digest',
           label: formatRangeLabel(digestRange, { prefix: 'weekly digest' }),
+          tags: digestCategoryLabels,
         }),
       },
     });

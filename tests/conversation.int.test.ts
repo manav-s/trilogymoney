@@ -100,6 +100,7 @@ vi.mock('@/lib/transactionsContext', () => {
       storedAt: now.toISOString(),
       source: meta.source ?? 'adhoc',
       label: meta.label ?? `${query.from} → ${query.to}`,
+      tags: meta.tags ?? undefined,
     }),
     shouldReuseStoredQuery: (parsedResult: any, stored: any) => {
       if (!stored) return false;
@@ -157,6 +158,7 @@ describe('handleLLMConversation stored query reuse', () => {
       storedAt: new Date().toISOString(),
       source: 'weekly_digest',
       label: 'weekly digest nov 3 → nov 9',
+      tags: ['general merchandise', 'personal care', 'food and drink'],
       ...overrides,
     };
     prismaMock.user.findUnique.mockResolvedValue({
@@ -280,7 +282,8 @@ describe('handleLLMConversation stored query reuse', () => {
         id: 'msg-1',
         direction: 'outbound',
         sentAt: new Date(),
-        content: 'weekly summary: 2025-11-10 → 2025-11-16 total spend $520.',
+        content:
+          'weekly summary: 2025-11-10 → 2025-11-16 total spend $520.\ncategory breakdown:\n🧴 personal care $94\n🛍️ general merchandise $319\npending to watch: $85 still clearing.',
       },
     ]);
     const { handleLLMConversation } = await import('../lib/conversation');
@@ -302,6 +305,36 @@ describe('handleLLMConversation stored query reuse', () => {
     );
   });
 
+  it('forces weekly digest range when user references a category label without keywords', async () => {
+    mockUserWithStoredQuery();
+    mockTransactionsReturn();
+    prismaMock.message.findMany.mockResolvedValue([
+      {
+        id: 'msg-1',
+        direction: 'outbound',
+        sentAt: new Date(),
+        content:
+          'weekly summary: 2025-11-10 → 2025-11-16 total spend $520.\ncategory breakdown:\n🧴 personal care $94\n🛍️ general merchandise $319\npending to watch: $85 still clearing.',
+      },
+    ]);
+    const { handleLLMConversation } = await import('../lib/conversation');
+    await handleLLMConversation('+13471234567', 'personal care total?');
+
+    expect(getTransactionsMock).toHaveBeenCalledWith({
+      userId: 'user-1',
+      from: '2025-11-03',
+      to: '2025-11-09',
+      limit: 500,
+      maxRows: 500,
+    });
+    expect(generateReplyMock).toHaveBeenCalledWith(
+      'transactions',
+      expect.objectContaining({
+        rangeLabel: 'weekly digest nov 3 → nov 9',
+      }),
+    );
+  });
+
   it('derives weekly digest range from lastWeeklyDigestAt when stored query is missing', async () => {
     const lastWeeklyDigestAt = new Date('2025-11-17T12:00:00Z');
     mockUserWithoutStoredQuery({ lastWeeklyDigestAt });
@@ -311,7 +344,8 @@ describe('handleLLMConversation stored query reuse', () => {
         id: 'msg-1',
         direction: 'outbound',
         sentAt: new Date(),
-        content: 'weekly summary: 2025-11-10 → 2025-11-16 total spend $520.',
+        content:
+          'weekly summary: 2025-11-10 → 2025-11-16 total spend $520.\ncategory breakdown:\n🧴 personal care $94\n🛍️ general merchandise $319\npending to watch: $85 still clearing.',
       },
     ]);
     const { handleLLMConversation } = await import('../lib/conversation');
@@ -343,5 +377,6 @@ type StoredTransactionsQuery = {
   storedAt: string;
   source: string;
   label: string;
+  tags?: string[];
 };
 
