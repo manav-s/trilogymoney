@@ -217,9 +217,6 @@ function getWeeklyDigestRangeOverride(args: {
   const digestAge = Date.now() - lastWeeklyDigestAt.getTime();
   if (digestAge > WEEKLY_DIGEST_STICKY_MS) return null;
 
-  const normalizedHistory = history?.toLowerCase?.() ?? '';
-  if (!normalizedHistory.includes('weekly summary:')) return null;
-
   const normalizedText = (userText ?? '').toLowerCase();
   if (!normalizedText) return null;
   const digestLabels = collectDigestCategoryLabels(history, storedQuery);
