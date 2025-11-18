@@ -30,15 +30,15 @@ export default function SignInPage() {
           {/* Reassurance bullets */}
           <div className="space-y-3 mb-8">
             <div className="flex items-start gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-indigo-600 mt-2 flex-shrink-0"></div>
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0"></div>
               <p className="text-sm text-gray-600 lowercase">no passwords</p>
             </div>
             <div className="flex items-start gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-indigo-600 mt-2 flex-shrink-0"></div>
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0"></div>
               <p className="text-sm text-gray-600 lowercase">read-only bank access</p>
             </div>
             <div className="flex items-start gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-indigo-600 mt-2 flex-shrink-0"></div>
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0"></div>
               <p className="text-sm text-gray-600 lowercase">cancel anytime · blue bubbles</p>
             </div>
           </div>
@@ -47,7 +47,7 @@ export default function SignInPage() {
           <div className="space-y-3">
             <button 
               onClick={openSms} 
-              className="w-full px-8 py-4 rounded-lg bg-indigo-600 text-white lowercase font-medium hover:bg-indigo-700 transition-colors shadow-md"
+              className="w-full px-8 py-4 rounded-lg bg-blue-500 text-white lowercase font-medium hover:bg-blue-600 transition-colors shadow-md"
             >
               finish sign in
             </button>
