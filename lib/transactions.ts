@@ -124,33 +124,32 @@ function normalizeCategoryKey(category?: string | null): string | null {
 }
 
 const EXCLUDED_SUMMARY_CATEGORY_VALUES = new Set([
-  'transfer_in',
-  'transfer_out',
-  'loan_payments',
-  'bank_fees',
-  'service_charges',
+  'transfer in',
+  'transfer out',
+  'loan payments',
+  'bank fees',
+  'service charges',
   'interest',
   'income',
   'payroll',
-  'investment_and_retirement_income',
-  'cash_advance',
-  'cash_withdrawal',
-  'credit_card_payment',
-  'credit_card_bill_payment',
+  'investment and retirement income',
+  'cash advance',
+  'cash withdrawal',
+  'credit card payment',
+  'credit card bill payment',
   'payment',
   'mortgage',
   'deposit',
 ]);
 
 const EXCLUDED_SUMMARY_CATEGORY_PREFIXES = [
-  'transfer_in',
-  'transfer_out',
-  'loan_payments',
-  'cash_advance',
-  'cash_withdrawal',
-  'credit_card_payment',
-  'credit_card_bill_payment',
-  'investment_and_retirement_income',
+  'transfer',
+  'loan payments',
+  'cash advance',
+  'cash withdrawal',
+  'credit card payment',
+  'credit card bill payment',
+  'investment and retirement income',
 ];
 
 export function isExcludedFromSummary(txn: TransactionSummary): boolean {
