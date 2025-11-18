@@ -928,14 +928,11 @@ describe('handleLLMConversation stored query reuse', () => {
     await handleLLMConversation('+13471234567', 'personal care expenses?');
 
     expect(getTransactionsMock).not.toHaveBeenCalled();
-    const lastCall = generateReplyMock.mock.calls.at(-1);
-    expect(lastCall).toBeTruthy();
-    const ctxArg = lastCall?.[1] as Record<string, string>;
-    expect(ctxArg.categoryBreakdownJson).toBeTruthy();
-    expect(ctxArg.categoryBreakdownJson).toContain('Styles Barber Lounge');
-    expect(ctxArg.categoryBreakdownJson).toContain('Sephora');
-    expect(ctxArg.categoryFocusTotalsJson).toBeTruthy();
-    expect(ctxArg.categoryFocusTotalsJson).toContain('"spend":94');
+    expect(generateReplyMock).not.toHaveBeenCalled();
+    const sms = sendMessageMock.mock.calls.at(-1)?.[0]?.body ?? '';
+    expect(sms).toContain('Styles Barber Lounge');
+    expect(sms).toContain('Sephora');
+    expect(sms).toContain('$94');
   });
 });
 

@@ -213,6 +213,7 @@ export async function handleLLMConversation(phone: string, userText: string) {
       });
 
       let categoryTotalsJson: string | null = null;
+      let categoryTotalsObj: ReturnType<typeof summarizeCategoryTotals> | null = null;
       const breakdown = categoryFocusNormalized
         ? buildCategoryMerchantBreakdown(txns.transactions, categoryFocusNormalized)
         : null;
@@ -225,26 +226,43 @@ export async function handleLLMConversation(phone: string, userText: string) {
         return;
       }
       if (categoryFocusNormalized) {
-        categoryTotalsJson = JSON.stringify(
-          summarizeCategoryTotals(txns.transactions, categoryFocusNormalized)
-        );
+        categoryTotalsObj = summarizeCategoryTotals(txns.transactions, categoryFocusNormalized);
+        categoryTotalsJson = JSON.stringify(categoryTotalsObj);
       }
 
-      body = await generateReply('transactions', {
-        transactions: txns.transactions,
-        moreAvailable: txns.moreAvailable,
-        transactionsJson,
-        summaryJson,
-        categorySummaryLines,
-        history,
-        userText,
-        profile,
-        query: queryForPrompt,
-        rangeLabel,
-        categoryBreakdownJson: breakdown ? JSON.stringify(breakdown) : null,
-        categoryFocusLabel: categoryFocusDisplay ?? categoryFocusNormalized ?? null,
-        categoryFocusTotalsJson: categoryTotalsJson,
-      });
+      const directCategoryReply =
+        snapshotCategoryTransactions !== null &&
+        categoryFocusNormalized &&
+        breakdown &&
+        breakdown.length > 0 &&
+        categoryTotalsObj
+          ? formatCategoryBreakdownSms({
+              label: categoryFocusDisplay ?? categoryFocusNormalized,
+              breakdown,
+              totals: categoryTotalsObj,
+              rangeLabel,
+            })
+          : null;
+
+      if (directCategoryReply) {
+        body = directCategoryReply;
+      } else {
+        body = await generateReply('transactions', {
+          transactions: txns.transactions,
+          moreAvailable: txns.moreAvailable,
+          transactionsJson,
+          summaryJson,
+          categorySummaryLines,
+          history,
+          userText,
+          profile,
+          query: queryForPrompt,
+          rangeLabel,
+          categoryBreakdownJson: breakdown ? JSON.stringify(breakdown) : null,
+          categoryFocusLabel: categoryFocusDisplay ?? categoryFocusNormalized ?? null,
+          categoryFocusTotalsJson: categoryTotalsJson,
+        });
+      }
 
       const shouldStoreCategoryFocus = Boolean(categoryFocusNormalized);
       const shouldStoreContext = shouldPersistContext || shouldStoreCategoryFocus;
@@ -537,6 +555,30 @@ function filterTransactionsByCategory(
   normalizedLabel: string
 ): TransactionSummary[] {
   return transactions.filter((txn) => matchesCategoryLabel(txn.category, normalizedLabel));
+}
+
+function formatCategoryBreakdownSms({
+  label,
+  breakdown,
+  totals,
+  rangeLabel,
+}: {
+  label: string;
+  breakdown: CategoryMerchantBreakdown[];
+  totals: ReturnType<typeof summarizeCategoryTotals>;
+  rangeLabel: string;
+}): string {
+  const totalLine = `${label} (${rangeLabel}): $${formatCurrency(totals.spend)} total${
+    totals.pendingSpend ? `, $${formatCurrency(totals.pendingSpend)} pending` : ''
+  }.`;
+  const merchantLine = breakdown
+    .map((entry) => `${entry.merchant} $${formatCurrency(entry.amount)}`)
+    .join(', ');
+  return merchantLine ? `${totalLine} Merchants: ${merchantLine}.` : totalLine;
+}
+
+function formatCurrency(amount: number): string {
+  return Math.round(amount).toString();
 }
 
 function normalizeLabel(label: string | null | undefined): string | null {
