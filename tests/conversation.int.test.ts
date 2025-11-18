@@ -65,6 +65,7 @@ vi.mock('@/lib/llm', () => ({
 }));
 vi.mock('@/lib/transactions', () => ({
   getTransactions: getTransactionsMock,
+  isExcludedFromSummary: vi.fn(() => false),
 }));
 vi.mock('@/lib/blooio', () => ({
   sendMessage: sendMessageMock,

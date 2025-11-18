@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db';
 import { chooseIntentFromText, generateReply } from '@/lib/llm';
 import { getBalancesBreakdown } from '@/lib/balances';
-import { getTransactions, type TransactionSummary } from '@/lib/transactions';
+import { getTransactions, type TransactionSummary, isExcludedFromSummary } from '@/lib/transactions';
 import {
   parseTransactionsQueryWithOverrides,
   TransactionQuery,
@@ -420,6 +420,8 @@ function buildCategoryMerchantBreakdown(
 ): CategoryMerchantBreakdown[] {
   const map = new Map<string, CategoryMerchantBreakdown>();
   for (const txn of transactions) {
+    if (isExcludedFromSummary(txn)) continue;
+    
     const txnCategory = normalizeLabel(txn.category);
     if (!txnCategory) continue;
     const matchesCategory =
@@ -428,6 +430,7 @@ function buildCategoryMerchantBreakdown(
       normalizedLabel.includes(txnCategory);
     if (!matchesCategory) continue;
     if (typeof txn.amount !== 'number' || txn.amount <= 0) continue;
+    
     const merchantName = txn.merchant?.trim() || txn.description?.trim() || 'unknown merchant';
     const key = merchantName.toLowerCase();
     if (!map.has(key)) {
@@ -469,6 +472,8 @@ function summarizeCategoryTotals(transactions: TransactionSummary[], normalizedL
   let pendingSpend = 0;
   let pendingRefunds = 0;
   for (const txn of transactions) {
+    if (isExcludedFromSummary(txn)) continue;
+    
     const txnCategory = normalizeLabel(txn.category);
     if (!txnCategory) continue;
     const matchesCategory =
