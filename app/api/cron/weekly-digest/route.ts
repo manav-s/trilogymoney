@@ -278,7 +278,7 @@ async function sendWeeklyDigestCandidate(
     });
 
     try {
-      const restoredLastTransactionsQuery: Prisma.JsonNullValueInput | Prisma.InputJsonValue =
+      const restoredLastTransactionsQuery =
         previousState.lastTransactionsQuery === null
           ? Prisma.JsonNull
           : (previousState.lastTransactionsQuery as Prisma.InputJsonValue);
