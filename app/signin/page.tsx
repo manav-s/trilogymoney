@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 const SMS_LINK = "https://shorturl.at/wqcwo"; // opens Messages to +16468941360 with body "pass the sign in link"
 
@@ -24,7 +25,7 @@ export default function SignInPage() {
         {/* Main card */}
         <div className="border border-white/10 bg-white/[0.02] rounded-2xl p-8 backdrop-blur-sm">
           <h2 className="text-3xl font-bold text-white mb-3 lowercase">sign in</h2>
-          <p className="text-gray-400 mb-8 lowercase">we'll text you a magic link to sign in</p>
+          <p className="text-gray-400 mb-8 lowercase">we&apos;ll text you a magic link to sign in</p>
 
           {/* Reassurance bullets */}
           <div className="space-y-3 mb-8">
@@ -63,9 +64,9 @@ export default function SignInPage() {
 
         {/* Footer link */}
         <div className="text-center mt-8">
-          <a href="/" className="text-sm text-gray-500 hover:text-gray-400 transition-colors lowercase">
+          <Link href="/" className="text-sm text-gray-500 hover:text-gray-400 transition-colors lowercase">
             ← back to home
-          </a>
+          </Link>
         </div>
       </div>
     </div>
