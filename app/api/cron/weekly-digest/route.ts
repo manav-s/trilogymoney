@@ -322,9 +322,9 @@ async function sendWeeklyDigestCandidate(
     range: digestRange,
     highlights,
     totals: {
-      totalSpend: summary.totalSpend,
-      totalRefund: summary.totalRefund,
-      pendingSpend: summary.pendingSpend,
+      totalSpend: digestSummary.totalSpend,
+      totalRefund: digestSummary.totalRefund,
+      pendingSpend: digestSummary.pendingSpend,
     },
   });
 
