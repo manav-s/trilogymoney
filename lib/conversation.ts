@@ -1,7 +1,12 @@
 import { prisma } from '@/lib/db';
 import { chooseIntentFromText, generateReply } from '@/lib/llm';
 import { getBalancesBreakdown } from '@/lib/balances';
-import { getTransactions, type TransactionSummary, isExcludedFromSummary } from '@/lib/transactions';
+import {
+  getTransactions,
+  type TransactionSummary,
+  isExcludedFromSummary,
+  buildTransactionsSummary,
+} from '@/lib/transactions';
 import {
   parseTransactionsQueryWithOverrides,
   TransactionQuery,
@@ -40,6 +45,10 @@ export async function handleLLMConversation(phone: string, userText: string) {
     const storedQueryFresh = storedQueryRaw
       ? shouldReuseStoredQuery(parsedResult, storedQueryRaw)
       : false;
+    const storedSnapshot =
+      Array.isArray(storedQueryRaw?.storedTransactions) && storedQueryRaw.storedTransactions.length > 0
+        ? storedQueryRaw.storedTransactions
+        : null;
     const digestRangeOverride = getWeeklyDigestRangeOverride({
       lastWeeklyDigestAt: user.lastWeeklyDigestAt ?? null,
       history,
@@ -143,17 +152,45 @@ export async function handleLLMConversation(phone: string, userText: string) {
       });
     } else if (shouldUseTransactions) {
       const limit = effectiveQuery.limit;
-    const txns = await getTransactions({
-        userId: user.id,
-        from: effectiveQuery.from,
-        to: effectiveQuery.to,
-        limit,
-        maxRows: effectiveQuery.limit,
-        ...(categoryFocusNormalized ? { category: categoryFocusNormalized } : {}),
-        ...(effectiveQuery.kind === 'merchantSpend' && effectiveQuery.merchant
-          ? { merchant: effectiveQuery.merchant }
-          : {}),
-      });
+      const canUseDigestSnapshot =
+        Boolean(digestRangeOverride) &&
+        storedQueryRaw?.source === 'weekly_digest' &&
+        Array.isArray(storedSnapshot) &&
+        storedSnapshot.length > 0;
+      let snapshotCategoryTransactions: TransactionSummary[] | null = null;
+      if (canUseDigestSnapshot && categoryFocusNormalized) {
+        snapshotCategoryTransactions = filterTransactionsByCategory(storedSnapshot!, categoryFocusNormalized);
+        if (snapshotCategoryTransactions.length === 0) {
+          body = formatMissingCategoryMessage(categoryFocusDisplay ?? categoryFocusNormalized);
+          const parts = splitIntoSmsSegments(body);
+          for (const segment of parts) {
+            await sendMessage({ to: phone, body: segment, userId: user.id, shouldPersist: true });
+          }
+          return;
+        }
+      }
+
+      const txns =
+        snapshotCategoryTransactions !== null
+          ? {
+              transactions: snapshotCategoryTransactions,
+              summary: buildTransactionsSummary(snapshotCategoryTransactions, {
+                from: digestRangeOverride?.range.from ?? effectiveQuery.from,
+                to: digestRangeOverride?.range.to ?? effectiveQuery.to,
+              }),
+              moreAvailable: false,
+            }
+          : await getTransactions({
+              userId: user.id,
+              from: effectiveQuery.from,
+              to: effectiveQuery.to,
+              limit,
+              maxRows: effectiveQuery.limit,
+              ...(categoryFocusNormalized ? { category: categoryFocusNormalized } : {}),
+              ...(effectiveQuery.kind === 'merchantSpend' && effectiveQuery.merchant
+                ? { merchant: effectiveQuery.merchant }
+                : {}),
+            });
       if (categoryFocusNormalized && txns.transactions.length === 0) {
         body = formatMissingCategoryMessage(categoryFocusDisplay ?? categoryFocusNormalized);
         const parts = splitIntoSmsSegments(body);
@@ -421,16 +458,9 @@ function buildCategoryMerchantBreakdown(
   const map = new Map<string, CategoryMerchantBreakdown>();
   for (const txn of transactions) {
     if (isExcludedFromSummary(txn)) continue;
-    
-    const txnCategory = normalizeLabel(txn.category);
-    if (!txnCategory) continue;
-    const matchesCategory =
-      txnCategory === normalizedLabel ||
-      txnCategory.includes(normalizedLabel) ||
-      normalizedLabel.includes(txnCategory);
-    if (!matchesCategory) continue;
+    if (!matchesCategoryLabel(txn.category, normalizedLabel)) continue;
     if (typeof txn.amount !== 'number' || txn.amount <= 0) continue;
-    
+
     const merchantName = txn.merchant?.trim() || txn.description?.trim() || 'unknown merchant';
     const key = merchantName.toLowerCase();
     if (!map.has(key)) {
@@ -473,14 +503,7 @@ function summarizeCategoryTotals(transactions: TransactionSummary[], normalizedL
   let pendingRefunds = 0;
   for (const txn of transactions) {
     if (isExcludedFromSummary(txn)) continue;
-    
-    const txnCategory = normalizeLabel(txn.category);
-    if (!txnCategory) continue;
-    const matchesCategory =
-      txnCategory === normalizedLabel ||
-      txnCategory.includes(normalizedLabel) ||
-      normalizedLabel.includes(txnCategory);
-    if (!matchesCategory) continue;
+    if (!matchesCategoryLabel(txn.category, normalizedLabel)) continue;
     const amt = txn.amount || 0;
     if (amt >= 0) {
       spend += amt;
@@ -497,6 +520,23 @@ function summarizeCategoryTotals(transactions: TransactionSummary[], normalizedL
     pendingSpend: Math.round(pendingSpend * 100) / 100,
     pendingRefunds: Math.round(pendingRefunds * 100) / 100,
   };
+}
+
+function matchesCategoryLabel(category: string | null | undefined, normalizedLabel: string): boolean {
+  const txnCategory = normalizeLabel(category);
+  if (!txnCategory) return false;
+  return (
+    txnCategory === normalizedLabel ||
+    txnCategory.includes(normalizedLabel) ||
+    normalizedLabel.includes(txnCategory)
+  );
+}
+
+function filterTransactionsByCategory(
+  transactions: TransactionSummary[],
+  normalizedLabel: string
+): TransactionSummary[] {
+  return transactions.filter((txn) => matchesCategoryLabel(txn.category, normalizedLabel));
 }
 
 function normalizeLabel(label: string | null | undefined): string | null {

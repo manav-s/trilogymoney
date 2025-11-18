@@ -262,6 +262,7 @@ async function sendWeeklyDigestCandidate(
   };
 
   try {
+    const snapshotTransactions = filteredTransactions.slice(0, MAX_TRANSACTIONS_FOR_DIGEST);
     await prisma.user.update({
       where: { id: user.id },
       data: {
@@ -270,6 +271,7 @@ async function sendWeeklyDigestCandidate(
           source: 'weekly_digest',
           label: formatRangeLabel(digestRange, { prefix: 'weekly digest' }),
           tags: digestCategoryLabels,
+          storedTransactions: snapshotTransactions,
         }),
       },
     });

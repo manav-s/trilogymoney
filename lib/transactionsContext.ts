@@ -1,4 +1,5 @@
 import type { TransactionQuery } from './transactionQuery';
+import type { TransactionSummary } from './transactions';
 import { RECENT_FALLBACK_LIMIT } from './transactionQuery';
 
 export type StoredQuerySource = 'weekly_digest' | 'monthly_digest' | 'adhoc';
@@ -15,6 +16,7 @@ export type StoredTransactionsQuery = {
   tags?: string[];
   categoryFocusNormalized?: string | null;
   categoryFocusDisplay?: string | null;
+  storedTransactions?: TransactionSummary[];
 };
 
 const SOURCE_TTL_MS: Record<StoredQuerySource, number> = {
@@ -43,6 +45,7 @@ export function buildStoredTransactionsQuery(
     label?: string;
     tags?: string[];
     categoryFocus?: { normalized: string; display?: string | null };
+    storedTransactions?: TransactionSummary[];
   }
 ): StoredTransactionsQuery {
   const baseRange = { from: query.from, to: query.to };
@@ -59,6 +62,7 @@ export function buildStoredTransactionsQuery(
     tags: Array.isArray(meta?.tags) ? meta?.tags?.map(tag => tag ?? '').filter(Boolean) : undefined,
     categoryFocusNormalized: meta?.categoryFocus?.normalized ?? null,
     categoryFocusDisplay: meta?.categoryFocus?.display ?? null,
+    storedTransactions: meta?.storedTransactions,
   };
 }
 

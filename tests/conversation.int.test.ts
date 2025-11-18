@@ -90,10 +90,87 @@ const isExcludedFromSummaryMock = vi.fn((txn?: { category?: string | null }) => 
   const category = txn?.category?.toString().toLowerCase() ?? '';
   return category.includes('transfer');
 });
+const buildTransactionsSummaryMock = vi.fn((transactions: any[], params: { from: string; to: string }) => {
+  const merchantMap = new Map<string, any>();
+  const categoryMap = new Map<string, any>();
+  let totalSpend = 0;
+  let totalRefund = 0;
+  let pendingSpend = 0;
+  let pendingRefund = 0;
+  let pendingCount = 0;
+
+  const getBucket = (map: Map<string, any>, key: string, label: string) => {
+    if (!map.has(key)) {
+      map.set(key, {
+        label,
+        amount: 0,
+        spendAmount: 0,
+        refundAmount: 0,
+        pendingAmount: 0,
+        pendingSpendAmount: 0,
+        pendingRefundAmount: 0,
+        count: 0,
+        pendingCount: 0,
+      });
+    }
+    return map.get(key)!;
+  };
+
+  for (const txn of transactions) {
+    const amount = Number(txn.amount) || 0;
+    const pending = Boolean(txn.pending);
+    const categoryLabel = (txn.category ?? 'uncategorized').toString();
+    const merchantLabel = txn.merchant ?? txn.description ?? 'unknown merchant';
+    const categoryKey = categoryLabel.toLowerCase();
+    const merchantKey = merchantLabel.toLowerCase();
+
+    if (amount >= 0) {
+      totalSpend += amount;
+      if (pending) pendingSpend += amount;
+    } else {
+      const abs = Math.abs(amount);
+      totalRefund += abs;
+      if (pending) pendingRefund += abs;
+    }
+    if (pending) pendingCount += 1;
+
+    const categoryBucket = getBucket(categoryMap, categoryKey, categoryLabel);
+    const merchantBucket = getBucket(merchantMap, merchantKey, merchantLabel);
+    for (const bucket of [categoryBucket, merchantBucket]) {
+      bucket.amount += amount;
+      if (amount >= 0) {
+        bucket.spendAmount += amount;
+        if (pending) bucket.pendingSpendAmount += amount;
+      } else {
+        const abs = Math.abs(amount);
+        bucket.refundAmount += abs;
+        if (pending) bucket.pendingRefundAmount += abs;
+      }
+      bucket.count += 1;
+      if (pending) bucket.pendingCount += 1;
+    }
+  }
+
+  return {
+    from: params.from,
+    to: params.to,
+    totalAmount: totalSpend - totalRefund,
+    totalSpend,
+    totalRefund,
+    pendingAmount: pendingSpend - pendingRefund,
+    pendingSpend,
+    pendingRefund,
+    count: transactions.length,
+    pendingCount,
+    perMerchant: Array.from(merchantMap.values()),
+    perCategory: Array.from(categoryMap.values()),
+  };
+});
 
 vi.mock('@/lib/transactions', () => ({
   getTransactions: getTransactionsMock,
   isExcludedFromSummary: isExcludedFromSummaryMock,
+  buildTransactionsSummary: buildTransactionsSummaryMock,
 }));
 vi.mock('@/lib/blooio', () => ({
   sendMessage: sendMessageMock,
@@ -825,6 +902,41 @@ describe('handleLLMConversation stored query reuse', () => {
       (generateReplyMock.mock.calls.at(-1)?.[1]?.categoryBreakdownJson as string) ?? '',
     ).not.toContain('Robinhood');
   });
+
+  it('uses stored digest snapshots for category breakdowns to keep totals aligned', async () => {
+    const snapshot = [
+      buildTransaction({ merchant: 'Styles Barber Lounge', amount: 30, category: 'personal care' }),
+      buildTransaction({ merchant: 'Sephora', amount: 64, category: 'personal care' }),
+      buildTransaction({ merchant: 'Amazon', amount: 239, category: 'general merchandise' }),
+    ];
+    mockUserWithStoredQuery(
+      { storedTransactions: snapshot },
+      { lastWeeklyDigestAt: new Date() },
+    );
+    mockTransactionsReturn();
+    getTransactionsMock.mockClear();
+    prismaMock.message.findMany.mockResolvedValue([
+      {
+        id: 'msg-1',
+        direction: 'outbound',
+        sentAt: new Date(),
+        content:
+          'weekly summary: 2025-11-10 → 2025-11-16 total spend $520.\ncategory breakdown:\n🧴 personal care $94\n🛍️ general merchandise $319\npending to watch: $85 still clearing.',
+      },
+    ]);
+    const { handleLLMConversation } = await import('../lib/conversation');
+    await handleLLMConversation('+13471234567', 'personal care expenses?');
+
+    expect(getTransactionsMock).not.toHaveBeenCalled();
+    const lastCall = generateReplyMock.mock.calls.at(-1);
+    expect(lastCall).toBeTruthy();
+    const ctxArg = lastCall?.[1] as Record<string, string>;
+    expect(ctxArg.categoryBreakdownJson).toBeTruthy();
+    expect(ctxArg.categoryBreakdownJson).toContain('Styles Barber Lounge');
+    expect(ctxArg.categoryBreakdownJson).toContain('Sephora');
+    expect(ctxArg.categoryFocusTotalsJson).toBeTruthy();
+    expect(ctxArg.categoryFocusTotalsJson).toContain('"spend":94');
+  });
 });
 
 type StoredTransactionsQuery = {
@@ -839,5 +951,6 @@ type StoredTransactionsQuery = {
   tags?: string[];
   categoryFocusNormalized?: string | null;
   categoryFocusDisplay?: string | null;
+  storedTransactions?: Array<Record<string, unknown>>;
 };
 
