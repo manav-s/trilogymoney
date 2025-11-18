@@ -42,6 +42,10 @@ export default function Home() {
                 texts you via imessage like a friend. once a week, a quick money check-in.
               </p>
 
+              <p className="text-lg sm:text-xl text-gray-700 lowercase">
+                do you get anxious opening your bank app? trilogy shows you what you need to see, without the spiral.
+              </p>
+
               <div className="space-y-4">
                 <a
                   href="https://shorturl.at/KGbiL"
@@ -118,15 +122,18 @@ export default function Home() {
           <p className="text-xl sm:text-2xl text-gray-600 lowercase">
             most finance apps are exhausting.
           </p>
+          <p className="text-xl text-gray-700 lowercase">
+            they want you to build budgets, track every category, stare at charts.
+          </p>
           <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 lowercase">
-            we built something different.
+            trilogy is different.
           </h2>
           <p className="text-xl sm:text-2xl text-gray-700 lowercase">
             once a week, you get an imessage with what actually matters.
           </p>
           <div className="text-center mt-12 space-y-4">
             <p className="text-xl text-gray-700 lowercase">
-              no app to open. no charts to analyze.
+              no app to open. no dashboards to obsess over.
             </p>
             <p className="text-2xl sm:text-3xl font-bold text-gray-900 lowercase">
               just awareness.
@@ -165,7 +172,7 @@ export default function Home() {
                 get weekly updates
               </h3>
               <p className="text-lg text-gray-600 lowercase">
-                every sunday, a quick check-in on your spending
+                every sunday, an imessage with your balance, recent spending, and any red flags
               </p>
             </div>
 
@@ -178,7 +185,7 @@ export default function Home() {
                 stay aware
               </h3>
               <p className="text-lg text-gray-600 lowercase">
-                weekly imessage with what matters most
+                a simple check-in that keeps you on top of your money, without stressing over it
               </p>
             </div>
           </div>
@@ -200,13 +207,13 @@ export default function Home() {
               you just need to know where you&apos;re at.
             </p>
             <p>
-              sometimes that&apos;s all it takes. seeing the numbers. being aware. staying intentional.
+              seeing the numbers once a week. noticing patterns. staying intentional. that alone can ease the anxiety of &quot;i don&apos;t even know what&apos;s going on with my money.&quot;
             </p>
             <p>
               no judgment. no lectures. no $200/month financial advisor.
             </p>
             <p className="text-gray-500">
-              what you do with that? totally up to you.
+              trilogy gives you clarity. what you do with it is totally up to you.
             </p>
           </div>
         </div>
@@ -227,7 +234,7 @@ export default function Home() {
           </a>
 
           <p className="text-sm text-gray-500 lowercase">
-            we&apos;ll open your messages app. just hit send!
+            we&apos;ll open your messages app — just hit send.
           </p>
         </div>
       </section>
