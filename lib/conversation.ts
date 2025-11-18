@@ -175,8 +175,8 @@ export async function handleLLMConversation(phone: string, userText: string) {
       const txns =
         usingDigestSnapshot
           ? {
-              transactions: snapshotCategoryTransactions,
-              summary: buildTransactionsSummary(snapshotCategoryTransactions, {
+              transactions: snapshotCategoryTransactions!,
+              summary: buildTransactionsSummary(snapshotCategoryTransactions!, {
                 from: digestRangeOverride?.range.from ?? effectiveQuery.from,
                 to: digestRangeOverride?.range.to ?? effectiveQuery.to,
               }),
