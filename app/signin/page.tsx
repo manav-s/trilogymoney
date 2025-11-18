@@ -49,7 +49,7 @@ export default function SignInPage() {
               onClick={openSms} 
               className="w-full px-8 py-4 rounded-lg bg-indigo-600 text-white lowercase font-medium hover:bg-indigo-700 transition-colors shadow-md"
             >
-              open imessage to get your link
+              finish sign in
             </button>
             {openedOnce ? (
               <button 
