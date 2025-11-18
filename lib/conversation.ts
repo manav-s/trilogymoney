@@ -115,8 +115,12 @@ export async function handleLLMConversation(phone: string, userText: string) {
       categoryFocusDisplay = storedCategoryFocusDisplay ?? categoryFocusDisplay;
     }
 
+    const isDigestFollowup = Boolean(digestRangeOverride);
+
     const shouldUseTransactions =
-      effectiveQuery.kind === 'merchantSpend' || intent === 'transactions';
+      isDigestFollowup ||
+      effectiveQuery.kind === 'merchantSpend' ||
+      intent === 'transactions';
     if (intent === 'balances') {
       const breakdown = await getBalancesBreakdown({ userId: user.id });
       const cashInstitutions = [...new Set(breakdown.cash.accounts.map(a => a.institution).filter(Boolean))] as string[];

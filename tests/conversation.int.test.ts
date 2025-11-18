@@ -1249,6 +1249,61 @@ describe('handleLLMConversation stored query reuse', () => {
 
     vi.useRealTimers();
   });
+
+  it('treats digest follow-ups as transactions even when intent is chat', async () => {
+    vi.useFakeTimers();
+    const now = new Date('2025-11-18T12:00:00Z');
+    vi.setSystemTime(now);
+
+    const snapshot = [
+      buildTransaction({ merchant: 'Amazon', amount: 200, category: 'general merchandise' }),
+      buildTransaction({ merchant: 'Skool.com', amount: 75, category: 'general merchandise' }),
+      buildTransaction({ merchant: 'Target', amount: 40, category: 'general merchandise', pending: true }),
+    ];
+
+    mockUserWithStoredQuery(
+      {
+        from: '2025-11-10',
+        to: '2025-11-16',
+        limit: 500,
+        label: 'weekly digest Nov 10 → Nov 16',
+        storedTransactions: snapshot,
+        tags: ['general merchandise'],
+      },
+      { lastWeeklyDigestAt: new Date('2025-11-17T16:00:00Z') },
+    );
+
+    prismaMock.message.findMany.mockResolvedValue([
+      {
+        id: 'msg-1',
+        direction: 'outbound',
+        sentAt: new Date('2025-11-17T16:00:00Z'),
+        content:
+          'trilogy: weekly summary: 2025-11-10 → 2025-11-16 total spend $450 with amazon leading the way alongside skool.com and crunch fitness. category breakdown: 🛒 general merchandise $315 pending to watch: $75 still clearing. balances: td convenience checking 3589.',
+      },
+    ]);
+
+    mockTransactionsReturn();
+    getTransactionsMock.mockClear();
+    generateReplyMock.mockClear();
+    sendMessageMock.mockClear();
+    chooseIntentMock.mockResolvedValue('chat');
+
+    const { handleLLMConversation } = await import('../lib/conversation');
+
+    await handleLLMConversation('+13471234567', 'can you break down general merchandise?');
+    expect(chooseIntentMock).toHaveBeenCalledWith('can you break down general merchandise?');
+    expect(getTransactionsMock).not.toHaveBeenCalled();
+    expect(generateReplyMock).not.toHaveBeenCalled();
+    const sms = sendMessageMock.mock.calls.at(-1)?.[0]?.body ?? '';
+    logSms('intent-chat general merchandise', sms);
+    expect(sms.toLowerCase()).toContain('general merchandise (weekly digest nov 10 → nov 16)'.toLowerCase());
+    expect(sms).toContain('Amazon $200');
+    expect(sms).toContain('Skool.com $75');
+    expect(sms).toContain('Target $40');
+
+    vi.useRealTimers();
+  });
 });
 
 type StoredTransactionsQuery = {
