@@ -47,8 +47,13 @@ export async function handleLLMConversation(phone: string, userText: string) {
       parsedResult,
       storedQuery: storedQueryRaw,
     });
-    const categoryFocusNormalized = digestRangeOverride?.matchedLabelNormalized ?? null;
-    const categoryFocusDisplay = digestRangeOverride?.matchedLabelDisplay ?? null;
+    const storedCategoryFocusNormalized =
+      typeof storedQueryRaw?.categoryFocusNormalized === 'string' && storedQueryRaw.categoryFocusNormalized
+        ? storedQueryRaw.categoryFocusNormalized
+        : null;
+    const storedCategoryFocusDisplay = storedQueryRaw?.categoryFocusDisplay ?? null;
+    let categoryFocusNormalized = digestRangeOverride?.matchedLabelNormalized ?? null;
+    let categoryFocusDisplay = digestRangeOverride?.matchedLabelDisplay ?? null;
 
     let effectiveQuery: TransactionQuery = parsedResult.query;
     let rangeLabel = formatRangeLabel({ from: effectiveQuery.from, to: effectiveQuery.to });
@@ -88,6 +93,17 @@ export async function handleLLMConversation(phone: string, userText: string) {
       }
       rangeLabel = digestRangeOverride.label;
       shouldPersistContext = false;
+      if (digestRangeOverride.matchedLabelNormalized) {
+        effectiveQuery = {
+          ...effectiveQuery,
+          category: digestRangeOverride.matchedLabelNormalized,
+        } as TransactionQuery & { category?: string };
+      }
+    }
+
+    if (!categoryFocusNormalized && storedQueryFresh && storedCategoryFocusNormalized) {
+      categoryFocusNormalized = storedCategoryFocusNormalized;
+      categoryFocusDisplay = storedCategoryFocusDisplay ?? categoryFocusDisplay;
     }
 
     const shouldUseTransactions =
@@ -188,13 +204,18 @@ export async function handleLLMConversation(phone: string, userText: string) {
         categoryFocusLabel: categoryFocusDisplay ?? categoryFocusNormalized ?? null,
       });
 
-      if (shouldPersistContext) {
+      const shouldStoreCategoryFocus = Boolean(categoryFocusNormalized);
+      const shouldStoreContext = shouldPersistContext || shouldStoreCategoryFocus;
+      if (shouldStoreContext) {
         await prisma.user.update({
           where: { id: user.id },
           data: {
             lastTransactionsQuery: buildStoredTransactionsQuery(queryForPrompt, new Date(), {
               source: 'adhoc',
               label: rangeLabel,
+              categoryFocus: categoryFocusNormalized
+                ? { normalized: categoryFocusNormalized, display: categoryFocusDisplay ?? null }
+                : undefined,
             }),
           },
         });
@@ -310,14 +331,14 @@ function collectDigestCategoryLabels(
     for (const tag of storedQuery.tags) {
       const normalized = normalizeLabel(tag);
       if (normalized && !labels.has(normalized)) {
-        labels.set(normalized, { normalized, display: tag });
+        labels.set(normalized, { normalized, display: tag ?? normalized });
       }
     }
   }
   for (const label of extractCategoryLabelsFromHistory(history)) {
     const normalized = normalizeLabel(label);
     if (normalized && !labels.has(normalized)) {
-      labels.set(normalized, { normalized, display: label });
+      labels.set(normalized, { normalized, display: label ?? normalized });
     }
   }
   return labels;
@@ -368,7 +389,7 @@ function matchesDigestFollowup(
   labels: Map<string, DigestLabelEntry>
 ): { matched: boolean; matchedLabel: DigestLabelEntry | null } {
   for (const entry of labels.values()) {
-    const escaped = escapeRegex(entry.display);
+    const escaped = escapeRegex(entry.normalized);
     const regex = new RegExp(`\\b${escaped}\\b`, 'i');
     if (regex.test(normalizedText)) {
       return { matched: true, matchedLabel: entry };

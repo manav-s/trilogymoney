@@ -13,6 +13,8 @@ export type StoredTransactionsQuery = {
   source: StoredQuerySource;
   label: string;
   tags?: string[];
+  categoryFocusNormalized?: string | null;
+  categoryFocusDisplay?: string | null;
 };
 
 const SOURCE_TTL_MS: Record<StoredQuerySource, number> = {
@@ -36,7 +38,12 @@ export function formatRangeLabel(range: RangeLike, options?: { prefix?: string }
 export function buildStoredTransactionsQuery(
   query: TransactionQuery,
   now = new Date(),
-  meta?: { source?: StoredQuerySource; label?: string; tags?: string[] }
+  meta?: {
+    source?: StoredQuerySource;
+    label?: string;
+    tags?: string[];
+    categoryFocus?: { normalized: string; display?: string | null };
+  }
 ): StoredTransactionsQuery {
   const baseRange = { from: query.from, to: query.to };
   const label = meta?.label ?? formatRangeLabel(baseRange);
@@ -50,6 +57,8 @@ export function buildStoredTransactionsQuery(
     source: meta?.source ?? 'adhoc',
     label,
     tags: Array.isArray(meta?.tags) ? meta?.tags?.map(tag => tag ?? '').filter(Boolean) : undefined,
+    categoryFocusNormalized: meta?.categoryFocus?.normalized ?? null,
+    categoryFocusDisplay: meta?.categoryFocus?.display ?? null,
   };
 }
 

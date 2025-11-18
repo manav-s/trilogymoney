@@ -106,14 +106,20 @@ function matchesMerchant(summary: TransactionSummary, needle?: string): boolean 
 
 function matchesCategory(summary: TransactionSummary, needle?: string): boolean {
   if (!needle) return true;
-  const lower = needle.trim().toLowerCase();
-  if (!lower) return true;
-  return summary.category?.toLowerCase().includes(lower) ?? false;
+  const normalizedNeedle = normalizeCategoryKey(needle);
+  if (!normalizedNeedle) return true;
+  const summaryKey = normalizeCategoryKey(summary.category);
+  if (!summaryKey) return false;
+  return summaryKey.includes(normalizedNeedle);
 }
 
 function normalizeCategoryKey(category?: string | null): string | null {
   if (!category) return null;
-  const normalized = category.trim().toLowerCase();
+  const normalized = category
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ');
   return normalized || null;
 }
 

@@ -101,6 +101,8 @@ vi.mock('@/lib/transactionsContext', () => {
       source: meta.source ?? 'adhoc',
       label: meta.label ?? `${query.from} → ${query.to}`,
       tags: meta.tags ?? undefined,
+      categoryFocusNormalized: meta.categoryFocus?.normalized ?? null,
+      categoryFocusDisplay: meta.categoryFocus?.display ?? null,
     }),
     shouldReuseStoredQuery: (parsedResult: any, stored: any) => {
       if (!stored) return false;
@@ -159,6 +161,8 @@ describe('handleLLMConversation stored query reuse', () => {
       source: 'weekly_digest',
       label: 'weekly digest nov 3 → nov 9',
       tags: ['general merchandise', 'personal care', 'food and drink'],
+      categoryFocusNormalized: null,
+      categoryFocusDisplay: null,
       ...overrides,
     };
     prismaMock.user.findUnique.mockResolvedValue({
@@ -427,6 +431,46 @@ describe('handleLLMConversation stored query reuse', () => {
     );
   });
 
+  it('keeps the last category focus sticky across follow-ups', async () => {
+    mockUserWithStoredQuery();
+    mockTransactionsReturn({
+      transactions: [
+        buildTransaction({ category: 'general merchandise', merchant: 'Amazon', amount: 239 }),
+      ],
+    });
+    const { handleLLMConversation } = await import('../lib/conversation');
+    await handleLLMConversation('+13471234567', 'break down general merchandise please');
+
+    const storedCall = prismaMock.user.update.mock.calls.at(-1);
+    expect(storedCall).toBeTruthy();
+    const storedQuery = storedCall?.[0]?.data?.lastTransactionsQuery;
+    expect(storedQuery?.categoryFocusNormalized).toBe('general merchandise');
+
+    prismaMock.user.findUnique.mockResolvedValueOnce({
+      id: 'user-1',
+      phone: '+13471234567',
+      billingStatus: 'active',
+      messagingStatus: 'active',
+      isActive: true,
+      lastTransactionsQuery: storedQuery,
+    });
+
+    mockTransactionsReturn({
+      transactions: [
+        buildTransaction({ category: 'general merchandise', merchant: 'Skool.com', amount: 120 }),
+      ],
+    });
+
+    await handleLLMConversation('+13471234567', 'what about pending spend?');
+
+    expect(getTransactionsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        userId: 'user-1',
+        category: 'general merchandise',
+      }),
+    );
+  });
+
   it('derives weekly digest range from lastWeeklyDigestAt when stored query is missing', async () => {
     const lastWeeklyDigestAt = new Date('2025-11-17T12:00:00Z');
     mockUserWithoutStoredQuery({ lastWeeklyDigestAt });
@@ -474,5 +518,7 @@ type StoredTransactionsQuery = {
   source: string;
   label: string;
   tags?: string[];
+  categoryFocusNormalized?: string | null;
+  categoryFocusDisplay?: string | null;
 };
 
