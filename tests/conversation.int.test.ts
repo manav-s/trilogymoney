@@ -506,6 +506,32 @@ describe('handleLLMConversation stored query reuse', () => {
       }),
     );
   });
+
+  it('mirrors the weekly digest flow with mocked data', async () => {
+    const digestTransactions = [
+      buildTransaction({ merchant: 'Amazon', amount: 239.35, category: 'general merchandise' }),
+      buildTransaction({ merchant: 'Skool.com', amount: 120, category: 'general merchandise' }),
+      buildTransaction({ merchant: 'Crunch Fitness', amount: 80, category: 'general merchandise' }),
+      buildTransaction({ merchant: 'Target', amount: 35.75, category: 'personal care' }),
+      buildTransaction({ merchant: 'CVS', amount: 22.4, category: 'personal care' }),
+      buildTransaction({ merchant: 'Starbucks', amount: 20, category: 'food and drink' }),
+      buildTransaction({ merchant: 'Subway', amount: 15, category: 'food and drink' }),
+    ];
+    mockUserWithStoredQuery();
+    mockTransactionsReturn({ transactions: digestTransactions });
+
+    const { handleLLMConversation } = await import('../lib/conversation');
+    await handleLLMConversation('+13471234567', 'can you break down general merchandise?');
+
+    const lastCall = generateReplyMock.mock.calls.at(-1);
+    expect(lastCall?.[0]).toBe('transactions');
+    expect(lastCall?.[1]).toEqual(
+      expect.objectContaining({
+        categoryBreakdownJson: expect.stringContaining('Amazon'),
+        categoryFocusTotalsJson: expect.stringContaining('"spend":439.35'),
+      })
+    );
+  });
 });
 
 type StoredTransactionsQuery = {
