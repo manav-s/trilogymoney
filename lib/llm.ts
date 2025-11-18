@@ -218,6 +218,9 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
         ? (ctx.categorySummaryLines as string[])
         : null;
     const rangeLabel = (ctx.rangeLabel as string) || '';
+    const categoryBreakdownJson =
+      typeof ctx.categoryBreakdownJson === 'string' ? ctx.categoryBreakdownJson : null;
+    const categoryFocusLabel = (ctx.categoryFocusLabel as string) || '';
     const guidance = [
       'Respond with 1–2 short sentences in lowercase using ONLY the JSON data provided.',
       'Use summary.totalSpend for overall spend and summary.totalRefund for refunds/credits.',
@@ -231,15 +234,24 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
       rangeLabel
         ? `Unless the user clearly asked for different dates, keep all amounts scoped to ${rangeLabel} and start your answer with "for ${rangeLabel},".`
         : '',
+      categoryBreakdownJson
+        ? categoryFocusLabel
+          ? `You are describing ${categoryFocusLabel}. Mention ONLY merchants listed in categoryBreakdownJson; never invent other store names or amounts.`
+          : 'Mention ONLY merchants listed in categoryBreakdownJson; never invent other store names or amounts.'
+        : '',
     ]
       .filter(Boolean)
       .join(' ');
     const categoriesLine = categorySummaryLines
       ? `Category summary lines: ${JSON.stringify(categorySummaryLines)}`
       : '';
+    const categoryFocusLine = categoryFocusLabel ? `Category focus: ${categoryFocusLabel}` : '';
+    const categoryBreakdownLine = categoryBreakdownJson ? `Category breakdown JSON: ${categoryBreakdownJson}` : '';
     return `${guidance}
 ${questionLine}
 ${categoriesLine}
+${categoryFocusLine}
+${categoryBreakdownLine}
 Query JSON: ${queryJson}
 Summary JSON: ${summaryJson}
 Transactions JSON: ${transactionsJson}`;

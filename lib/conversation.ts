@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db';
 import { chooseIntentFromText, generateReply } from '@/lib/llm';
 import { getBalancesBreakdown } from '@/lib/balances';
-import { getTransactions } from '@/lib/transactions';
+import { getTransactions, type TransactionSummary } from '@/lib/transactions';
 import {
   parseTransactionsQueryWithOverrides,
   TransactionQuery,
@@ -47,6 +47,8 @@ export async function handleLLMConversation(phone: string, userText: string) {
       parsedResult,
       storedQuery: storedQueryRaw,
     });
+    const categoryFocusNormalized = digestRangeOverride?.matchedLabelNormalized ?? null;
+    const categoryFocusDisplay = digestRangeOverride?.matchedLabelDisplay ?? null;
 
     let effectiveQuery: TransactionQuery = parsedResult.query;
     let rangeLabel = formatRangeLabel({ from: effectiveQuery.from, to: effectiveQuery.to });
@@ -147,29 +149,46 @@ export async function handleLLMConversation(phone: string, userText: string) {
         return `${bucket.label}: $${spend} spend`;
       });
 
-      body = await generateReply('transactions', {
-        transactions: txns.transactions,
-        moreAvailable: txns.moreAvailable,
-        transactionsJson,
-        summaryJson,
-        categorySummaryLines,
-        history,
-        userText,
-        profile,
-        query: queryForPrompt,
-        rangeLabel,
-      });
+      let skipLLMReply = false;
+      let categoryBreakdownJson: string | null = null;
 
-      if (shouldPersistContext) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            lastTransactionsQuery: buildStoredTransactionsQuery(queryForPrompt, new Date(), {
-              source: 'adhoc',
-              label: rangeLabel,
-            }),
-          },
+      if (categoryFocusNormalized) {
+        const breakdown = buildCategoryMerchantBreakdown(txns.transactions, categoryFocusNormalized);
+        if (breakdown.length === 0) {
+          body = formatMissingCategoryMessage(categoryFocusDisplay ?? categoryFocusNormalized);
+          skipLLMReply = true;
+        } else {
+          categoryBreakdownJson = JSON.stringify(breakdown);
+        }
+      }
+
+      if (!skipLLMReply) {
+        body = await generateReply('transactions', {
+          transactions: txns.transactions,
+          moreAvailable: txns.moreAvailable,
+          transactionsJson,
+          summaryJson,
+          categorySummaryLines,
+          history,
+          userText,
+          profile,
+          query: queryForPrompt,
+          rangeLabel,
+          categoryBreakdownJson,
+          categoryFocusLabel: categoryFocusDisplay ?? categoryFocusNormalized ?? null,
         });
+
+        if (shouldPersistContext) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              lastTransactionsQuery: buildStoredTransactionsQuery(queryForPrompt, new Date(), {
+                source: 'adhoc',
+                label: rangeLabel,
+              }),
+            },
+          });
+        }
       }
     } else {
       body = await generateReply('chat', {
@@ -201,6 +220,8 @@ type WeeklyDigestRangeOverride = {
   range: { from: string; to: string };
   label: string;
   limit: number;
+  matchedLabelNormalized: string | null;
+  matchedLabelDisplay: string | null;
 };
 
 function getWeeklyDigestRangeOverride(args: {
@@ -220,13 +241,16 @@ function getWeeklyDigestRangeOverride(args: {
   const normalizedText = (userText ?? '').toLowerCase();
   if (!normalizedText) return null;
   const digestLabels = collectDigestCategoryLabels(history, storedQuery);
-  if (!matchesDigestFollowup(normalizedText, digestLabels)) return null;
+  const matchResult = matchesDigestFollowup(normalizedText, digestLabels);
+  if (!matchResult.matched) return null;
 
   if (storedQuery?.source === 'weekly_digest') {
     return {
       range: { from: storedQuery.from, to: storedQuery.to },
       label: storedQuery.label,
       limit: storedQuery.limit,
+      matchedLabelNormalized: matchResult.matchedLabel?.normalized ?? null,
+      matchedLabelDisplay: matchResult.matchedLabel?.display ?? null,
     };
   }
 
@@ -236,6 +260,8 @@ function getWeeklyDigestRangeOverride(args: {
     range: derivedRange,
     label: formatRangeLabel(derivedRange, { prefix: 'weekly digest' }),
     limit: WEEKLY_DIGEST_DEFAULT_LIMIT,
+    matchedLabelNormalized: matchResult.matchedLabel?.normalized ?? null,
+    matchedLabelDisplay: matchResult.matchedLabel?.display ?? null,
   };
 }
 
@@ -264,18 +290,28 @@ function toIsoDay(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-function collectDigestCategoryLabels(history: string, storedQuery: StoredTransactionsQuery | null): string[] {
-  const labels = new Set<string>();
+type DigestLabelEntry = { normalized: string; display: string };
+
+function collectDigestCategoryLabels(
+  history: string,
+  storedQuery: StoredTransactionsQuery | null
+): Map<string, DigestLabelEntry> {
+  const labels = new Map<string, DigestLabelEntry>();
   if (Array.isArray(storedQuery?.tags)) {
     for (const tag of storedQuery.tags) {
       const normalized = normalizeLabel(tag);
-      if (normalized) labels.add(normalized);
+      if (normalized && !labels.has(normalized)) {
+        labels.set(normalized, { normalized, display: tag });
+      }
     }
   }
   for (const label of extractCategoryLabelsFromHistory(history)) {
-    if (label) labels.add(label);
+    const normalized = normalizeLabel(label);
+    if (normalized && !labels.has(normalized)) {
+      labels.set(normalized, { normalized, display: label });
+    }
   }
-  return Array.from(labels);
+  return labels;
 }
 
 function extractCategoryLabelsFromHistory(history: string): string[] {
@@ -311,23 +347,85 @@ function extractCategoryLabelsFromHistory(history: string): string[] {
     const amountIndex = sanitized.lastIndexOf('$');
     if (amountIndex === -1) continue;
     const labelRaw = sanitized.slice(0, amountIndex).trim();
-    const normalized = normalizeLabel(labelRaw);
-    if (normalized) {
-      labels.add(normalized);
+    if (labelRaw) {
+      labels.add(labelRaw);
     }
   }
   return Array.from(labels);
 }
 
-function matchesDigestFollowup(normalizedText: string, labels: string[]): boolean {
-  if (DIGEST_FOLLOWUP_BASE_REGEX.test(normalizedText)) return true;
-  for (const label of labels) {
-    if (!label) continue;
-    const escaped = escapeRegex(label);
+function matchesDigestFollowup(
+  normalizedText: string,
+  labels: Map<string, DigestLabelEntry>
+): { matched: boolean; matchedLabel: DigestLabelEntry | null } {
+  for (const entry of labels.values()) {
+    const escaped = escapeRegex(entry.display);
     const regex = new RegExp(`\\b${escaped}\\b`, 'i');
-    if (regex.test(normalizedText)) return true;
+    if (regex.test(normalizedText)) {
+      return { matched: true, matchedLabel: entry };
+    }
   }
-  return false;
+  if (DIGEST_FOLLOWUP_BASE_REGEX.test(normalizedText)) {
+    return { matched: true, matchedLabel: null };
+  }
+  return { matched: false, matchedLabel: null };
+}
+
+type CategoryMerchantBreakdown = {
+  merchant: string;
+  amount: number;
+  pendingAmount: number;
+  pending: boolean;
+  count: number;
+};
+
+function buildCategoryMerchantBreakdown(
+  transactions: TransactionSummary[],
+  normalizedLabel: string
+): CategoryMerchantBreakdown[] {
+  const map = new Map<string, CategoryMerchantBreakdown>();
+  for (const txn of transactions) {
+    const txnCategory = normalizeLabel(txn.category);
+    if (!txnCategory) continue;
+    const matchesCategory =
+      txnCategory === normalizedLabel ||
+      txnCategory.includes(normalizedLabel) ||
+      normalizedLabel.includes(txnCategory);
+    if (!matchesCategory) continue;
+    if (typeof txn.amount !== 'number' || txn.amount <= 0) continue;
+    const merchantName = txn.merchant?.trim() || txn.description?.trim() || 'unknown merchant';
+    const key = merchantName.toLowerCase();
+    if (!map.has(key)) {
+      map.set(key, {
+        merchant: merchantName,
+        amount: 0,
+        pendingAmount: 0,
+        pending: false,
+        count: 0,
+      });
+    }
+    const entry = map.get(key)!;
+    entry.amount += txn.amount;
+    if (txn.pending) {
+      entry.pendingAmount += txn.amount;
+      entry.pending = true;
+    }
+    entry.count += 1;
+  }
+  const breakdown = Array.from(map.values()).map((entry) => ({
+    ...entry,
+    amount: Math.round(entry.amount * 100) / 100,
+    pendingAmount: Math.round(entry.pendingAmount * 100) / 100,
+  }));
+  breakdown.sort((a, b) => b.amount - a.amount);
+  return breakdown;
+}
+
+function formatMissingCategoryMessage(label: string | null): string {
+  if (!label) {
+    return "i can't see those charges right now—try again in a bit.";
+  }
+  return `i can't see ${label} charges right now—try again in a bit.`;
 }
 
 function normalizeLabel(label: string | null | undefined): string | null {

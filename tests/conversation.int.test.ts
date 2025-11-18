@@ -188,29 +188,53 @@ describe('handleLLMConversation stored query reuse', () => {
     prismaMock.user.update.mockResolvedValue({});
   }
 
-  function mockTransactionsReturn() {
+  function mockTransactionsReturn(overrides?: {
+    transactions?: Array<Record<string, unknown>>;
+    summary?: Record<string, unknown>;
+    moreAvailable?: boolean;
+  }) {
     getTransactionsMock.mockResolvedValue({
-      transactions: [],
-      summary: {
-        from: '2025-11-03',
-        to: '2025-11-09',
-        totalAmount: 0,
-        totalSpend: 0,
-        totalRefund: 0,
-        pendingAmount: 0,
-        pendingSpend: 0,
-        pendingRefund: 0,
-        count: 0,
-        pendingCount: 0,
-        perMerchant: [],
-        perCategory: [],
-      },
-      moreAvailable: false,
+      transactions: overrides?.transactions ?? [],
+      summary:
+        overrides?.summary ?? {
+          from: '2025-11-03',
+          to: '2025-11-09',
+          totalAmount: 0,
+          totalSpend: 0,
+          totalRefund: 0,
+          pendingAmount: 0,
+          pendingSpend: 0,
+          pendingRefund: 0,
+          count: 0,
+          pendingCount: 0,
+          perMerchant: [],
+          perCategory: [],
+        },
+      moreAvailable: overrides?.moreAvailable ?? false,
     });
     generateReplyMock.mockResolvedValue('ok');
     sendMessageMock.mockResolvedValue(undefined);
     chooseIntentMock.mockResolvedValue('transactions');
     prismaMock.message.findMany.mockResolvedValue([]);
+  }
+
+  function buildTransaction(overrides: Record<string, unknown> = {}) {
+    return {
+      id: overrides.id ?? `txn-${Math.random().toString(36).slice(2, 8)}`,
+      date: overrides.date ?? '2025-11-12',
+      amount: overrides.amount ?? 100,
+      currency: overrides.currency ?? 'USD',
+      merchant: overrides.merchant ?? 'sample merchant',
+      description: overrides.description ?? 'sample merchant',
+      category: overrides.category ?? 'general merchandise',
+      pending: overrides.pending ?? false,
+      account: overrides.account ?? {
+        id: 'acct-1',
+        name: 'checking',
+        institution: 'td bank',
+        mask: '1234',
+      },
+    };
   }
 
   it('reuses stored query when parser falls back to recent', async () => {
@@ -276,7 +300,11 @@ describe('handleLLMConversation stored query reuse', () => {
   it('forces weekly digest range for immediate category follow-up even when stored query reuse expires', async () => {
     const staleStoredAt = new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString();
     mockUserWithStoredQuery({ storedAt: staleStoredAt }, { lastWeeklyDigestAt: new Date() });
-    mockTransactionsReturn();
+    mockTransactionsReturn({
+      transactions: [
+        buildTransaction({ category: 'food and drink', merchant: 'Cafe Rio', amount: 50 }),
+      ],
+    });
     prismaMock.message.findMany.mockResolvedValue([
       {
         id: 'msg-1',
@@ -307,7 +335,11 @@ describe('handleLLMConversation stored query reuse', () => {
 
   it('forces weekly digest range when user references a category label without keywords', async () => {
     mockUserWithStoredQuery();
-    mockTransactionsReturn();
+    mockTransactionsReturn({
+      transactions: [
+        buildTransaction({ category: 'personal care', merchant: 'Target', amount: 70 }),
+      ],
+    });
     prismaMock.message.findMany.mockResolvedValue([
       {
         id: 'msg-1',
@@ -331,6 +363,64 @@ describe('handleLLMConversation stored query reuse', () => {
       'transactions',
       expect.objectContaining({
         rangeLabel: 'weekly digest nov 3 → nov 9',
+      }),
+    );
+  });
+
+  it('passes category breakdown merchants to the LLM for digest follow-ups', async () => {
+    mockUserWithStoredQuery();
+    mockTransactionsReturn({
+      transactions: [
+        buildTransaction({ merchant: 'Amazon', description: 'Amazon', amount: 239, category: 'general merchandise' }),
+        buildTransaction({ merchant: 'Skool.com', description: 'Skool.com', amount: 120, category: 'general merchandise' }),
+        buildTransaction({ merchant: 'Crunch Fitness', description: 'Crunch Fitness', amount: 85, category: 'general merchandise' }),
+        buildTransaction({ merchant: 'Target', description: 'Target', amount: 70, category: 'personal care' }),
+      ],
+    });
+    prismaMock.message.findMany.mockResolvedValue([
+      {
+        id: 'msg-1',
+        direction: 'outbound',
+        sentAt: new Date(),
+        content:
+          'weekly summary: 2025-11-10 → 2025-11-16 total spend $520.\ncategory breakdown:\n🧴 personal care $94\n🛍️ general merchandise $319\npending to watch: $85 still clearing.',
+      },
+    ]);
+    const { handleLLMConversation } = await import('../lib/conversation');
+    await handleLLMConversation('+13471234567', 'break down the general merchandise category please');
+
+    expect(generateReplyMock).toHaveBeenCalledWith(
+      'transactions',
+      expect.objectContaining({
+        categoryBreakdownJson: expect.stringContaining('Amazon'),
+        categoryFocusLabel: 'general merchandise',
+      }),
+    );
+  });
+
+  it('returns a guardrail when category transactions are missing', async () => {
+    mockUserWithStoredQuery();
+    mockTransactionsReturn({
+      transactions: [
+        buildTransaction({ merchant: 'Other Store', category: 'other', amount: 50 }),
+      ],
+    });
+    prismaMock.message.findMany.mockResolvedValue([
+      {
+        id: 'msg-1',
+        direction: 'outbound',
+        sentAt: new Date(),
+        content:
+          'weekly summary: 2025-11-10 → 2025-11-16 total spend $520.\ncategory breakdown:\n🧴 personal care $94\n🛍️ general merchandise $319\npending to watch: $85 still clearing.',
+      },
+    ]);
+    const { handleLLMConversation } = await import('../lib/conversation');
+    await handleLLMConversation('+13471234567', 'break down the general merchandise category please');
+
+    expect(generateReplyMock).not.toHaveBeenCalled();
+    expect(sendMessageMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.stringContaining("can't see general merchandise"),
       }),
     );
   });
