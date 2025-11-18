@@ -314,7 +314,7 @@ export async function generateWeeklyDigestMessage(context: WeeklyDigestContext):
     'After the category block, add a blank line.',
     'If pending spend exists, write "pending to watch: $X still clearing." (rounded whole dollars); otherwise omit this line.',
     'After that, add another blank line, write "balances:" on its own line, then list every cash account (available balance when present, otherwise current) followed by every credit account (as "owes $amount"), one per line in the format "{name or institution} $amount" (mask optional).',
-    'Finish with one short, sass-forward riff about the top merchant or category (no labels like "quip") that reads like a judgy poke (e.g., "amazon’s got the spotlight—still calling that ‘needs only’?").',
+    'Finish with one short, sass-forward riff about the top merchant or category (no labels like "quip") that reads like a fresh judgy poke—invent a new line each week, no recycled wording.',
     'Do not mention refunds or credits.',
     'If spend was zero, reassure the user instead of forcing amounts.',
     'Do not ask questions or offer to fetch more data.',
