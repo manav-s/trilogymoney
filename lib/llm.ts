@@ -221,6 +221,8 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
     const categoryBreakdownJson =
       typeof ctx.categoryBreakdownJson === 'string' ? ctx.categoryBreakdownJson : null;
     const categoryFocusLabel = (ctx.categoryFocusLabel as string) || '';
+    const categoryFocusTotalsJson =
+      typeof ctx.categoryFocusTotalsJson === 'string' ? ctx.categoryFocusTotalsJson : null;
     const guidance = [
       'Respond with 1–2 short sentences in lowercase using ONLY the JSON data provided.',
       'Use summary.totalSpend for overall spend and summary.totalRefund for refunds/credits.',
@@ -239,6 +241,9 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
           ? `You are describing ${categoryFocusLabel}. Mention ONLY merchants listed in categoryBreakdownJson; never invent other store names or amounts.`
           : 'Mention ONLY merchants listed in categoryBreakdownJson; never invent other store names or amounts.'
         : '',
+      categoryFocusTotalsJson
+        ? 'Use the spend/pending/refund amounts from categoryFocusTotalsJson exactly when talking about this category.'
+        : '',
     ]
       .filter(Boolean)
       .join(' ');
@@ -247,11 +252,13 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
       : '';
     const categoryFocusLine = categoryFocusLabel ? `Category focus: ${categoryFocusLabel}` : '';
     const categoryBreakdownLine = categoryBreakdownJson ? `Category breakdown JSON: ${categoryBreakdownJson}` : '';
+    const categoryTotalsLine = categoryFocusTotalsJson ? `Category focus totals JSON: ${categoryFocusTotalsJson}` : '';
     return `${guidance}
 ${questionLine}
 ${categoriesLine}
 ${categoryFocusLine}
 ${categoryBreakdownLine}
+${categoryTotalsLine}
 Query JSON: ${queryJson}
 Summary JSON: ${summaryJson}
 Transactions JSON: ${transactionsJson}`;

@@ -175,6 +175,7 @@ export async function handleLLMConversation(phone: string, userText: string) {
         return `${bucket.label}: $${spend} spend`;
       });
 
+      let categoryTotalsJson: string | null = null;
       const breakdown = categoryFocusNormalized
         ? buildCategoryMerchantBreakdown(txns.transactions, categoryFocusNormalized)
         : null;
@@ -185,6 +186,11 @@ export async function handleLLMConversation(phone: string, userText: string) {
           await sendMessage({ to: phone, body: segment, userId: user.id, shouldPersist: true });
         }
         return;
+      }
+      if (categoryFocusNormalized) {
+        categoryTotalsJson = JSON.stringify(
+          summarizeCategoryTotals(txns.transactions, categoryFocusNormalized)
+        );
       }
 
       body = await generateReply('transactions', {
@@ -200,6 +206,7 @@ export async function handleLLMConversation(phone: string, userText: string) {
         rangeLabel,
         categoryBreakdownJson: breakdown ? JSON.stringify(breakdown) : null,
         categoryFocusLabel: categoryFocusDisplay ?? categoryFocusNormalized ?? null,
+        categoryFocusTotalsJson: categoryTotalsJson,
       });
 
       const shouldStoreCategoryFocus = Boolean(categoryFocusNormalized);
@@ -454,6 +461,37 @@ function formatMissingCategoryMessage(label: string | null): string {
     return "i can't see those charges right now—try again in a bit.";
   }
   return `i can't see ${label} charges right now—try again in a bit.`;
+}
+
+function summarizeCategoryTotals(transactions: TransactionSummary[], normalizedLabel: string) {
+  let spend = 0;
+  let refunds = 0;
+  let pendingSpend = 0;
+  let pendingRefunds = 0;
+  for (const txn of transactions) {
+    const txnCategory = normalizeLabel(txn.category);
+    if (!txnCategory) continue;
+    const matchesCategory =
+      txnCategory === normalizedLabel ||
+      txnCategory.includes(normalizedLabel) ||
+      normalizedLabel.includes(txnCategory);
+    if (!matchesCategory) continue;
+    const amt = txn.amount || 0;
+    if (amt >= 0) {
+      spend += amt;
+      if (txn.pending) pendingSpend += amt;
+    } else {
+      const abs = Math.abs(amt);
+      refunds += abs;
+      if (txn.pending) pendingRefunds += abs;
+    }
+  }
+  return {
+    spend: Math.round(spend * 100) / 100,
+    refunds: Math.round(refunds * 100) / 100,
+    pendingSpend: Math.round(pendingSpend * 100) / 100,
+    pendingRefunds: Math.round(pendingRefunds * 100) / 100,
+  };
 }
 
 function normalizeLabel(label: string | null | undefined): string | null {
