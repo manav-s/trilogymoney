@@ -248,7 +248,7 @@ function finalizeBuckets(map: Map<string, TransactionsSummaryBucket>): Transacti
   return top;
 }
 
-function buildTransactionsSummary(
+export function buildTransactionsSummary(
   transactions: TransactionSummary[],
   params: { from: string; to: string }
 ): TransactionsSummary {

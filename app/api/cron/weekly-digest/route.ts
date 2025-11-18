@@ -8,7 +8,7 @@ import { sendMessage } from '@/lib/blooio';
 import { prisma } from '@/lib/db';
 import { logError } from '@/lib/logger';
 import { generateWeeklyDigestMessage } from '@/lib/llm';
-import { getTransactions } from '@/lib/transactions';
+import { getTransactions, buildTransactionsSummary, isExcludedFromSummary } from '@/lib/transactions';
 import { buildWeeklyDigestContext, extractHighlights } from '@/lib/weeklyDigest';
 import { TransactionQuery } from '@/lib/transactionQuery';
 import { buildStoredTransactionsQuery, formatRangeLabel } from '@/lib/transactionsContext';
@@ -212,11 +212,14 @@ async function sendWeeklyDigestCandidate(
     return { status: 'failed', reason: 'balances_error' };
   }
 
-  const summary = transactionsResult.summary;
-  const highlights = extractHighlights(summary);
+  const filteredTransactions = transactionsResult.transactions.filter(
+    (txn) => !isExcludedFromSummary(txn)
+  );
+  const digestSummary = buildTransactionsSummary(filteredTransactions, digestRange);
+  const highlights = extractHighlights(digestSummary);
   const digestContext = buildWeeklyDigestContext({
-    summary,
-    transactions: transactionsResult.transactions,
+    summary: digestSummary,
+    transactions: filteredTransactions,
     balances,
     timezone: user.timezone,
     range: digestRange,
