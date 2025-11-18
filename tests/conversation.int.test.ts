@@ -579,6 +579,65 @@ describe('handleLLMConversation stored query reuse', () => {
     expect(generateReplyMock).toHaveBeenCalled();
     expect(sendMessageMock).toHaveBeenCalled();
   });
+
+  it('handles zero-spend weeks gracefully', async () => {
+    mockUserWithStoredQuery();
+    mockTransactionsReturn({
+      transactions: [],
+      summary: {
+        from: '2025-11-03',
+        to: '2025-11-09',
+        totalAmount: 0,
+        totalSpend: 0,
+        totalRefund: 0,
+        pendingAmount: 0,
+        pendingSpend: 0,
+        pendingRefund: 0,
+        count: 0,
+        pendingCount: 0,
+        perMerchant: [],
+        perCategory: [],
+      },
+    });
+    const { handleLLMConversation } = await import('../lib/conversation');
+    await handleLLMConversation('+13471234567', 'whats my spend this week?');
+
+    expect(generateReplyMock).toHaveBeenCalledWith(
+      'transactions',
+      expect.objectContaining({
+        transactionsJson: '[]',
+        summaryJson: expect.stringContaining('"totalSpend":0'),
+      })
+    );
+  });
+
+  it('handles pending-heavy categories correctly', async () => {
+    mockUserWithStoredQuery();
+    mockTransactionsReturn({
+      transactions: [
+        buildTransaction({ merchant: 'Pending Store', amount: 100, pending: true, category: 'general merchandise' }),
+      ],
+    });
+    prismaMock.message.findMany.mockResolvedValue([
+      {
+        id: 'msg-1',
+        direction: 'outbound',
+        sentAt: new Date(),
+        content:
+          'weekly summary: 2025-11-10 → 2025-11-16 total spend $100.\ncategory breakdown:\n🛍️ general merchandise $100\npending to watch: $100 still clearing.',
+      },
+    ]);
+    const { handleLLMConversation } = await import('../lib/conversation');
+    await handleLLMConversation('+13471234567', 'break down general merchandise');
+
+    expect(generateReplyMock).toHaveBeenCalledWith(
+      'transactions',
+      expect.objectContaining({
+        categoryBreakdownJson: expect.stringContaining('Pending Store'),
+        categoryFocusTotalsJson: expect.stringContaining('"pendingSpend":100'),
+      })
+    );
+  });
 });
 
 type StoredTransactionsQuery = {
