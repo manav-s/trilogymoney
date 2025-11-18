@@ -1,6 +1,7 @@
 import type { BalancesBreakdown } from './balances';
 import type { WeeklyDigestContext } from './llm';
 import type { TransactionSummary, TransactionsSummary } from './transactions';
+import { isExcludedFromSummary } from './transactions';
 
 export const WEEKLY_DIGEST_HIGHLIGHT_KEYWORDS: Array<{ key: string; label: string }> = [
   { key: 'amazon', label: 'amazon' },
@@ -46,12 +47,15 @@ export function buildWeeklyDigestContext(input: {
   highlights: string[];
 }): WeeklyDigestContext {
   const { summary, transactions, balances, timezone, range, highlights } = input;
-  const topCategories = summary.perCategory.slice(0, 5).map((bucket) => ({
-    label: bucket.label,
-    spendAmount: roundCurrency(bucket.spendAmount),
-    refundAmount: roundCurrency(bucket.refundAmount),
-    count: bucket.count,
-  }));
+  const topCategories = summary.perCategory
+    .filter((bucket) => !isExcludedCategoryLabel(bucket.label))
+    .slice(0, 5)
+    .map((bucket) => ({
+      label: bucket.label,
+      spendAmount: roundCurrency(bucket.spendAmount),
+      refundAmount: roundCurrency(bucket.refundAmount),
+      count: bucket.count,
+    }));
   const topMerchants = summary.perMerchant.slice(0, 5).map((bucket) => ({
     label: bucket.label,
     spendAmount: roundCurrency(bucket.spendAmount),
@@ -117,5 +121,15 @@ export function pickTopTransactions(
 export function roundCurrency(value: number | null | undefined): number {
   if (typeof value !== 'number' || Number.isNaN(value)) return 0;
   return Math.round(value * 100) / 100;
+}
+
+function isExcludedCategoryLabel(label: string | null | undefined): boolean {
+  if (!label) return false;
+  const normalized = label
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ');
+  return normalized.startsWith('transfer');
 }
 

@@ -153,7 +153,7 @@ const EXCLUDED_SUMMARY_CATEGORY_PREFIXES = [
   'investment_and_retirement_income',
 ];
 
-function isExcludedFromSummary(txn: TransactionSummary): boolean {
+export function isExcludedFromSummary(txn: TransactionSummary): boolean {
   const categoryKey = normalizeCategoryKey(txn.category);
   if (!categoryKey) return false;
   if (EXCLUDED_SUMMARY_CATEGORY_VALUES.has(categoryKey)) return true;
