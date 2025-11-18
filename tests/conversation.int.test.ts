@@ -324,6 +324,7 @@ describe('handleLLMConversation stored query reuse', () => {
       limit: 100,
       maxRows: 100,
       merchant: 'food',
+      category: 'food and drink',
     });
     expect(generateReplyMock).toHaveBeenCalledWith(
       'transactions',
@@ -358,6 +359,7 @@ describe('handleLLMConversation stored query reuse', () => {
       to: '2025-11-09',
       limit: 500,
       maxRows: 500,
+      category: 'personal care',
     });
     expect(generateReplyMock).toHaveBeenCalledWith(
       'transactions',
@@ -428,7 +430,11 @@ describe('handleLLMConversation stored query reuse', () => {
   it('derives weekly digest range from lastWeeklyDigestAt when stored query is missing', async () => {
     const lastWeeklyDigestAt = new Date('2025-11-17T12:00:00Z');
     mockUserWithoutStoredQuery({ lastWeeklyDigestAt });
-    mockTransactionsReturn();
+    mockTransactionsReturn({
+      transactions: [
+        buildTransaction({ category: 'food and drink', merchant: 'Cafe Rio', amount: 50 }),
+      ],
+    });
     prismaMock.message.findMany.mockResolvedValue([
       {
         id: 'msg-1',

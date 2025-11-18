@@ -127,16 +127,26 @@ export async function handleLLMConversation(phone: string, userText: string) {
       });
     } else if (shouldUseTransactions) {
       const limit = effectiveQuery.limit;
-      const txns = await getTransactions({
+    const txns = await getTransactions({
         userId: user.id,
         from: effectiveQuery.from,
         to: effectiveQuery.to,
         limit,
         maxRows: effectiveQuery.limit,
+        ...(categoryFocusNormalized ? { category: categoryFocusNormalized } : {}),
         ...(effectiveQuery.kind === 'merchantSpend' && effectiveQuery.merchant
           ? { merchant: effectiveQuery.merchant }
           : {}),
       });
+      if (categoryFocusNormalized && txns.transactions.length === 0) {
+        body = formatMissingCategoryMessage(categoryFocusDisplay ?? categoryFocusNormalized);
+        const parts = splitIntoSmsSegments(body);
+        for (const segment of parts) {
+          await sendMessage({ to: phone, body: segment, userId: user.id, shouldPersist: true });
+        }
+        return;
+      }
+
       const transactionsJson = JSON.stringify(txns.transactions);
       const summaryJson = JSON.stringify(txns.summary);
       const queryForPrompt: TransactionQuery = effectiveQuery;
@@ -149,46 +159,45 @@ export async function handleLLMConversation(phone: string, userText: string) {
         return `${bucket.label}: $${spend} spend`;
       });
 
-      let skipLLMReply = false;
       let categoryBreakdownJson: string | null = null;
-
       if (categoryFocusNormalized) {
         const breakdown = buildCategoryMerchantBreakdown(txns.transactions, categoryFocusNormalized);
         if (breakdown.length === 0) {
           body = formatMissingCategoryMessage(categoryFocusDisplay ?? categoryFocusNormalized);
-          skipLLMReply = true;
-        } else {
-          categoryBreakdownJson = JSON.stringify(breakdown);
+          const parts = splitIntoSmsSegments(body);
+          for (const segment of parts) {
+            await sendMessage({ to: phone, body: segment, userId: user.id, shouldPersist: true });
+          }
+          return;
         }
+        categoryBreakdownJson = JSON.stringify(breakdown);
       }
 
-      if (!skipLLMReply) {
-        body = await generateReply('transactions', {
-          transactions: txns.transactions,
-          moreAvailable: txns.moreAvailable,
-          transactionsJson,
-          summaryJson,
-          categorySummaryLines,
-          history,
-          userText,
-          profile,
-          query: queryForPrompt,
-          rangeLabel,
-          categoryBreakdownJson,
-          categoryFocusLabel: categoryFocusDisplay ?? categoryFocusNormalized ?? null,
-        });
+      body = await generateReply('transactions', {
+        transactions: txns.transactions,
+        moreAvailable: txns.moreAvailable,
+        transactionsJson,
+        summaryJson,
+        categorySummaryLines,
+        history,
+        userText,
+        profile,
+        query: queryForPrompt,
+        rangeLabel,
+        categoryBreakdownJson,
+        categoryFocusLabel: categoryFocusDisplay ?? categoryFocusNormalized ?? null,
+      });
 
-        if (shouldPersistContext) {
-          await prisma.user.update({
-            where: { id: user.id },
-            data: {
-              lastTransactionsQuery: buildStoredTransactionsQuery(queryForPrompt, new Date(), {
-                source: 'adhoc',
-                label: rangeLabel,
-              }),
-            },
-          });
-        }
+      if (shouldPersistContext) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            lastTransactionsQuery: buildStoredTransactionsQuery(queryForPrompt, new Date(), {
+              source: 'adhoc',
+              label: rangeLabel,
+            }),
+          },
+        });
       }
     } else {
       body = await generateReply('chat', {
