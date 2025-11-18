@@ -31,6 +31,29 @@ vi.mock('@/lib/transactionQuery', () => {
         overrideRange: true,
       };
     }
+    if (lower.includes('amazon')) {
+      return {
+        query: {
+          kind: 'merchantSpend',
+          merchant: 'amazon',
+          from: '2025-11-08',
+          to: '2025-11-09',
+          limit: 100,
+        },
+        overrideRange: false,
+      };
+    }
+    if (lower.includes('general merchandise')) {
+      return {
+        query: {
+          kind: 'recent',
+          from: '2025-11-08',
+          to: '2025-11-09',
+          limit: 500,
+        },
+        overrideRange: false,
+      };
+    }
     if (lower.includes('food')) {
       return {
         query: {
@@ -63,9 +86,14 @@ vi.mock('@/lib/llm', () => ({
   chooseIntentFromText: chooseIntentMock,
   generateReply: generateReplyMock,
 }));
+const isExcludedFromSummaryMock = vi.fn((txn?: { category?: string | null }) => {
+  const category = txn?.category?.toString().toLowerCase() ?? '';
+  return category.includes('transfer');
+});
+
 vi.mock('@/lib/transactions', () => ({
   getTransactions: getTransactionsMock,
-  isExcludedFromSummary: vi.fn(() => false),
+  isExcludedFromSummary: isExcludedFromSummaryMock,
 }));
 vi.mock('@/lib/blooio', () => ({
   sendMessage: sendMessageMock,
@@ -637,6 +665,165 @@ describe('handleLLMConversation stored query reuse', () => {
         categoryFocusTotalsJson: expect.stringContaining('"pendingSpend":100'),
       })
     );
+  });
+
+  it('does not reuse digest range once the sticky window expires', async () => {
+    const staleDigest = new Date(Date.now() - 1000 * 60 * 60 * 120);
+    mockUserWithStoredQuery({ storedAt: staleDigest.toISOString() }, { lastWeeklyDigestAt: staleDigest });
+    mockTransactionsReturn();
+    prismaMock.message.findMany.mockResolvedValue([
+      {
+        id: 'msg-1',
+        direction: 'outbound',
+        sentAt: staleDigest,
+        content:
+          'weekly summary: 2025-11-03 → 2025-11-09 total spend $520.\ncategory breakdown:\n🧴 personal care $94\n🛍️ general merchandise $319\npending to watch: $85 still clearing.',
+      },
+    ]);
+    const { handleLLMConversation } = await import('../lib/conversation');
+    await handleLLMConversation('+13471234567', 'personal care total?');
+
+    expect(generateReplyMock).toHaveBeenCalledWith(
+      'transactions',
+      expect.objectContaining({
+        rangeLabel: '2025-11-08 → 2025-11-09',
+      }),
+    );
+  });
+
+  it('uses the latest weekly digest range when multiple digests exist', async () => {
+    mockUserWithStoredQuery(
+      {
+        from: '2025-11-10',
+        to: '2025-11-16',
+        label: 'weekly digest nov 10 → nov 16',
+        tags: ['general merchandise'],
+      },
+      { lastWeeklyDigestAt: new Date('2025-11-17T12:00:00Z') },
+    );
+    mockTransactionsReturn({
+      transactions: [
+        buildTransaction({ merchant: 'Amazon', amount: 200, category: 'general merchandise' }),
+      ],
+    });
+    prismaMock.message.findMany.mockResolvedValue([
+      {
+        id: 'msg-1',
+        direction: 'outbound',
+        sentAt: new Date('2025-11-17T12:00:00Z'),
+        content:
+          'weekly summary: 2025-11-10 → 2025-11-16 total spend $520.\ncategory breakdown:\n🛍️ general merchandise $319\npending to watch: $85 still clearing.',
+      },
+    ]);
+    const { handleLLMConversation } = await import('../lib/conversation');
+    await handleLLMConversation('+13471234567', 'general merchandise breakdown');
+
+    expect(getTransactionsMock).toHaveBeenCalledWith({
+      userId: 'user-1',
+      from: '2025-11-10',
+      to: '2025-11-16',
+      limit: 500,
+      maxRows: 500,
+      category: 'general merchandise',
+    });
+    expect(generateReplyMock).toHaveBeenCalledWith(
+      'transactions',
+      expect.objectContaining({
+        rangeLabel: 'weekly digest nov 10 → nov 16',
+      }),
+    );
+  });
+
+  it('honors explicit today overrides even after a digest', async () => {
+    mockUserWithStoredQuery();
+    mockTransactionsReturn();
+    const { handleLLMConversation } = await import('../lib/conversation');
+    await handleLLMConversation('+13471234567', 'show me todays spending');
+
+    expect(getTransactionsMock).toHaveBeenCalledWith({
+      userId: 'user-1',
+      from: '2025-11-10',
+      to: '2025-11-10',
+      limit: 50,
+      maxRows: 50,
+    });
+    expect(generateReplyMock).toHaveBeenCalledWith(
+      'transactions',
+      expect.objectContaining({
+        rangeLabel: '2025-11-10 → 2025-11-10',
+      }),
+    );
+  });
+
+  it('distinguishes merchant vs category follow-ups', async () => {
+    mockUserWithStoredQuery();
+    mockTransactionsReturn();
+    const { handleLLMConversation } = await import('../lib/conversation');
+    await handleLLMConversation('+13471234567', 'show amazon spend');
+
+    expect(getTransactionsMock).toHaveBeenLastCalledWith({
+      userId: 'user-1',
+      from: '2025-11-03',
+      to: '2025-11-09',
+      limit: 100,
+      maxRows: 100,
+      merchant: 'amazon',
+    });
+
+    getTransactionsMock.mockClear();
+    generateReplyMock.mockClear();
+    mockTransactionsReturn();
+    mockUserWithStoredQuery();
+    prismaMock.message.findMany.mockResolvedValue([
+      {
+        id: 'msg-1',
+        direction: 'outbound',
+        sentAt: new Date(),
+        content:
+          'weekly summary: 2025-11-10 → 2025-11-16 total spend $520.\ncategory breakdown:\n🛍️ general merchandise $319\npending to watch: $85 still clearing.',
+      },
+    ]);
+    await handleLLMConversation('+13471234567', 'break down general merchandise');
+
+    expect(getTransactionsMock).toHaveBeenCalledWith({
+      userId: 'user-1',
+      from: '2025-11-03',
+      to: '2025-11-09',
+      limit: 500,
+      maxRows: 500,
+      category: 'general merchandise',
+    });
+  });
+
+  it('filters transfer categories out of breakdowns', async () => {
+    mockUserWithStoredQuery();
+    mockTransactionsReturn({
+      transactions: [
+        buildTransaction({ merchant: 'Amazon', amount: 239, category: 'general merchandise' }),
+        buildTransaction({ merchant: 'Robinhood', amount: 1000, category: 'transfer out' }),
+      ],
+    });
+    prismaMock.message.findMany.mockResolvedValue([
+      {
+        id: 'msg-1',
+        direction: 'outbound',
+        sentAt: new Date(),
+        content:
+          'weekly summary: 2025-11-10 → 2025-11-16 total spend $520.\ncategory breakdown:\n🛍️ general merchandise $319\npending to watch: $85 still clearing.',
+      },
+    ]);
+    const { handleLLMConversation } = await import('../lib/conversation');
+    await handleLLMConversation('+13471234567', 'break down general merchandise');
+
+    expect(generateReplyMock).toHaveBeenCalledWith(
+      'transactions',
+      expect.objectContaining({
+        categoryBreakdownJson: expect.stringContaining('Amazon'),
+      }),
+    );
+    expect(
+      (generateReplyMock.mock.calls.at(-1)?.[1]?.categoryBreakdownJson as string) ?? '',
+    ).not.toContain('Robinhood');
   });
 });
 
