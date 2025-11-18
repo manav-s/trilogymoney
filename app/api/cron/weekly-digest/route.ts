@@ -1,6 +1,7 @@
 export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client';
 
 import { getBalancesBreakdown } from '@/lib/balances';
 import { sendMessage } from '@/lib/blooio';
@@ -75,7 +76,8 @@ export async function POST(req: NextRequest) {
       u."id",
       u."phone",
       u."timezone",
-      u."lastWeeklyDigestAt"
+      u."lastWeeklyDigestAt",
+      u."lastTransactionsQuery"
     FROM "User" u
     WHERE u."isActive" = true
       AND u."messagingStatus" = 'active'
@@ -149,6 +151,7 @@ type DigestCandidate = {
   phone: string | null;
   timezone: string;
   lastWeeklyDigestAt: Date | null;
+  lastTransactionsQuery: unknown | null;
 };
 
 type DigestResult =
@@ -229,21 +232,6 @@ async function sendWeeklyDigestCandidate(
     return { status: 'skipped', reason: 'dry_run' };
   }
 
-  try {
-    await sendMessage({
-      to: user.phone,
-      body: message,
-      userId: user.id,
-      shouldPersist: true,
-    });
-  } catch (error) {
-    logError('weekly-digest.send', error, {
-      userId: user.id,
-      range: digestRange,
-    });
-    return { status: 'failed', reason: 'send_error' };
-  }
-
   const now = new Date();
   const digestQuery: TransactionQuery = {
     kind: 'recent',
@@ -251,6 +239,12 @@ async function sendWeeklyDigestCandidate(
     to: digestRange.to,
     limit: MAX_TRANSACTIONS_FOR_DIGEST,
   };
+
+  const previousState = {
+    lastWeeklyDigestAt: user.lastWeeklyDigestAt ?? null,
+    lastTransactionsQuery: user.lastTransactionsQuery ?? null,
+  };
+
   try {
     await prisma.user.update({
       where: { id: user.id },
@@ -268,6 +262,37 @@ async function sendWeeklyDigestCandidate(
       range: digestRange,
     });
     return { status: 'failed', reason: 'persist_error' };
+  }
+
+  try {
+    await sendMessage({
+      to: user.phone,
+      body: message,
+      userId: user.id,
+      shouldPersist: true,
+    });
+  } catch (error) {
+    logError('weekly-digest.send', error, {
+      userId: user.id,
+      range: digestRange,
+    });
+
+    try {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          lastWeeklyDigestAt: previousState.lastWeeklyDigestAt,
+          lastTransactionsQuery: previousState.lastTransactionsQuery as unknown as Prisma.JsonValue | null,
+        },
+      });
+    } catch (restoreError) {
+      logError('weekly-digest.restore', restoreError, {
+        userId: user.id,
+        range: digestRange,
+      });
+    }
+
+    return { status: 'failed', reason: 'send_error' };
   }
 
   console.info('weekly-digest.sent', {

@@ -87,7 +87,10 @@ vi.mock('@/lib/balances', () => ({
 vi.mock('@/lib/transactionsContext', () => {
   const ONE_HOUR_MS = 1000 * 60 * 60;
   return {
-    formatRangeLabel: ({ from, to }: { from: string; to: string }) => `${from} → ${to}`,
+    formatRangeLabel: (
+      { from, to }: { from: string; to: string },
+      options?: { prefix?: string }
+    ) => (options?.prefix ? `${options.prefix} ${from} → ${to}` : `${from} → ${to}`),
     buildStoredTransactionsQuery: (query: any, now: Date = new Date(), meta: any = {}) => ({
       kind: query.kind,
       from: query.from,
@@ -143,7 +146,7 @@ describe('handleLLMConversation stored query reuse', () => {
 
   function mockUserWithStoredQuery(
     overrides?: Partial<StoredTransactionsQuery>,
-    userOverrides?: Partial<{ lastWeeklyDigestAt: Date | null }>
+    userOverrides?: Partial<{ lastWeeklyDigestAt: Date | null; lastTransactionsQuery: StoredTransactionsQuery | null }>
   ) {
     const stored: StoredTransactionsQuery = {
       kind: 'recent',
@@ -163,6 +166,20 @@ describe('handleLLMConversation stored query reuse', () => {
       messagingStatus: 'active',
       isActive: true,
       lastTransactionsQuery: stored,
+      lastWeeklyDigestAt: new Date(),
+      ...userOverrides,
+    });
+    prismaMock.user.update.mockResolvedValue({});
+  }
+
+  function mockUserWithoutStoredQuery(userOverrides?: Partial<{ lastWeeklyDigestAt: Date | null }>) {
+    prismaMock.user.findUnique.mockResolvedValue({
+      id: 'user-1',
+      phone: '+13471234567',
+      billingStatus: 'active',
+      messagingStatus: 'active',
+      isActive: true,
+      lastTransactionsQuery: null,
       lastWeeklyDigestAt: new Date(),
       ...userOverrides,
     });
@@ -281,6 +298,37 @@ describe('handleLLMConversation stored query reuse', () => {
       'transactions',
       expect.objectContaining({
         rangeLabel: 'weekly digest nov 3 → nov 9',
+      }),
+    );
+  });
+
+  it('derives weekly digest range from lastWeeklyDigestAt when stored query is missing', async () => {
+    const lastWeeklyDigestAt = new Date('2025-11-17T12:00:00Z');
+    mockUserWithoutStoredQuery({ lastWeeklyDigestAt });
+    mockTransactionsReturn();
+    prismaMock.message.findMany.mockResolvedValue([
+      {
+        id: 'msg-1',
+        direction: 'outbound',
+        sentAt: new Date(),
+        content: 'weekly summary: 2025-11-10 → 2025-11-16 total spend $520.',
+      },
+    ]);
+    const { handleLLMConversation } = await import('../lib/conversation');
+    await handleLLMConversation('+13471234567', 'break down the food and drink');
+
+    expect(getTransactionsMock).toHaveBeenCalledWith({
+      userId: 'user-1',
+      from: '2025-11-10',
+      to: '2025-11-16',
+      limit: 100,
+      maxRows: 100,
+      merchant: 'food',
+    });
+    expect(generateReplyMock).toHaveBeenCalledWith(
+      'transactions',
+      expect.objectContaining({
+        rangeLabel: 'weekly digest 2025-11-10 → 2025-11-16',
       }),
     );
   });

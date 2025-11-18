@@ -19,6 +19,7 @@ import { sendMessage } from '@/lib/blooio';
 import { decryptMessage, encryptMessage } from '@/lib/encryption';
 
 const WEEKLY_DIGEST_STICKY_MS = 1000 * 60 * 60 * 72;
+const WEEKLY_DIGEST_DEFAULT_LIMIT = 500;
 const DIGEST_FOLLOWUP_REGEX =
   /\b(?:category|categories|break ?down|food|drink|pending|balance|balances|weekly\s+summary|weekly\s+digest|top\s+merchant|merchant)\b/i;
 
@@ -39,7 +40,7 @@ export async function handleLLMConversation(phone: string, userText: string) {
     const storedQueryFresh = storedQueryRaw
       ? shouldReuseStoredQuery(parsedResult, storedQueryRaw)
       : false;
-    const shouldForceWeeklyDigestRange = shouldApplyWeeklyDigestRange({
+    const digestRangeOverride = getWeeklyDigestRangeOverride({
       lastWeeklyDigestAt: user.lastWeeklyDigestAt ?? null,
       history,
       userText,
@@ -51,7 +52,7 @@ export async function handleLLMConversation(phone: string, userText: string) {
     let rangeLabel = formatRangeLabel({ from: effectiveQuery.from, to: effectiveQuery.to });
     let shouldPersistContext = parsedResult.overrideRange;
 
-    if (storedQueryRaw && (storedQueryFresh || shouldForceWeeklyDigestRange)) {
+    if (storedQueryFresh && storedQueryRaw) {
       const baseRange = storedQueryToTransactionQuery(storedQueryRaw);
       if (parsedResult.query.kind === 'merchantSpend' && parsedResult.query.merchant) {
         effectiveQuery = {
@@ -65,6 +66,25 @@ export async function handleLLMConversation(phone: string, userText: string) {
         effectiveQuery = baseRange;
       }
       rangeLabel = storedQueryRaw.label;
+      shouldPersistContext = false;
+    } else if (digestRangeOverride) {
+      if (parsedResult.query.kind === 'merchantSpend' && parsedResult.query.merchant) {
+        effectiveQuery = {
+          kind: 'merchantSpend',
+          limit: parsedResult.query.limit,
+          merchant: parsedResult.query.merchant,
+          from: digestRangeOverride.range.from,
+          to: digestRangeOverride.range.to,
+        };
+      } else {
+        effectiveQuery = {
+          kind: 'recent',
+          limit: digestRangeOverride.limit,
+          from: digestRangeOverride.range.from,
+          to: digestRangeOverride.range.to,
+        };
+      }
+      rangeLabel = digestRangeOverride.label;
       shouldPersistContext = false;
     }
 
@@ -177,29 +197,73 @@ export async function handleLLMConversation(phone: string, userText: string) {
   }
 }
 
-function shouldApplyWeeklyDigestRange(args: {
+type WeeklyDigestRangeOverride = {
+  range: { from: string; to: string };
+  label: string;
+  limit: number;
+};
+
+function getWeeklyDigestRangeOverride(args: {
   lastWeeklyDigestAt: Date | null;
   history: string;
   userText: string;
   parsedResult: ParsedTransactionsQueryResult;
   storedQuery: StoredTransactionsQuery | null;
-}): boolean {
+}): WeeklyDigestRangeOverride | null {
   const { lastWeeklyDigestAt, history, userText, parsedResult, storedQuery } = args;
-  if (!storedQuery || storedQuery.source !== 'weekly_digest') return false;
-  if (!lastWeeklyDigestAt) return false;
-  if (parsedResult.overrideRange) return false;
+  if (parsedResult.overrideRange) return null;
+  if (!lastWeeklyDigestAt) return null;
 
   const digestAge = Date.now() - lastWeeklyDigestAt.getTime();
-  if (digestAge > WEEKLY_DIGEST_STICKY_MS) return false;
+  if (digestAge > WEEKLY_DIGEST_STICKY_MS) return null;
 
   const normalizedHistory = history?.toLowerCase?.() ?? '';
-  if (!normalizedHistory.includes('weekly summary:')) return false;
+  if (!normalizedHistory.includes('weekly summary:')) return null;
 
   const normalizedText = (userText ?? '').toLowerCase();
-  if (!normalizedText) return false;
-  if (!DIGEST_FOLLOWUP_REGEX.test(normalizedText)) return false;
+  if (!normalizedText) return null;
+  if (!DIGEST_FOLLOWUP_REGEX.test(normalizedText)) return null;
 
-  return true;
+  if (storedQuery?.source === 'weekly_digest') {
+    return {
+      range: { from: storedQuery.from, to: storedQuery.to },
+      label: storedQuery.label,
+      limit: storedQuery.limit,
+    };
+  }
+
+  const derivedRange = deriveWeeklyDigestRangeFromTimestamp(lastWeeklyDigestAt);
+  if (!derivedRange) return null;
+  return {
+    range: derivedRange,
+    label: formatRangeLabel(derivedRange, { prefix: 'weekly digest' }),
+    limit: WEEKLY_DIGEST_DEFAULT_LIMIT,
+  };
+}
+
+function deriveWeeklyDigestRangeFromTimestamp(timestamp: Date | null): { from: string; to: string } | null {
+  if (!timestamp) return null;
+  const millis = timestamp.getTime();
+  if (!Number.isFinite(millis)) return null;
+
+  const weekStart = getUtcWeekStart(timestamp);
+  const start = new Date(weekStart);
+  start.setUTCDate(start.getUTCDate() - 7);
+  const end = new Date(weekStart);
+  end.setUTCDate(end.getUTCDate() - 1);
+  return { from: toIsoDay(start), to: toIsoDay(end) };
+}
+
+function getUtcWeekStart(base: Date): Date {
+  const copy = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate()));
+  const day = copy.getUTCDay();
+  const diff = (day + 6) % 7;
+  copy.setUTCDate(copy.getUTCDate() - diff);
+  return copy;
+}
+
+function toIsoDay(date: Date): string {
+  return date.toISOString().slice(0, 10);
 }
 
 async function getRecentHistorySnippet(userId: string, days = 30, limit = 30): Promise<string> {
