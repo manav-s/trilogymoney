@@ -9,24 +9,19 @@ export default function Home() {
           </span>
         </div>
         <div className="flex items-center">
-          <a href="/signin" className="text-sm font-semibold leading-6 text-gray-900 lowercase hover:text-indigo-600">
+          <a href="/signin" className="text-sm font-semibold leading-6 text-gray-900 lowercase hover:text-blue-600 transition-colors">
             sign in
           </a>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <main className="bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+      <main className="bg-gradient-to-br from-blue-50 via-white to-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Left side - Content */}
             <div className="space-y-8">
               <div className="flex flex-wrap gap-3">
-                <div className="inline-block px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-full">
-                  <span className="text-sm text-indigo-600 font-medium lowercase">
-                    launching soon
-                  </span>
-                </div>
                 <div className="inline-block px-4 py-2 bg-blue-50 border border-blue-200 rounded-full">
                   <span className="text-sm text-blue-600 font-medium lowercase">
                     imessage native
@@ -49,7 +44,7 @@ export default function Home() {
               <div className="space-y-4">
                 <a
                   href="https://shorturl.at/KGbiL"
-                  className="inline-flex items-center px-10 py-5 text-xl font-semibold rounded-full bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-600/20 transition-all lowercase shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                  className="inline-flex items-center px-10 py-5 text-xl font-semibold rounded-full bg-blue-600 text-white hover:bg-blue-700 focus:ring-4 focus:ring-blue-600/20 transition-all lowercase shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                 >
                   start now
                 </a>
@@ -81,30 +76,33 @@ export default function Home() {
                       </p>
                       {/* Trilogy's message (blue bubble, left-aligned) */}
                       <div className="bg-blue-500 rounded-3xl rounded-tl-sm p-4 shadow-md max-w-[240px]">
-                        <p className="text-white text-sm mb-3">
-                          checking in on you 👀
+                        <p className="text-white text-sm font-semibold mb-2">
+                          weekly summary: nov 10 → nov 16
                         </p>
-                        <div className="space-y-2 text-white text-sm">
-                          <p>💰 chase checking:</p>
-                          <p className="ml-2">$2,547.83</p>
-                          <p>💸 yesterday:</p>
-                          <p className="ml-2">-$47.20</p>
-                          <p>📊 this week:</p>
-                          <p className="ml-2">-$312.45</p>
+                        <p className="text-white text-sm mb-3">
+                          you spent $450 this week with amazon leading the way.
+                        </p>
+                        <div className="space-y-1.5 text-white text-sm mb-3">
+                          <p>🛍️ general merchandise $315</p>
+                          <p>💅 personal care $94</p>
+                          <p>🚗 transportation $25</p>
                         </div>
-                        <p className="text-white text-sm mt-4">
-                          maybe lay off the doordash today? 🤨
+                        <p className="text-white text-sm">
+                          balances: td bank $3,589
+                        </p>
+                        <p className="text-white text-sm mt-3 italic">
+                          amazon&apos;s got the spotlight—maybe give your cart a little space? 😏
                         </p>
                       </div>
                       
                       {/* User's response (gray bubble, right-aligned) */}
                       <div className="flex justify-end mt-3">
-                        <div className="bg-gray-200 rounded-3xl rounded-tr-sm p-4 shadow-md max-w-[240px]">
+                        <div className="bg-gray-200 rounded-3xl rounded-tr-sm p-4 shadow-md max-w-[200px]">
                           <p className="text-gray-900 text-sm">
-                            ok fine 🙄
-            </p>
-          </div>
-        </div>
+                            break down personal care
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   {/* iPhone notch */}
@@ -152,7 +150,7 @@ export default function Home() {
           <div className="grid sm:grid-cols-3 gap-12">
             {/* Step 1 */}
             <div className="text-center space-y-4">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-2xl font-bold shadow-lg">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl font-bold shadow-lg">
                 1
               </div>
               <h3 className="text-2xl font-bold text-gray-900 lowercase">
@@ -165,7 +163,7 @@ export default function Home() {
 
             {/* Step 2 */}
             <div className="text-center space-y-4">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-purple-600 text-white flex items-center justify-center text-2xl font-bold shadow-lg">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-500 text-white flex items-center justify-center text-2xl font-bold shadow-lg">
                 2
               </div>
               <h3 className="text-2xl font-bold text-gray-900 lowercase">
@@ -228,7 +226,7 @@ export default function Home() {
 
           <a
             href="https://shorturl.at/KGbiL"
-            className="inline-flex items-center px-10 py-5 text-xl font-semibold rounded-full bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-600/20 transition-all lowercase shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+            className="inline-flex items-center px-10 py-5 text-xl font-semibold rounded-full bg-blue-600 text-white hover:bg-blue-700 focus:ring-4 focus:ring-blue-600/20 transition-all lowercase shadow-lg hover:shadow-xl hover:-translate-y-0.5"
           >
             start now
           </a>
@@ -247,10 +245,10 @@ export default function Home() {
               trilogy
             </span>
             <div className="flex items-center space-x-6 text-sm text-gray-600 lowercase">
-              <a href="/privacy" className="hover:text-indigo-600 transition-colors">
+              <a href="/privacy" className="hover:text-blue-600 transition-colors">
                 privacy
               </a>
-              <a href="/signin" className="hover:text-indigo-600 transition-colors">
+              <a href="/signin" className="hover:text-blue-600 transition-colors">
                 sign in
               </a>
             </div>
