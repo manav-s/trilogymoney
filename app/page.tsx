@@ -122,37 +122,8 @@ export default function Home() {
             we built something different.
           </h2>
           <p className="text-xl sm:text-2xl text-gray-700 lowercase">
-            once a week, you get an imessage. three numbers:
+            once a week, you get an imessage with what actually matters.
           </p>
-        </div>
-      </section>
-
-      {/* Three numbers */}
-      <section className="py-16 sm:py-24 bg-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid sm:grid-cols-3 gap-8">
-            <div className="text-center p-8 bg-white border border-gray-200 rounded-2xl shadow-sm">
-              <div className="text-5xl mb-4">💰</div>
-              <p className="text-lg font-semibold text-gray-900 lowercase">
-                your balance
-              </p>
-            </div>
-
-            <div className="text-center p-8 bg-white border border-gray-200 rounded-2xl shadow-sm">
-              <div className="text-5xl mb-4">💸</div>
-              <p className="text-lg font-semibold text-gray-900 lowercase">
-                yesterday
-            </p>
-          </div>
-
-            <div className="text-center p-8 bg-white border border-gray-200 rounded-2xl shadow-sm">
-              <div className="text-5xl mb-4">📊</div>
-              <p className="text-lg font-semibold text-gray-900 lowercase">
-                this week
-              </p>
-            </div>
-          </div>
-
           <div className="text-center mt-12 space-y-4">
             <p className="text-xl text-gray-700 lowercase">
               no app to open. no charts to analyze.
@@ -191,10 +162,10 @@ export default function Home() {
                 2
               </div>
               <h3 className="text-2xl font-bold text-gray-900 lowercase">
-                choose your day + time
+                get weekly updates
               </h3>
               <p className="text-lg text-gray-600 lowercase">
-                get your 3 numbers when you want them
+                every sunday, a quick check-in on your spending
               </p>
             </div>
 
