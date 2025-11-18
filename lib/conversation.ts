@@ -175,18 +175,16 @@ export async function handleLLMConversation(phone: string, userText: string) {
         return `${bucket.label}: $${spend} spend`;
       });
 
-      let categoryBreakdownJson: string | null = null;
-      if (categoryFocusNormalized) {
-        const breakdown = buildCategoryMerchantBreakdown(txns.transactions, categoryFocusNormalized);
-        if (breakdown.length === 0) {
-          body = formatMissingCategoryMessage(categoryFocusDisplay ?? categoryFocusNormalized);
-          const parts = splitIntoSmsSegments(body);
-          for (const segment of parts) {
-            await sendMessage({ to: phone, body: segment, userId: user.id, shouldPersist: true });
-          }
-          return;
+      const breakdown = categoryFocusNormalized
+        ? buildCategoryMerchantBreakdown(txns.transactions, categoryFocusNormalized)
+        : null;
+      if (categoryFocusNormalized && (!breakdown || breakdown.length === 0)) {
+        body = formatMissingCategoryMessage(categoryFocusDisplay ?? categoryFocusNormalized);
+        const parts = splitIntoSmsSegments(body);
+        for (const segment of parts) {
+          await sendMessage({ to: phone, body: segment, userId: user.id, shouldPersist: true });
         }
-        categoryBreakdownJson = JSON.stringify(breakdown);
+        return;
       }
 
       body = await generateReply('transactions', {
@@ -200,7 +198,7 @@ export async function handleLLMConversation(phone: string, userText: string) {
         profile,
         query: queryForPrompt,
         rangeLabel,
-        categoryBreakdownJson,
+        categoryBreakdownJson: breakdown ? JSON.stringify(breakdown) : null,
         categoryFocusLabel: categoryFocusDisplay ?? categoryFocusNormalized ?? null,
       });
 
