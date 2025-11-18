@@ -451,6 +451,7 @@ function matchesDigestFollowup(
   normalizedText: string,
   labels: Map<string, DigestLabelEntry>
 ): { matched: boolean; matchedLabel: DigestLabelEntry | null } {
+  // First pass: exact match on stored tag
   for (const entry of labels.values()) {
     const escaped = escapeRegex(entry.normalized);
     const regex = new RegExp(`\\b${escaped}\\b`, 'i');
@@ -458,7 +459,16 @@ function matchesDigestFollowup(
       return { matched: true, matchedLabel: entry };
     }
   }
+  
+  // Second pass: if base regex matches, try fuzzy match against tags
   if (DIGEST_FOLLOWUP_BASE_REGEX.test(normalizedText)) {
+    for (const entry of labels.values()) {
+      const words = entry.normalized.split(/\s+/);
+      // If user text contains all words from the tag (in any order), it's a match
+      if (words.every(word => normalizedText.includes(word))) {
+        return { matched: true, matchedLabel: entry };
+      }
+    }
     return { matched: true, matchedLabel: null };
   }
   return { matched: false, matchedLabel: null };

@@ -1,5 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+const logSms = (label: string, body: string) => {
+  if (process.env.LOG_DIGEST_SMS === '1') {
+    // eslint-disable-next-line no-console
+    console.log(`[${label}] ${body}`);
+  }
+};
+
 const prismaMock = {
   user: {
     findUnique: vi.fn(),
@@ -962,6 +969,7 @@ describe('handleLLMConversation stored query reuse', () => {
     expect(getTransactionsMock).not.toHaveBeenCalled();
     expect(generateReplyMock).not.toHaveBeenCalled();
     let sms = sendMessageMock.mock.calls.at(-1)?.[0]?.body ?? '';
+    logSms('general merchandise #1', sms);
     expect(sms).toContain('general merchandise');
     expect(sms).toContain('Amazon $239');
     expect(sms).toContain('Skool.com $120');
@@ -972,6 +980,7 @@ describe('handleLLMConversation stored query reuse', () => {
     expect(getTransactionsMock).not.toHaveBeenCalled();
     expect(generateReplyMock).not.toHaveBeenCalled();
     sms = sendMessageMock.mock.calls.at(-1)?.[0]?.body ?? '';
+    logSms('personal care', sms);
     expect(sms).toContain('personal care');
     expect(sms).toContain('Styles Barber Lounge $45');
     expect(sms).toContain('Soap & Co $49');
@@ -982,10 +991,263 @@ describe('handleLLMConversation stored query reuse', () => {
     expect(getTransactionsMock).not.toHaveBeenCalled();
     expect(generateReplyMock).not.toHaveBeenCalled();
     sms = sendMessageMock.mock.calls.at(-1)?.[0]?.body ?? '';
+    logSms('food and drink', sms);
     expect(sms).toContain('food and drink');
     expect(sms).toContain('$35 total');
     expect(sms).toContain('Trader Joe\'s $15');
     expect(sms).toContain('Uber Eats $20');
+  });
+
+  it('answers digest follow-ups with realistic snapshot + flattened history', async () => {
+    vi.useFakeTimers();
+    const now = new Date('2025-11-18T12:00:00Z');
+    vi.setSystemTime(now);
+
+    const realisticSnapshot = [
+      buildTransaction({ merchant: 'Amazon', amount: 200, category: 'general merchandise' }),
+      buildTransaction({ merchant: 'Skool.com', amount: 75, category: 'general merchandise' }),
+      buildTransaction({ merchant: 'Target', amount: 40, category: 'general merchandise', pending: true }),
+      buildTransaction({
+        merchant: 'Styles Barber Lounge',
+        amount: 45,
+        category: 'personal care',
+      }),
+      buildTransaction({
+        merchant: 'Soap & Co',
+        amount: 49,
+        category: 'personal care',
+        pending: true,
+      }),
+      buildTransaction({
+        merchant: "Trader Joe's",
+        amount: 15,
+        category: 'food and drink',
+      }),
+      buildTransaction({
+        merchant: 'Uber Eats',
+        amount: 20,
+        category: 'food and drink',
+        pending: true,
+      }),
+      buildTransaction({
+        merchant: 'Microsoft Paycheck',
+        amount: -3256,
+        category: 'general merchandise',
+      }),
+      buildTransaction({
+        merchant: 'Robinhood Transfer',
+        amount: 500,
+        category: 'transfer out',
+      }),
+    ];
+
+    mockUserWithStoredQuery(
+      {
+        from: '2025-11-10',
+        to: '2025-11-16',
+        limit: 500,
+        label: 'weekly digest Nov 10 → Nov 16',
+        storedTransactions: realisticSnapshot,
+        tags: ['general merchandise', 'personal care', 'food and drink', 'transportation'],
+      },
+      { lastWeeklyDigestAt: new Date('2025-11-17T16:00:00Z') },
+    );
+
+    prismaMock.message.findMany.mockResolvedValue([
+      {
+        id: 'msg-1',
+        direction: 'outbound',
+        sentAt: new Date('2025-11-17T16:00:00Z'),
+        content:
+          'trilogy: weekly summary: 2025-11-10 → 2025-11-16 total spend $450 with amazon leading the way alongside skool.com and crunch fitness. category breakdown: 🛒 general merchandise $315 🧴 personal care $94 🍽️ food and drink $35 pending to watch: $75 still clearing. balances: td convenience checking 3589 discover card 1907 owed.',
+      },
+    ]);
+
+    mockTransactionsReturn();
+    getTransactionsMock.mockClear();
+    generateReplyMock.mockClear();
+    sendMessageMock.mockClear();
+
+    const { handleLLMConversation } = await import('../lib/conversation');
+
+    await handleLLMConversation('+13471234567', 'break down general merchandise');
+    expect(getTransactionsMock).not.toHaveBeenCalled();
+    expect(generateReplyMock).not.toHaveBeenCalled();
+    let sms = sendMessageMock.mock.calls.at(-1)?.[0]?.body ?? '';
+    logSms('realistic general merchandise #1', sms);
+    expect(sms.toLowerCase()).toContain(
+      'general merchandise (weekly digest nov 10 → nov 16): $315 total'.toLowerCase(),
+    );
+    expect(sms).toContain('Amazon $200');
+    expect(sms).toContain('Skool.com $75');
+    expect(sms).toContain('Target $40');
+    expect(sms).not.toContain('Styles Barber Lounge');
+
+    sendMessageMock.mockClear();
+    await handleLLMConversation('+13471234567', 'can you break down personal care?');
+    expect(getTransactionsMock).not.toHaveBeenCalled();
+    expect(generateReplyMock).not.toHaveBeenCalled();
+    sms = sendMessageMock.mock.calls.at(-1)?.[0]?.body ?? '';
+    logSms('realistic personal care', sms);
+    expect(sms.toLowerCase()).toContain(
+      'personal care (weekly digest nov 10 → nov 16): $94 total'.toLowerCase(),
+    );
+    expect(sms).toContain('Styles Barber Lounge $45');
+    expect(sms).toContain('Soap & Co $49');
+    expect(sms).not.toContain('Amazon');
+
+    sendMessageMock.mockClear();
+    await handleLLMConversation('+13471234567', 'food and drink details pls');
+    expect(getTransactionsMock).not.toHaveBeenCalled();
+    expect(generateReplyMock).not.toHaveBeenCalled();
+    sms = sendMessageMock.mock.calls.at(-1)?.[0]?.body ?? '';
+    logSms('realistic food and drink', sms);
+    expect(sms.toLowerCase()).toContain(
+      'food and drink (weekly digest nov 10 → nov 16): $35 total'.toLowerCase(),
+    );
+    expect(sms).toContain("Trader Joe's $15");
+    expect(sms).toContain('Uber Eats $20');
+
+    sendMessageMock.mockClear();
+    await handleLLMConversation('+13471234567', 'transportation breakdown?');
+    sms = sendMessageMock.mock.calls.at(-1)?.[0]?.body ?? '';
+    logSms('realistic transportation guardrail', sms);
+    expect(sms).toContain("i can't see transportation charges right now—try again in a bit.");
+
+    sendMessageMock.mockClear();
+    await handleLLMConversation('+13471234567', 'cool just remind me general merchandise again?');
+    expect(getTransactionsMock).not.toHaveBeenCalled();
+    expect(generateReplyMock).not.toHaveBeenCalled();
+    sms = sendMessageMock.mock.calls.at(-1)?.[0]?.body ?? '';
+    logSms('realistic general merchandise #2', sms);
+    expect(sms.toLowerCase()).toContain(
+      'general merchandise (weekly digest nov 10 → nov 16): $315 total'.toLowerCase(),
+    );
+    expect(sms).toContain('Amazon $200');
+    expect(sms).toContain('Skool.com $75');
+    expect(sms).toContain('Target $40');
+
+    vi.useRealTimers();
+  });
+
+  it('handles a standalone food and drink follow-up from the digest snapshot', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2025-11-18T12:00:00Z'));
+
+    const realisticSnapshot = [
+      buildTransaction({ merchant: 'Amazon', amount: 200, category: 'general merchandise' }),
+      buildTransaction({ merchant: 'Skool.com', amount: 75, category: 'general merchandise' }),
+      buildTransaction({ merchant: 'Target', amount: 40, category: 'general merchandise', pending: true }),
+      buildTransaction({ merchant: "Trader Joe's", amount: 15, category: 'food and drink' }),
+      buildTransaction({ merchant: 'Uber Eats', amount: 20, category: 'food and drink', pending: true }),
+    ];
+
+    mockUserWithStoredQuery(
+      {
+        from: '2025-11-10',
+        to: '2025-11-16',
+        limit: 500,
+        label: 'weekly digest Nov 10 → Nov 16',
+        storedTransactions: realisticSnapshot,
+        tags: ['general merchandise', 'food and drink'],
+      },
+      { lastWeeklyDigestAt: new Date('2025-11-17T16:00:00Z') },
+    );
+
+    prismaMock.message.findMany.mockResolvedValue([
+      {
+        id: 'msg-1',
+        direction: 'outbound',
+        sentAt: new Date('2025-11-17T16:00:00Z'),
+        content:
+          'trilogy: weekly summary: 2025-11-10 → 2025-11-16 total spend $450 ... category breakdown: 🛍️ general merchandise $315 🍽️ food and drink $35 pending to watch: $75 still clearing.',
+      },
+    ]);
+
+    mockTransactionsReturn();
+    getTransactionsMock.mockClear();
+    generateReplyMock.mockClear();
+    sendMessageMock.mockClear();
+
+    const { handleLLMConversation } = await import('../lib/conversation');
+    await handleLLMConversation('+13471234567', 'Can you break down food and drink?');
+    expect(getTransactionsMock).not.toHaveBeenCalled();
+    expect(generateReplyMock).not.toHaveBeenCalled();
+    const sms = sendMessageMock.mock.calls.at(-1)?.[0]?.body ?? '';
+    logSms('standalone food and drink', sms);
+    expect(sms.toLowerCase()).toContain(
+      'food and drink (weekly digest nov 10 → nov 16): $35 total'.toLowerCase(),
+    );
+    expect(sms).toContain("Trader Joe's $15");
+    expect(sms).toContain('Uber Eats $20');
+
+    vi.useRealTimers();
+  });
+
+  it('handles digest follow-ups when history is truncated at 140 chars', async () => {
+    vi.useFakeTimers();
+    const now = new Date('2025-11-18T12:00:00Z');
+    vi.setSystemTime(now);
+
+    const snapshot = [
+      buildTransaction({ merchant: 'Amazon', amount: 200, category: 'general merchandise' }),
+      buildTransaction({ merchant: 'Skool.com', amount: 75, category: 'general merchandise' }),
+      buildTransaction({ merchant: 'Target', amount: 40, category: 'general merchandise', pending: true }),
+      buildTransaction({ merchant: 'Styles Barber Lounge', amount: 45, category: 'personal care' }),
+      buildTransaction({ merchant: 'Soap & Co', amount: 49, category: 'personal care', pending: true }),
+    ];
+
+    mockUserWithStoredQuery(
+      {
+        from: '2025-11-10',
+        to: '2025-11-16',
+        limit: 500,
+        label: 'weekly digest Nov 10 → Nov 16',
+        storedTransactions: snapshot,
+        tags: ['general merchandise', 'personal care', 'food and drink'],
+      },
+      { lastWeeklyDigestAt: new Date('2025-11-17T16:00:00Z') },
+    );
+
+    // Simulate real truncation: 140-char limit cuts off category breakdown
+    prismaMock.message.findMany.mockResolvedValue([
+      {
+        id: 'msg-1',
+        direction: 'outbound',
+        sentAt: new Date('2025-11-17T16:00:00Z'),
+        content:
+          'trilogy: weekly summary: 2025-11-10 → 2025-11-16 total spend $450 with amazon leading the way alongside skool.com and crunch fitness. ca',
+      },
+    ]);
+
+    mockTransactionsReturn();
+    getTransactionsMock.mockClear();
+    generateReplyMock.mockClear();
+    sendMessageMock.mockClear();
+
+    const { handleLLMConversation } = await import('../lib/conversation');
+
+    await handleLLMConversation('+13471234567', 'can you break down general merchandise');
+    expect(getTransactionsMock).not.toHaveBeenCalled();
+    expect(generateReplyMock).not.toHaveBeenCalled();
+    let sms = sendMessageMock.mock.calls.at(-1)?.[0]?.body ?? '';
+    logSms('truncated general merchandise', sms);
+    expect(sms.toLowerCase()).toContain('general merchandise (weekly digest nov 10 → nov 16)'.toLowerCase());
+    expect(sms).toContain('Amazon $200');
+    expect(sms).toContain('Skool.com $75');
+    expect(sms).toContain('Target $40');
+
+    sendMessageMock.mockClear();
+    await handleLLMConversation('+13471234567', 'personal care breakdown?');
+    expect(getTransactionsMock).not.toHaveBeenCalled();
+    expect(generateReplyMock).not.toHaveBeenCalled();
+    sms = sendMessageMock.mock.calls.at(-1)?.[0]?.body ?? '';
+    logSms('truncated personal care', sms);
+    expect(sms.toLowerCase()).toContain('personal care (weekly digest nov 10 → nov 16)'.toLowerCase());
+    expect(sms).toContain('Styles Barber Lounge $45');
+    expect(sms).toContain('Soap & Co $49');
+
+    vi.useRealTimers();
   });
 });
 
