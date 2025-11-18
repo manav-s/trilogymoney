@@ -127,16 +127,16 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
       <main className="flex-1">
-      <div className="max-w-3xl mx-auto px-4 py-10">
-        <h1 className="text-4xl font-bold text-gray-900 mb-6 lowercase">dashboard</h1>
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        <h1 className="text-5xl font-bold text-white mb-12 lowercase tracking-tight">dashboard</h1>
 
-        <div className="mb-8 flex flex-wrap gap-3">
+        <div className="mb-10 flex flex-wrap gap-3">
           <button
             onClick={createLinkToken}
             disabled={linking}
-            className="px-5 py-3 rounded-full bg-indigo-600 text-white lowercase disabled:opacity-50"
+            className="px-6 py-3 rounded-lg bg-indigo-600 text-white lowercase font-medium disabled:opacity-50 hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-900/30"
           >
             {linking ? 'opening link…' : 'add account'}
           </button>
@@ -144,19 +144,19 @@ export default function DashboardPage() {
             <PlaidLinkLauncher token={linkToken} onSuccess={onLinkSuccess} onExit={onLinkExit} />
           ) : null}
 
-          <button onClick={openPortal} disabled={!customerId} className="px-5 py-3 rounded-full bg-gray-900 text-white lowercase disabled:opacity-50">manage subscription</button>
+          <button onClick={openPortal} disabled={!customerId} className="px-6 py-3 rounded-lg bg-white/5 text-white lowercase font-medium disabled:opacity-50 hover:bg-white/10 transition-colors border border-white/10">manage subscription</button>
           {!confirmingDelete ? (
-            <button onClick={() => setConfirmingDelete(true)} className="px-5 py-3 rounded-full bg-red-600 text-white lowercase">delete all data</button>
+            <button onClick={() => setConfirmingDelete(true)} className="px-6 py-3 rounded-lg bg-red-600/10 text-red-500 lowercase font-medium hover:bg-red-600/20 transition-colors border border-red-600/20">delete all data</button>
           ) : (
             <div className="flex items-center gap-2">
-              <button onClick={softDelete} disabled={deleting} className="px-5 py-3 rounded-full bg-red-700 text-white lowercase disabled:opacity-50">{deleting ? 'deleting…' : 'confirm delete'}</button>
-              <button onClick={() => setConfirmingDelete(false)} className="px-5 py-3 rounded-full bg-gray-200 text-gray-800 lowercase">cancel</button>
+              <button onClick={softDelete} disabled={deleting} className="px-6 py-3 rounded-lg bg-red-600 text-white lowercase font-medium disabled:opacity-50 hover:bg-red-500 transition-colors shadow-lg shadow-red-900/30">{deleting ? 'deleting…' : 'confirm delete'}</button>
+              <button onClick={() => setConfirmingDelete(false)} className="px-6 py-3 rounded-lg bg-white/5 text-white lowercase font-medium hover:bg-white/10 transition-colors border border-white/10">cancel</button>
             </div>
           )}
 
           <button
             onClick={signOut}
-            className="px-5 py-3 rounded-full border border-gray-300 bg-white text-gray-800 lowercase hover:bg-gray-100"
+            className="px-6 py-3 rounded-lg border border-white/10 bg-transparent text-gray-400 lowercase font-medium hover:bg-white/5 hover:text-white transition-all"
           >
             sign out
           </button>
@@ -170,21 +170,21 @@ export default function DashboardPage() {
           return (
         <div className="space-y-4">
           {visibleItems.flatMap((it) => it.accounts).length === 0 ? (
-            <p className="text-gray-600 lowercase">no accounts linked yet</p>
+            <p className="text-gray-500 lowercase text-center py-12">no accounts linked yet</p>
           ) : (
             visibleItems.map((it) => (
-              <div key={it.id} className="border rounded-2xl p-4">
+              <div key={it.id} className="border border-white/10 bg-white/[0.02] rounded-xl p-6 backdrop-blur-sm hover:bg-white/[0.04] transition-colors">
                 {it.institutionName ? (
-                  <div className="font-semibold mb-2 lowercase">{it.institutionName}</div>
+                  <div className="font-semibold mb-4 lowercase text-white text-lg">{it.institutionName}</div>
                 ) : null}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {it.accounts.map((a) => (
-                    <div key={a.id} className="flex items-center justify-between bg-gray-50 rounded-xl p-3">
-                      <div className="text-sm lowercase">
-                        <div className="font-medium">{a.name} {a.mask ? `•••${a.mask}` : ""}</div>
-                        <div className="text-gray-600">{a.type}{a.subtype ? ` / ${a.subtype}` : ""} {a.currency ? ` • ${a.currency}` : ""}</div>
+                    <div key={a.id} className="flex items-center justify-between bg-white/[0.03] rounded-lg p-4 border border-white/5 hover:border-white/10 transition-colors">
+                      <div className="text-sm lowercase flex-1">
+                        <div className="font-medium text-white mb-1">{a.name} {a.mask ? `•••${a.mask}` : ""}</div>
+                        <div className="text-gray-500">{a.type}{a.subtype ? ` / ${a.subtype}` : ""} {a.currency ? ` • ${a.currency}` : ""}</div>
                       </div>
-                      <button onClick={() => deleteAccount(a.id)} className="px-3 py-2 rounded-full bg-gray-200 text-gray-800 lowercase">remove</button>
+                      <button onClick={() => deleteAccount(a.id)} className="px-4 py-2 rounded-lg bg-white/5 text-gray-400 lowercase font-medium hover:bg-white/10 hover:text-white transition-all border border-white/5 ml-4">remove</button>
                     </div>
                   ))}
                 </div>
@@ -197,22 +197,22 @@ export default function DashboardPage() {
       </div>
       </main>
 
-      {/* Footer (same as homepage) */}
-      <footer className="border-t border-gray-200 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* Footer */}
+      <footer className="border-t border-white/10 bg-black/20 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-6 py-10">
           <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
-            <span className="text-xl font-bold text-gray-900 lowercase">
+            <span className="text-xl font-bold text-white lowercase tracking-tight">
               trilogy
             </span>
-            <div className="flex items-center space-x-6 text-sm text-gray-600 lowercase">
-              <a href="/privacy" className="hover:text-indigo-600 transition-colors">
+            <div className="flex items-center space-x-8 text-sm text-gray-400 lowercase">
+              <a href="/privacy" className="hover:text-white transition-colors">
                 privacy
               </a>
-              <button onClick={signOut} className="hover:text-indigo-600 transition-colors">
+              <button onClick={signOut} className="hover:text-white transition-colors">
                 sign out
               </button>
             </div>
-            <p className="text-sm text-gray-500 lowercase">© 2025 trilogy</p>
+            <p className="text-sm text-gray-600 lowercase">© 2025 trilogy</p>
           </div>
         </div>
       </footer>
