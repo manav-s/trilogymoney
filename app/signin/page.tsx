@@ -14,19 +14,58 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-2xl mx-auto px-4 py-16">
-        <h1 className="text-4xl font-bold text-gray-900 mb-6 lowercase">sign in</h1>
-        <p className="text-gray-600 lowercase mb-8">we’ll text you a magic link to sign in</p>
-        <div className="flex items-center gap-4">
-          <button onClick={openSms} className="px-8 py-4 rounded-full bg-indigo-600 text-white lowercase hover:bg-indigo-700">
-            send me a link
-          </button>
-          {openedOnce ? (
-            <button onClick={openSms} className="px-8 py-4 rounded-full bg-gray-200 text-gray-800 lowercase hover:bg-gray-300">
-              open messages again
+    <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center px-6">
+      <div className="max-w-md w-full">
+        {/* Logo/Brand */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-white lowercase tracking-tight mb-2">trilogy</h1>
+        </div>
+
+        {/* Main card */}
+        <div className="border border-white/10 bg-white/[0.02] rounded-2xl p-8 backdrop-blur-sm">
+          <h2 className="text-3xl font-bold text-white mb-3 lowercase">sign in</h2>
+          <p className="text-gray-400 mb-8 lowercase">we'll text you a magic link to sign in</p>
+
+          {/* Reassurance bullets */}
+          <div className="space-y-3 mb-8">
+            <div className="flex items-start gap-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2 flex-shrink-0"></div>
+              <p className="text-sm text-gray-400 lowercase">no passwords</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2 flex-shrink-0"></div>
+              <p className="text-sm text-gray-400 lowercase">read-only bank access</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2 flex-shrink-0"></div>
+              <p className="text-sm text-gray-400 lowercase">cancel anytime · blue bubbles</p>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="space-y-3">
+            <button 
+              onClick={openSms} 
+              className="w-full px-8 py-4 rounded-lg bg-indigo-600 text-white lowercase font-medium hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-900/30"
+            >
+              open imessage to get your link
             </button>
-          ) : null}
+            {openedOnce ? (
+              <button 
+                onClick={openSms} 
+                className="w-full px-8 py-4 rounded-lg bg-white/5 text-gray-400 lowercase font-medium hover:bg-white/10 hover:text-white transition-all border border-white/10"
+              >
+                open messages again
+              </button>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Footer link */}
+        <div className="text-center mt-8">
+          <a href="/" className="text-sm text-gray-500 hover:text-gray-400 transition-colors lowercase">
+            ← back to home
+          </a>
         </div>
       </div>
     </div>
