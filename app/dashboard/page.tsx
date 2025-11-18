@@ -129,63 +129,69 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
       <main className="flex-1">
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        <h1 className="text-5xl font-bold text-white mb-12 lowercase tracking-tight">dashboard</h1>
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        {/* Main container card */}
+        <div className="border border-white/10 bg-white/[0.02] rounded-2xl p-8 backdrop-blur-sm">
+          {/* Header with title and action buttons */}
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-10 gap-6">
+            <div>
+              <h1 className="text-4xl font-bold text-white mb-2 lowercase tracking-tight">trilogy dashboard</h1>
+              <p className="text-gray-400 text-sm lowercase">one place for your money pulse, updated automatically every week.</p>
+            </div>
+            
+            <div className="flex flex-wrap gap-3 md:flex-shrink-0">
+              <button
+                onClick={createLinkToken}
+                disabled={linking}
+                className="px-6 py-3 rounded-lg bg-indigo-600 text-white lowercase font-medium disabled:opacity-50 hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-900/30"
+              >
+                {linking ? 'opening link…' : 'add account'}
+              </button>
+              {linkToken ? (
+                <PlaidLinkLauncher token={linkToken} onSuccess={onLinkSuccess} onExit={onLinkExit} />
+              ) : null}
 
-        <div className="mb-10 flex flex-wrap gap-3">
-          <button
-            onClick={createLinkToken}
-            disabled={linking}
-            className="px-6 py-3 rounded-lg bg-indigo-600 text-white lowercase font-medium disabled:opacity-50 hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-900/30"
-          >
-            {linking ? 'opening link…' : 'add account'}
-          </button>
-          {linkToken ? (
-            <PlaidLinkLauncher token={linkToken} onSuccess={onLinkSuccess} onExit={onLinkExit} />
-          ) : null}
+              <button onClick={openPortal} disabled={!customerId} className="px-6 py-3 rounded-lg bg-white/5 text-white lowercase font-medium disabled:opacity-50 hover:bg-white/10 transition-colors border border-white/10">manage subscription</button>
+            </div>
+          </div>
 
-          <button onClick={openPortal} disabled={!customerId} className="px-6 py-3 rounded-lg bg-white/5 text-white lowercase font-medium disabled:opacity-50 hover:bg-white/10 transition-colors border border-white/10">manage subscription</button>
-
-          <button
-            onClick={signOut}
-            className="px-6 py-3 rounded-lg border border-white/10 bg-transparent text-gray-400 lowercase font-medium hover:bg-white/5 hover:text-white transition-all"
-          >
-            sign out
-          </button>
-        </div>
-
-        {(() => {
-          const visibleItems = items.map((it) => ({
-            ...it,
-            accounts: it.accounts.filter(Boolean),
-          })).filter((it) => it.accounts.length > 0);
-          return (
-        <div className="space-y-4">
-          {visibleItems.flatMap((it) => it.accounts).length === 0 ? (
-            <p className="text-gray-500 lowercase text-center py-12">no accounts linked yet</p>
-          ) : (
-            visibleItems.map((it) => (
-              <div key={it.id} className="border border-white/10 bg-white/[0.02] rounded-xl p-6 backdrop-blur-sm hover:bg-white/[0.04] transition-colors">
-                {it.institutionName ? (
-                  <div className="font-semibold mb-4 lowercase text-white text-lg">{it.institutionName}</div>
-                ) : null}
-                <div className="space-y-3">
-                  {it.accounts.map((a) => (
-                    <div key={a.id} className="flex items-center justify-between bg-white/[0.03] rounded-lg p-4 border border-white/5 hover:border-white/10 transition-colors">
-                      <div className="text-sm lowercase flex-1">
-                        <div className="font-medium text-white mb-1">{a.name} {a.mask ? `•••${a.mask}` : ""}</div>
-                        <div className="text-gray-500">{a.type}{a.subtype ? ` / ${a.subtype}` : ""} {a.currency ? ` • ${a.currency}` : ""}</div>
-                      </div>
-                      <button onClick={() => deleteAccount(a.id)} className="px-4 py-2 rounded-lg bg-white/5 text-gray-400 lowercase font-medium hover:bg-white/10 hover:text-white transition-all border border-white/5 ml-4">remove</button>
+          {/* Connected accounts section */}
+          <div>
+            <h2 className="text-xl font-semibold text-white mb-6 lowercase">connected accounts</h2>
+            {(() => {
+              const visibleItems = items.map((it) => ({
+                ...it,
+                accounts: it.accounts.filter(Boolean),
+              })).filter((it) => it.accounts.length > 0);
+              return (
+            <div className="space-y-4">
+              {visibleItems.flatMap((it) => it.accounts).length === 0 ? (
+                <p className="text-gray-500 lowercase text-center py-12">no accounts linked yet</p>
+              ) : (
+                visibleItems.map((it) => (
+                  <div key={it.id} className="border border-white/5 bg-white/[0.02] rounded-xl p-6 hover:bg-white/[0.03] transition-colors">
+                    {it.institutionName ? (
+                      <div className="font-semibold mb-4 lowercase text-white text-base">{it.institutionName}</div>
+                    ) : null}
+                    <div className="space-y-3">
+                      {it.accounts.map((a) => (
+                        <div key={a.id} className="flex items-center justify-between bg-white/[0.02] rounded-lg p-4 border border-white/5 hover:border-white/10 transition-colors">
+                          <div className="text-sm lowercase flex-1">
+                            <div className="font-medium text-white mb-1">{a.name} {a.mask ? `•••${a.mask}` : ""}</div>
+                            <div className="text-gray-500">{a.type}{a.subtype ? ` / ${a.subtype}` : ""} {a.currency ? ` • ${a.currency}` : ""}</div>
+                          </div>
+                          <button onClick={() => deleteAccount(a.id)} className="px-4 py-2 rounded-lg bg-white/5 text-gray-400 lowercase font-medium hover:bg-white/10 hover:text-white transition-all border border-white/5 ml-4">remove</button>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
-            ))
-          )}
+                  </div>
+                ))
+              )}
+            </div>
+              );
+            })()}
+          </div>
         </div>
-          );
-        })()}
       </div>
       </main>
 
