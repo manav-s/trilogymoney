@@ -145,14 +145,6 @@ export default function DashboardPage() {
           ) : null}
 
           <button onClick={openPortal} disabled={!customerId} className="px-6 py-3 rounded-lg bg-white/5 text-white lowercase font-medium disabled:opacity-50 hover:bg-white/10 transition-colors border border-white/10">manage subscription</button>
-          {!confirmingDelete ? (
-            <button onClick={() => setConfirmingDelete(true)} className="px-6 py-3 rounded-lg bg-red-600/10 text-red-500 lowercase font-medium hover:bg-red-600/20 transition-colors border border-red-600/20">delete all data</button>
-          ) : (
-            <div className="flex items-center gap-2">
-              <button onClick={softDelete} disabled={deleting} className="px-6 py-3 rounded-lg bg-red-600 text-white lowercase font-medium disabled:opacity-50 hover:bg-red-500 transition-colors shadow-lg shadow-red-900/30">{deleting ? 'deleting…' : 'confirm delete'}</button>
-              <button onClick={() => setConfirmingDelete(false)} className="px-6 py-3 rounded-lg bg-white/5 text-white lowercase font-medium hover:bg-white/10 transition-colors border border-white/10">cancel</button>
-            </div>
-          )}
 
           <button
             onClick={signOut}
@@ -211,6 +203,20 @@ export default function DashboardPage() {
               <button onClick={signOut} className="hover:text-white transition-colors">
                 sign out
               </button>
+              {!confirmingDelete ? (
+                <button onClick={() => setConfirmingDelete(true)} className="hover:text-red-500 transition-colors">
+                  delete all data
+                </button>
+              ) : (
+                <div className="flex items-center space-x-3">
+                  <button onClick={softDelete} disabled={deleting} className="text-red-500 hover:text-red-400 transition-colors disabled:opacity-50">
+                    {deleting ? 'deleting…' : 'confirm delete'}
+                  </button>
+                  <button onClick={() => setConfirmingDelete(false)} className="hover:text-white transition-colors">
+                    cancel
+                  </button>
+                </div>
+              )}
             </div>
             <p className="text-sm text-gray-600 lowercase">© 2025 trilogy</p>
           </div>
