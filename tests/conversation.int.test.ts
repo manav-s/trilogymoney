@@ -934,6 +934,59 @@ describe('handleLLMConversation stored query reuse', () => {
     expect(sms).toContain('Sephora');
     expect(sms).toContain('$94');
   });
+
+  it('keeps digest snapshot replies consistent across multiple follow-ups', async () => {
+    const snapshot = [
+      buildTransaction({ merchant: 'Amazon', amount: 239, category: 'general merchandise' }),
+      buildTransaction({ merchant: 'Skool.com', amount: 120, category: 'general merchandise' }),
+      buildTransaction({ merchant: 'Crunch Fitness', amount: 50, category: 'general merchandise' }),
+      buildTransaction({ merchant: 'Styles Barber Lounge', amount: 45, category: 'personal care' }),
+      buildTransaction({ merchant: 'Soap & Co', amount: 49, category: 'personal care' }),
+      buildTransaction({ merchant: 'Trader Joe\'s', amount: 15, category: 'food and drink' }),
+      buildTransaction({ merchant: 'Uber Eats', amount: 20, category: 'food and drink', pending: true }),
+    ];
+    mockUserWithStoredQuery({ storedTransactions: snapshot });
+    mockTransactionsReturn();
+    prismaMock.message.findMany.mockResolvedValue([
+      {
+        id: 'msg-1',
+        direction: 'outbound',
+        sentAt: new Date(),
+        content:
+          'weekly summary: 2025-11-10 → 2025-11-16 total spend $520.\ncategory breakdown:\n🛍️ general merchandise $315\n🧴 personal care $94\n🍽️ food and drink $35\npending to watch: $85 still clearing.',
+      },
+    ]);
+    const { handleLLMConversation } = await import('../lib/conversation');
+
+    await handleLLMConversation('+13471234567', 'break down general merchandise');
+    expect(getTransactionsMock).not.toHaveBeenCalled();
+    expect(generateReplyMock).not.toHaveBeenCalled();
+    let sms = sendMessageMock.mock.calls.at(-1)?.[0]?.body ?? '';
+    expect(sms).toContain('general merchandise');
+    expect(sms).toContain('Amazon $239');
+    expect(sms).toContain('Skool.com $120');
+
+    sendMessageMock.mockClear();
+    generateReplyMock.mockClear();
+    await handleLLMConversation('+13471234567', 'personal care details?');
+    expect(getTransactionsMock).not.toHaveBeenCalled();
+    expect(generateReplyMock).not.toHaveBeenCalled();
+    sms = sendMessageMock.mock.calls.at(-1)?.[0]?.body ?? '';
+    expect(sms).toContain('personal care');
+    expect(sms).toContain('Styles Barber Lounge $45');
+    expect(sms).toContain('Soap & Co $49');
+
+    sendMessageMock.mockClear();
+    generateReplyMock.mockClear();
+    await handleLLMConversation('+13471234567', 'food and drink breakdown');
+    expect(getTransactionsMock).not.toHaveBeenCalled();
+    expect(generateReplyMock).not.toHaveBeenCalled();
+    sms = sendMessageMock.mock.calls.at(-1)?.[0]?.body ?? '';
+    expect(sms).toContain('food and drink');
+    expect(sms).toContain('$35 total');
+    expect(sms).toContain('Trader Joe\'s $15');
+    expect(sms).toContain('Uber Eats $20');
+  });
 });
 
 type StoredTransactionsQuery = {

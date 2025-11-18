@@ -170,8 +170,10 @@ export async function handleLLMConversation(phone: string, userText: string) {
         }
       }
 
+      const usingDigestSnapshot = snapshotCategoryTransactions !== null;
+
       const txns =
-        snapshotCategoryTransactions !== null
+        usingDigestSnapshot
           ? {
               transactions: snapshotCategoryTransactions,
               summary: buildTransactionsSummary(snapshotCategoryTransactions, {
@@ -231,7 +233,7 @@ export async function handleLLMConversation(phone: string, userText: string) {
       }
 
       const directCategoryReply =
-        snapshotCategoryTransactions !== null &&
+        usingDigestSnapshot &&
         categoryFocusNormalized &&
         breakdown &&
         breakdown.length > 0 &&
@@ -265,7 +267,8 @@ export async function handleLLMConversation(phone: string, userText: string) {
       }
 
       const shouldStoreCategoryFocus = Boolean(categoryFocusNormalized);
-      const shouldStoreContext = shouldPersistContext || shouldStoreCategoryFocus;
+      const shouldStoreContext =
+        shouldPersistContext || (!usingDigestSnapshot && shouldStoreCategoryFocus);
       if (shouldStoreContext) {
         await prisma.user.update({
           where: { id: user.id },
