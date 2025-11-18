@@ -532,6 +532,52 @@ describe('handleLLMConversation stored query reuse', () => {
       })
     );
   });
+
+  it('handles a category follow-up with pending transactions and refunds', async () => {
+    mockUserWithStoredQuery();
+    mockTransactionsReturn({
+      transactions: [
+        buildTransaction({
+          merchant: 'Trader Joes',
+          amount: 45,
+          category: 'food and drink',
+          pending: false,
+        }),
+        buildTransaction({
+          merchant: 'DoorDash',
+          amount: 30,
+          category: 'food and drink',
+          pending: true,
+        }),
+        buildTransaction({
+          merchant: 'Uber Eats',
+          amount: -12,
+          category: 'food and drink',
+          pending: false,
+        }),
+      ],
+    });
+    const { handleLLMConversation } = await import('../lib/conversation');
+    await handleLLMConversation('+13471234567', 'food and drink breakdown please');
+
+    const lastCall = generateReplyMock.mock.calls.at(-1);
+    expect(lastCall?.[0]).toBe('transactions');
+    expect(lastCall?.[1]).toMatchObject({
+      categoryFocusLabel: 'food and drink',
+      categoryBreakdownJson: expect.stringContaining('Trader Joes'),
+      categoryFocusTotalsJson: expect.stringContaining('"pendingSpend":30'),
+    });
+  });
+
+  it('falls back gracefully when no matching transactions after digest', async () => {
+    mockUserWithStoredQuery();
+    mockTransactionsReturn({ transactions: [] });
+    const { handleLLMConversation } = await import('../lib/conversation');
+    await handleLLMConversation('+13471234567', 'tell me about transfer out');
+
+    expect(generateReplyMock).toHaveBeenCalled();
+    expect(sendMessageMock).toHaveBeenCalled();
+  });
 });
 
 type StoredTransactionsQuery = {
