@@ -1,7 +1,7 @@
 export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 import { getBalancesBreakdown } from '@/lib/balances';
 import { sendMessage } from '@/lib/blooio';
