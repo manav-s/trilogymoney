@@ -216,7 +216,7 @@ export default function Home() {
       <section className="py-16 sm:py-24 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
           <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 lowercase">
-            join the waitlist
+            ready to stay aware?
           </h2>
 
           <a
