@@ -112,3 +112,18 @@ model MagicLink {
   @@index([expiresAt]) // For cleanup jobs
   @@index([used, expiresAt])
 }
+
+model Feedback {
+  id          String   @id @default(cuid())
+  userId      String   // Links to User but no explicit relation
+  userMessage String   @db.Text // The frustrated/feedback message
+  sentiment   String?  // 'frustrated' | 'feedback' | 'bug_report'
+  context     Json?    // Conversation context, recent history
+  resolved    Boolean  @default(false)
+  notes       String?  @db.Text // Admin notes
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userId, createdAt])
+  @@index([resolved])
+}

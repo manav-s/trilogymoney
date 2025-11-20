@@ -22,6 +22,7 @@ import {
 import { splitIntoSmsSegments } from '@/lib/sms';
 import { sendMessage } from '@/lib/blooio';
 import { decryptMessage, encryptMessage } from '@/lib/encryption';
+import { detectFeedbackIntent, captureFeedback } from '@/lib/feedback';
 
 const WEEKLY_DIGEST_STICKY_MS = 1000 * 60 * 60 * 72;
 const WEEKLY_DIGEST_DEFAULT_LIMIT = 500;
@@ -36,6 +37,39 @@ export async function handleLLMConversation(phone: string, userText: string) {
   if (!(isPaid && isActive)) return;
 
   const history = await getRecentHistorySnippet(user.id, 30, 30);
+
+  // Check for feedback/frustration early
+  const feedbackDetection = detectFeedbackIntent(userText);
+  if (feedbackDetection.isFeedback && feedbackDetection.sentiment) {
+    await captureFeedback({
+      userId: user.id,
+      userMessage: userText,
+      sentiment: feedbackDetection.sentiment,
+      context: {
+        history: history.slice(0, 500), // Last 500 chars
+        timestamp: new Date().toISOString(),
+      },
+    });
+
+    // Send acknowledgment based on sentiment
+    let acknowledgment = '';
+    if (feedbackDetection.sentiment === 'frustrated') {
+      acknowledgment = "i hear you—that's frustrating. i've logged this for the team to review. what else can i help with?";
+    } else if (feedbackDetection.sentiment === 'bug_report') {
+      acknowledgment = "thanks for reporting this. i've logged it for the team to investigate. anything else i can help with?";
+    } else {
+      acknowledgment = "thanks for the feedback! i've passed it along to the team. what else can i help with?";
+    }
+
+    await sendMessage({
+      to: phone,
+      body: acknowledgment,
+      userId: user.id,
+      shouldPersist: true
+    });
+    return; // Exit early after handling feedback
+  }
+
   let body = '';
   try {
     const profile = { name: user.name, timezone: user.timezone, preferredTime: user.preferredTime } as const;
@@ -179,24 +213,24 @@ export async function handleLLMConversation(phone: string, userText: string) {
       const txns =
         usingDigestSnapshot
           ? {
-              transactions: snapshotCategoryTransactions!,
-              summary: buildTransactionsSummary(snapshotCategoryTransactions!, {
-                from: digestRangeOverride?.range.from ?? effectiveQuery.from,
-                to: digestRangeOverride?.range.to ?? effectiveQuery.to,
-              }),
-              moreAvailable: false,
-            }
+            transactions: snapshotCategoryTransactions!,
+            summary: buildTransactionsSummary(snapshotCategoryTransactions!, {
+              from: digestRangeOverride?.range.from ?? effectiveQuery.from,
+              to: digestRangeOverride?.range.to ?? effectiveQuery.to,
+            }),
+            moreAvailable: false,
+          }
           : await getTransactions({
-              userId: user.id,
-              from: effectiveQuery.from,
-              to: effectiveQuery.to,
-              limit,
-              maxRows: effectiveQuery.limit,
-              ...(categoryFocusNormalized ? { category: categoryFocusNormalized } : {}),
-              ...(effectiveQuery.kind === 'merchantSpend' && effectiveQuery.merchant
-                ? { merchant: effectiveQuery.merchant }
-                : {}),
-            });
+            userId: user.id,
+            from: effectiveQuery.from,
+            to: effectiveQuery.to,
+            limit,
+            maxRows: effectiveQuery.limit,
+            ...(categoryFocusNormalized ? { category: categoryFocusNormalized } : {}),
+            ...(effectiveQuery.kind === 'merchantSpend' && effectiveQuery.merchant
+              ? { merchant: effectiveQuery.merchant }
+              : {}),
+          });
       if (categoryFocusNormalized && txns.transactions.length === 0) {
         body = formatMissingCategoryMessage(categoryFocusDisplay ?? categoryFocusNormalized);
         const parts = splitIntoSmsSegments(body);
@@ -238,16 +272,16 @@ export async function handleLLMConversation(phone: string, userText: string) {
 
       const directCategoryReply =
         usingDigestSnapshot &&
-        categoryFocusNormalized &&
-        breakdown &&
-        breakdown.length > 0 &&
-        categoryTotalsObj
+          categoryFocusNormalized &&
+          breakdown &&
+          breakdown.length > 0 &&
+          categoryTotalsObj
           ? formatCategoryBreakdownSms({
-              label: categoryFocusDisplay ?? categoryFocusNormalized,
-              breakdown,
-              totals: categoryTotalsObj,
-              rangeLabel,
-            })
+            label: categoryFocusDisplay ?? categoryFocusNormalized,
+            breakdown,
+            totals: categoryTotalsObj,
+            rangeLabel,
+          })
           : null;
 
       if (directCategoryReply) {
@@ -463,7 +497,7 @@ function matchesDigestFollowup(
       return { matched: true, matchedLabel: entry };
     }
   }
-  
+
   // Second pass: if base regex matches, try fuzzy match against tags
   if (DIGEST_FOLLOWUP_BASE_REGEX.test(normalizedText)) {
     for (const entry of labels.values()) {
@@ -585,9 +619,8 @@ function formatCategoryBreakdownSms({
   totals: ReturnType<typeof summarizeCategoryTotals>;
   rangeLabel: string;
 }): string {
-  const totalLine = `${label} (${rangeLabel}): $${formatCurrency(totals.spend)} total${
-    totals.pendingSpend ? `, $${formatCurrency(totals.pendingSpend)} pending` : ''
-  }.`;
+  const totalLine = `${label} (${rangeLabel}): $${formatCurrency(totals.spend)} total${totals.pendingSpend ? `, $${formatCurrency(totals.pendingSpend)} pending` : ''
+    }.`;
   const merchantLine = breakdown
     .map((entry) => `${entry.merchant} $${formatCurrency(entry.amount)}`)
     .join(', ');
@@ -625,7 +658,7 @@ async function getRecentHistorySnippet(userId: string, days = 30, limit = 30): P
       const role = m.direction === 'inbound' ? 'you' : 'trilogy';
       const text = decryptMessage(m.content).replace(/\s+/g, ' ').slice(0, 140);
       lines.push(`${role}: ${text}`);
-    } catch {}
+    } catch { }
   }
   return lines.join('\n');
 }
