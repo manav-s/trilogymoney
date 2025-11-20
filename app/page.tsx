@@ -64,15 +64,7 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* User Stats Badge */}
-              <div className="flex items-center gap-2 text-sm text-gray-500 mt-4">
-                <div className="flex -space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-white"></div>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 border-2 border-white"></div>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-white"></div>
-                </div>
-                <span className="font-medium text-gray-700">Join 1,000+ users managing their money effortlessly</span>
-              </div>
+
             </div>
 
             {/* Right side - iPhone mockup */}
