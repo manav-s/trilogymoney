@@ -161,5 +161,41 @@ describe('postOnboardingWelcome', () => {
     expect(getTransactionsMock).not.toHaveBeenCalled();
     expect(prismaMock.user.updateMany).toHaveBeenCalledTimes(1);
   });
+
+  it('still sends digest when snapshot persistence fails', async () => {
+    prismaMock.user.updateMany.mockResolvedValueOnce({ count: 1 });
+    prismaMock.user.findUnique.mockResolvedValueOnce({
+      id: 'user-1',
+      phone: '+15551234567',
+      timezone: 'America/New_York',
+    });
+    prismaMock.plaidAccount.count.mockResolvedValue(1);
+    getTransactionsMock.mockResolvedValue({
+      transactions: [
+        {
+          id: 'txn-1',
+          amount: 42,
+          category: 'shopping',
+          pending: false,
+          merchant: 'Amazon',
+          date: '2025-11-19',
+        },
+      ],
+    });
+    generateWeeklyDigestMessageMock.mockResolvedValue('here is your first digest!');
+    prismaMock.user.update
+      .mockRejectedValueOnce(new Error('persist fail'))
+      .mockResolvedValueOnce({});
+
+    const { postOnboardingWelcome } = await import('../lib/onboarding-welcome');
+    await postOnboardingWelcome('user-1');
+
+    expect(sendMessageMock).toHaveBeenCalledTimes(2);
+    expect(sendMessageMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ body: 'here is your first digest!' }),
+    );
+    expect(prismaMock.user.update).toHaveBeenCalledTimes(2);
+  });
 });
 
