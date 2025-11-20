@@ -1,4 +1,4 @@
-import { Lock, ShieldCheck, EyeOff } from "lucide-react";
+import { Lock, ShieldCheck, EyeOff, Wifi, Signal, Battery } from "lucide-react";
 
 export default function Home() {
   return (
@@ -63,6 +63,16 @@ export default function Home() {
                   cancel anytime • blue bubbles
                 </p>
               </div>
+
+              {/* User Stats Badge */}
+              <div className="flex items-center gap-2 text-sm text-gray-500 mt-4">
+                <div className="flex -space-x-2">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-white"></div>
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 border-2 border-white"></div>
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-white"></div>
+                </div>
+                <span className="font-medium text-gray-700">Join 1,000+ users managing their money effortlessly</span>
+              </div>
             </div>
 
             {/* Right side - iPhone mockup */}
@@ -78,7 +88,9 @@ export default function Home() {
                     <div className="flex items-center justify-between px-6 py-3 bg-white">
                       <span className="text-sm font-semibold text-gray-900">9:41</span>
                       <div className="flex items-center space-x-1">
-                        <div className="w-4 h-4 border border-gray-900 rounded-sm"></div>
+                        <Signal className="w-3 h-3 text-gray-900" />
+                        <Wifi className="w-3 h-3 text-gray-900" />
+                        <Battery className="w-4 h-3 text-gray-900" />
                       </div>
                     </div>
 
@@ -108,7 +120,7 @@ export default function Home() {
                       {/* Second message bubble */}
                       <div className="bg-blue-500 rounded-3xl rounded-bl-sm p-4 shadow-md max-w-[240px] mt-2 animate-fade-in-up delay-200">
                         <p className="text-white text-sm">
-                          lay off the doordash for a few days damn 😭
+                          might want to slow down on doordash this week 😅
                         </p>
                       </div>
                       
@@ -185,7 +197,7 @@ export default function Home() {
                 connect your bank
               </h3>
               <p className="text-lg text-gray-600 leading-relaxed">
-                secure plaid integration. takes 30 seconds, one-time setup.
+                secure plaid integration. 60-second setup, one time.
               </p>
             </div>
 
@@ -273,11 +285,23 @@ export default function Home() {
             <p className="text-lg text-gray-600 lowercase">
               your financial data is protected by industry-leading encryption and security standards. built by microsoft security engineers.
             </p>
+            
+            {/* Trust badges */}
+            <div className="flex flex-wrap items-center justify-center gap-6 mt-8">
+              <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                <ShieldCheck className="w-5 h-5 text-blue-600" />
+                <span className="text-sm font-semibold text-gray-700">SOC 2 Compliant</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                <Lock className="w-5 h-5 text-blue-600" />
+                <span className="text-sm font-semibold text-gray-700">GDPR Compliant</span>
+              </div>
+            </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
+          <div className="grid md:grid-cols-4 gap-8 lg:gap-12">
             {/* Feature 1 */}
-            <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-gray-50 border border-gray-100">
+            <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-gray-50 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6 text-blue-600">
                 <Lock className="w-6 h-6" />
               </div>
@@ -290,7 +314,7 @@ export default function Home() {
             </div>
 
             {/* Feature 2 */}
-            <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-gray-50 border border-gray-100">
+            <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-gray-50 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6 text-blue-600">
                 <ShieldCheck className="w-6 h-6" />
               </div>
@@ -303,7 +327,7 @@ export default function Home() {
             </div>
 
             {/* Feature 3 */}
-            <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-gray-50 border border-gray-100">
+            <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-gray-50 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6 text-blue-600">
                 <EyeOff className="w-6 h-6" />
               </div>
@@ -312,6 +336,19 @@ export default function Home() {
               </h3>
               <p className="text-gray-600 lowercase">
                 we do not sell your personal data. your financial privacy is our core commitment.
+              </p>
+            </div>
+
+            {/* Feature 4 - NEW */}
+            <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-gray-50 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6 text-blue-600">
+                <Lock className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3 lowercase">
+                end-to-end encrypted
+              </h3>
+              <p className="text-gray-600 lowercase">
+                all messages sent via imessage are end-to-end encrypted by apple.
               </p>
             </div>
           </div>
