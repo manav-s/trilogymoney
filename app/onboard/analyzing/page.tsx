@@ -51,32 +51,77 @@ export default function AnalyzingPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center font-mono p-4">
-      <div className="max-w-md w-full space-y-4">
-        <div className="flex items-center gap-2 mb-8">
-          <div className="w-3 h-3 rounded-full bg-red-500"></div>
-          <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-          <div className="w-3 h-3 rounded-full bg-green-500"></div>
-        </div>
-        
-        <div className="space-y-2 text-sm sm:text-base">
-          {STEPS.map((step, i) => (
-            <div key={step} className={`flex items-center gap-3 transition-opacity duration-300 ${i > idx ? 'opacity-0' : i === idx ? 'opacity-100' : 'opacity-50'}`}>
-              <span className={i <= idx ? "text-green-500" : "text-gray-600"}>
-                {i < idx ? "✓" : i === idx ? ">" : " "}
-              </span>
-              <span className={i === idx ? "text-white animate-pulse" : "text-gray-400"}>
-                {step}...
-              </span>
-            </div>
-          ))}
+    <div className="min-h-screen bg-gray-50 relative overflow-hidden flex items-center justify-center">
+      {/* Background */}
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-50"></div>
+      
+      <div className="max-w-md mx-auto px-4 relative z-10">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2 lowercase">analyzing your answers</h1>
+          <p className="text-gray-600 lowercase">crafting your personalized plan...</p>
         </div>
 
-        <div className="h-1 w-full bg-gray-800 rounded-full mt-8 overflow-hidden">
-          <div 
-            className="h-full bg-green-500 transition-all duration-300 ease-out"
-            style={{ width: `${((idx + 1) / STEPS.length) * 100}%` }}
-          ></div>
+        {/* Progress Cards */}
+        <div className="space-y-4">
+          {STEPS.map((step, i) => {
+            const isActive = idx === i;
+            const isComplete = idx > i;
+            const delay = i * 200; // stagger animation
+
+            return (
+              <div
+                key={i}
+                className="relative overflow-hidden rounded-2xl border border-white/40 bg-white/60 backdrop-blur-md p-6 transition-all duration-500"
+                style={{
+                  animation: `fadeInUp 0.5s ease-out ${delay}ms both`,
+                }}
+              >
+                {/* Progress Fill */}
+                <div
+                  className={`absolute inset-0 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 transition-all duration-1000 ${
+                    isActive || isComplete ? 'translate-x-0' : '-translate-x-full'
+                  }`}
+                  style={{
+                    transitionDelay: `${delay}ms`,
+                  }}
+                ></div>
+
+                {/* Content */}
+                <div className="relative flex items-center gap-4">
+                  {/* Icon */}
+                  <div
+                    className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ${
+                      isComplete
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 scale-100'
+                        : isActive
+                        ? 'bg-blue-100 scale-110 animate-pulse'
+                        : 'bg-gray-100 scale-100'
+                    }`}
+                  >
+                    {isComplete ? (
+                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-blue-600' : 'bg-gray-400'}`}></div>
+                    )}
+                  </div>
+
+                  {/* Text */}
+                  <div className="flex-1">
+                    <p
+                      className={`text-lg font-medium lowercase transition-colors duration-500 ${
+                        isComplete ? 'text-blue-700' : isActive ? 'text-gray-900' : 'text-gray-500'
+                      }`}
+                    >
+                      {step}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
