@@ -156,13 +156,13 @@ export default function ConnectPage() {
             <p className="text-gray-600 lowercase">no accounts linked yet</p>
           ) : (
             items.map((it) => (
-              <div key={it.id} className="border rounded-2xl p-4">
+              <div key={it.id} className="border border-gray-200 rounded-2xl p-4 hover:shadow-md transition-all duration-200">
                 {it.institutionName ? (
-                  <div className="font-semibold mb-2 lowercase">{it.institutionName}</div>
+                  <div className="font-semibold mb-2 lowercase text-gray-900">{it.institutionName}</div>
                 ) : null}
                 <div className="space-y-2">
                   {it.accounts.map((a) => (
-                    <div key={a.id} className="flex items-center justify-between bg-gray-50 rounded-xl p-3">
+                    <div key={a.id} className="flex items-center justify-between bg-gradient-to-br from-gray-50 to-indigo-50/30 rounded-xl p-3">
                       <div className="text-sm lowercase">
                         <div className="font-medium">{a.name} {a.mask ? `•••${a.mask}` : ''}</div>
                         <div className="text-gray-600">{a.type}{a.subtype ? ` / ${a.subtype}` : ''} {a.currency ? ` • ${a.currency}` : ''}</div>
@@ -178,7 +178,7 @@ export default function ConnectPage() {
         <div className="mt-6 flex justify-center">
           {linkToken ? (
             <PlaidLink token={linkToken} onSuccess={onSuccess}>
-              <button className="px-6 py-3 rounded-full bg-indigo-600 text-white focus:outline-none focus:ring-0 outline-none ring-0 border-none shadow-none">add account</button>
+              <button className="px-6 py-3 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white focus:outline-none focus:ring-0 outline-none ring-0 border-none shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 hover:-translate-y-0.5">add account</button>
             </PlaidLink>
           ) : (
             <button disabled className="px-6 py-3 rounded-full bg-indigo-600 text-white opacity-50 focus:outline-none focus:ring-0 outline-none ring-0 border-none shadow-none">{isFetchingToken ? 'loading…' : 'add account'}</button>
@@ -200,7 +200,7 @@ export default function ConnectPage() {
           <button
             onClick={goToCheckout}
             disabled={totalAccounts === 0 || creatingCheckout || loadingExchange}
-            className="px-8 py-4 rounded-full bg-gray-900 text-white lowercase disabled:opacity-50"
+            className="px-8 py-4 rounded-full bg-gradient-to-r from-gray-900 to-gray-800 text-white lowercase disabled:opacity-50 hover:from-gray-800 hover:to-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
           >
             {creatingCheckout ? 'redirecting…' : 'next'}
           </button>

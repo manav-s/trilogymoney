@@ -97,7 +97,7 @@ export default function StepA() {
             <span>33% complete</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-indigo-600 h-2 rounded-full" style={{ width: "33%" }}></div>
+            <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 h-2 rounded-full transition-all duration-500 ease-out" style={{ width: "33%" }}></div>
           </div>
         </div>
 
@@ -189,7 +189,7 @@ export default function StepA() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full px-10 py-5 text-xl font-semibold rounded-full bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-600/20 transition-all lowercase shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-10 py-5 text-xl font-semibold rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 focus:ring-4 focus:ring-indigo-600/20 transition-all duration-300 lowercase shadow-lg hover:shadow-xl hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? "creating account..." : "continue →"}
           </button>

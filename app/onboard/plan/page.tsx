@@ -81,7 +81,7 @@ export default function PlanPage() {
                 setOpening(false);
               }
             }}
-            className="px-6 py-4 rounded-full bg-indigo-600 text-white lowercase hover:bg-indigo-700 disabled:opacity-50"
+            className="px-8 py-4 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white lowercase hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
             disabled={opening}
           >
             {opening ? 'preparing…' : 'connect your accounts'}

@@ -223,7 +223,7 @@ export default function QuizPage() {
             <span>{progress}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-indigo-600 h-2 rounded-full" style={{ width: `${progress}%` }}></div>
+            <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 h-2 rounded-full transition-all duration-500 ease-out" style={{ width: `${progress}%` }}></div>
           </div>
         </div>
 
@@ -245,7 +245,7 @@ export default function QuizPage() {
               <button
                 key={opt}
                 onClick={onClick}
-                className={`px-6 py-4 rounded-2xl border-2 transition-all ${active ? "border-indigo-600 bg-indigo-50" : "border-gray-300 bg-white hover:border-gray-400"} lowercase text-left`}
+                className={`px-6 py-4 rounded-2xl border-2 transition-all duration-200 ${active ? "border-indigo-600 bg-gradient-to-br from-indigo-50 to-purple-50 shadow-md scale-[1.02]" : "border-gray-300 bg-white hover:border-indigo-400 hover:shadow-md hover:scale-[1.01]"} lowercase text-left`}
               >
                 {labelFor(current.key, opt)}
               </button>
@@ -255,8 +255,8 @@ export default function QuizPage() {
 
         {/* nav */}
         <div className="mt-10 flex justify-between">
-          <button onClick={goBack} disabled={step === 0} className="px-6 py-4 rounded-full bg-gray-100 text-gray-900 lowercase disabled:opacity-50">back</button>
-          <button onClick={goNext} disabled={!hasAnswer} className="px-8 py-4 rounded-full bg-indigo-600 text-white lowercase hover:bg-indigo-700 disabled:opacity-50">{isLast ? "finish" : "next →"}</button>
+          <button onClick={goBack} disabled={step === 0} className="px-6 py-4 rounded-full bg-gray-100 text-gray-900 lowercase disabled:opacity-50 hover:bg-gray-200 transition-all duration-200">back</button>
+          <button onClick={goNext} disabled={!hasAnswer} className="px-8 py-4 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white lowercase hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">{isLast ? "finish" : "next →"}</button>
         </div>
       </div>
     </div>
