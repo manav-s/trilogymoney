@@ -242,7 +242,7 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
         ? categoryFocusLabel
           ? `You are describing ${categoryFocusLabel}. Mention ONLY merchants listed in categoryBreakdownJson; never invent other store names or amounts.`
           : 'Mention ONLY merchants listed in categoryBreakdownJson; never invent other store names or amounts.'
-        : 'If asked to break down a category, say you don\'t have those details.',
+        : 'If asked to break down a category, you MUST say "i don\'t have the details for that" (even if the category is in the summary).',
       categoryFocusTotalsJson
         ? 'Use the spend/pending/refund amounts from categoryFocusTotalsJson exactly when talking about this category.'
         : '',

@@ -298,7 +298,7 @@ export async function handleLLMConversation(phone: string, userText: string) {
           profile,
           query: queryForPrompt,
           rangeLabel,
-          categoryBreakdownJson: breakdown ? JSON.stringify(breakdown) : null,
+          categoryBreakdownJson: breakdown && breakdown.length > 0 ? JSON.stringify(breakdown) : null,
           categoryFocusLabel: categoryFocusDisplay ?? categoryFocusNormalized ?? null,
           categoryFocusTotalsJson: categoryTotalsJson,
         });
