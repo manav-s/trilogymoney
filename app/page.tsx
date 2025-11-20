@@ -1,112 +1,137 @@
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white selection:bg-blue-100 selection:text-blue-900 overflow-x-hidden">
       {/* Navigation */}
-      <nav className="flex items-center justify-between p-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="flex items-center">
-          <span className="text-xl font-bold text-gray-900 lowercase">
-            trilogy
-          </span>
-        </div>
-        <div className="flex items-center">
-          <a href="/signin" className="text-sm font-semibold leading-6 text-gray-900 lowercase hover:text-blue-600 transition-colors">
-            sign in
-          </a>
+      <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 transition-all duration-300">
+        <div className="flex items-center justify-between p-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="flex items-center">
+            <span className="text-xl font-bold text-gray-900 lowercase tracking-tight hover:opacity-80 transition-opacity cursor-pointer">
+              trilogy
+            </span>
+          </div>
+          <div className="flex items-center gap-6">
+            <a href="/signin" className="text-sm font-medium text-gray-600 lowercase hover:text-blue-600 transition-colors">
+              sign in
+            </a>
+            <a href="https://shorturl.at/KGbiL" className="hidden sm:block px-5 py-2.5 text-sm font-semibold rounded-full bg-gray-900 text-white hover:bg-gray-800 transition-all hover:scale-105 shadow-lg hover:shadow-xl">
+              get started
+            </a>
+          </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <main className="bg-gradient-to-br from-blue-50 via-white to-blue-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+      <main className="relative pt-32 pb-16 sm:pt-40 sm:pb-24 overflow-hidden">
+        {/* Background Gradients */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl -z-10 pointer-events-none">
+          <div className="absolute top-20 left-20 w-72 h-72 bg-blue-400/20 rounded-full blur-3xl animate-pulse mix-blend-multiply"></div>
+          <div className="absolute top-40 right-20 w-96 h-96 bg-indigo-400/20 rounded-full blur-3xl animate-pulse mix-blend-multiply delay-100"></div>
+          <div className="absolute -bottom-20 left-1/2 w-80 h-80 bg-purple-400/20 rounded-full blur-3xl animate-pulse mix-blend-multiply delay-200"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Left side - Content */}
-            <div className="space-y-8">
-              <div className="flex flex-wrap gap-3">
-                <div className="inline-block px-4 py-2 bg-blue-50 border border-blue-200 rounded-full">
-                  <span className="text-sm text-blue-600 font-medium lowercase">
-                    imessage native
-                  </span>
-                </div>
+            <div className="space-y-8 text-center lg:text-left animate-fade-in-up">
+              <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-xs font-medium uppercase tracking-wider mb-4">
+                <span className="relative flex h-2 w-2 mr-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                </span>
+                iMessage Native
               </div>
 
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 lowercase">
-                your money&apos;s personal assistant.
-          </h1>
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 leading-[1.1]">
+                your money&apos;s <br />
+                <span className="text-gradient">personal assistant.</span>
+              </h1>
 
-              <p className="text-xl sm:text-2xl text-gray-600 lowercase">
+              <p className="text-xl sm:text-2xl text-gray-600 leading-relaxed max-w-2xl mx-auto lg:mx-0">
                 texts you via imessage like a friend. once a week, a quick money check-in.
               </p>
 
-              <p className="text-lg sm:text-xl text-gray-700 lowercase">
-                do you get anxious opening your bank app? trilogy shows you what you need to see, without the spiral.
-              </p>
-
-              <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
                 <a
                   href="https://shorturl.at/KGbiL"
-                  className="inline-flex items-center px-10 py-5 text-xl font-semibold rounded-full bg-blue-600 text-white hover:bg-blue-700 focus:ring-4 focus:ring-blue-600/20 transition-all lowercase shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                  className="w-full sm:w-auto px-8 py-4 text-lg font-semibold rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-500/30 hover:-translate-y-1"
                 >
                   start now
                 </a>
-
-                <div className="text-sm text-gray-500 lowercase">
-                  <p>cancel anytime • blue bubbles</p>
-                </div>
+                <p className="text-sm text-gray-500">
+                  cancel anytime • blue bubbles
+                </p>
               </div>
             </div>
 
             {/* Right side - iPhone mockup */}
-            <div className="flex justify-center lg:justify-end">
-              <div className="relative">
+            <div className="relative flex justify-center lg:justify-end animate-float delay-300">
+              <div className="relative z-10">
+                {/* Glass Panel Behind */}
+                <div className="absolute -inset-4 bg-gradient-to-tr from-blue-100 to-indigo-100 rounded-[3.5rem] blur-xl opacity-70"></div>
+                
                 {/* iPhone frame */}
-                <div className="relative bg-black rounded-[3rem] p-3 shadow-2xl">
-                  <div className="bg-white rounded-[2.5rem] overflow-hidden" style={{ width: "280px", height: "560px" }}>
+                <div className="relative bg-gray-900 rounded-[3rem] p-3 shadow-2xl ring-1 ring-gray-900/5">
+                  <div className="bg-white rounded-[2.5rem] overflow-hidden h-[600px] w-[300px] relative">
                     {/* Status bar */}
-                    <div className="flex items-center justify-between px-6 py-3 bg-white">
+                    <div className="flex items-center justify-between px-6 py-4 bg-white/90 backdrop-blur-sm sticky top-0 z-20">
                       <span className="text-sm font-semibold text-gray-900">9:41</span>
-                      <div className="flex items-center space-x-1">
-                        <div className="w-4 h-4 border border-gray-900 rounded-sm"></div>
+                      <div className="flex items-center space-x-1.5">
+                        <div className="w-4 h-2.5 bg-gray-900 rounded-[1px]"></div>
+                        <div className="w-0.5 h-1 bg-gray-900"></div>
                       </div>
                     </div>
 
-                    {/* SMS content */}
-                    <div className="px-4 py-6 bg-white">
-                      <p className="text-xs text-gray-400 mb-2 text-center">
-                        today 8:03 AM
-                      </p>
-                      {/* Trilogy's message (blue bubble, left-aligned) */}
-                      <div className="bg-blue-500 rounded-3xl rounded-tl-sm p-4 shadow-md max-w-[240px]">
-                        <p className="text-white text-sm font-semibold mb-2">
-                          weekly summary: nov 10 → nov 16
-                        </p>
-                        <p className="text-white text-sm mb-3">
-                          you spent $450 this week with amazon leading the way.
-                        </p>
-                        <div className="space-y-1.5 text-white text-sm mb-3">
-                          <p>🛍️ general merchandise $315</p>
-                          <p>💅 personal care $94</p>
-                          <p>🚗 transportation $25</p>
-                        </div>
-                        <p className="text-white text-sm">
-                          balances: td bank $3,589
-                        </p>
-                        <p className="text-white text-sm mt-3 italic">
-                          amazon&apos;s got the spotlight—maybe give your cart a little space? 😏
-                        </p>
+                    {/* Chat Interface */}
+                    <div className="flex flex-col h-full bg-white pb-20 overflow-y-auto no-scrollbar">
+                      <div className="px-4 py-2 text-center">
+                        <span className="text-xs font-medium text-gray-400">iMessage • Today 9:41 AM</span>
                       </div>
-                      
-                      {/* User's response (gray bubble, right-aligned) */}
-                      <div className="flex justify-end mt-3">
-                        <div className="bg-gray-200 rounded-3xl rounded-tr-sm p-4 shadow-md max-w-[200px]">
-                          <p className="text-gray-900 text-sm">
-                            break down personal care
-                          </p>
+
+                      <div className="flex-1 px-4 space-y-4 pt-4">
+                        {/* Trilogy Message */}
+                        <div className="flex flex-col items-start space-y-1 animate-fade-in-up delay-100">
+                          <div className="bg-[#007AFF] text-white rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%] shadow-sm">
+                            <p className="text-sm font-medium mb-1 opacity-90">Weekly Summary</p>
+                            <p className="text-base font-semibold">You spent $450 this week 💸</p>
+                          </div>
+                          <div className="bg-[#007AFF] text-white rounded-2xl px-4 py-3 max-w-[85%] shadow-sm">
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between gap-4">
+                                <span>🛍️ Amazon</span>
+                                <span className="font-medium">$315</span>
+                              </div>
+                              <div className="flex justify-between gap-4">
+                                <span>💅 Sephora</span>
+                                <span className="font-medium">$94</span>
+                              </div>
+                              <div className="flex justify-between gap-4">
+                                <span>🚗 Uber</span>
+                                <span className="font-medium">$25</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="bg-[#007AFF] text-white rounded-2xl rounded-bl-sm px-4 py-3 max-w-[85%] shadow-sm">
+                            <p className="text-sm">Amazon&apos;s popping off... maybe chill on the cart? 😏</p>
+                          </div>
+                        </div>
+
+                        {/* User Message */}
+                        <div className="flex flex-col items-end space-y-1 pt-4 animate-fade-in-up delay-300">
+                          <div className="bg-[#E9E9EB] text-black rounded-2xl rounded-tr-sm px-4 py-3 max-w-[80%]">
+                            <p className="text-sm">Oof. Break down Sephora for me?</p>
+                          </div>
                         </div>
                       </div>
                     </div>
+                    
+                    {/* Bottom Input Area */}
+                    <div className="absolute bottom-0 w-full bg-white/90 backdrop-blur-md border-t border-gray-100 p-4 pb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0"></div>
+                        <div className="flex-1 h-8 rounded-full border border-gray-200"></div>
+                      </div>
+                    </div>
                   </div>
-                  {/* iPhone notch */}
-                  <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-black rounded-full" style={{ width: "100px", height: "25px" }}></div>
                 </div>
               </div>
             </div>
@@ -115,75 +140,86 @@ export default function Home() {
       </main>
 
       {/* Problem statement */}
-      <section className="py-16 sm:py-24 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
-          <p className="text-xl sm:text-2xl text-gray-600 lowercase">
-            most finance apps are exhausting.
-          </p>
-          <p className="text-xl text-gray-700 lowercase">
-            they want you to build budgets, track every category, stare at charts.
-          </p>
-          <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 lowercase">
-            trilogy is different.
-          </h2>
-          <p className="text-xl sm:text-2xl text-gray-700 lowercase">
-            once a week, you get an imessage with what actually matters.
-          </p>
-          <div className="text-center mt-12 space-y-4">
-            <p className="text-xl text-gray-700 lowercase">
-              no app to open. no dashboards to obsess over.
+      <section className="py-24 sm:py-32 bg-gray-50 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-50"></div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-12 relative z-10">
+          <div className="space-y-6">
+            <p className="text-xl sm:text-2xl text-gray-600 font-medium">
+              most finance apps are exhausting.
             </p>
-            <p className="text-2xl sm:text-3xl font-bold text-gray-900 lowercase">
-              just awareness.
+            <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+              they want you to build budgets, track every category, and stare at charts until your eyes glaze over.
             </p>
+          </div>
+          
+          <div className="glass-panel rounded-3xl p-8 sm:p-12 transform hover:scale-[1.02] transition-transform duration-500">
+            <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
+              trilogy is <span className="text-blue-600">different.</span>
+            </h2>
+            <p className="text-xl sm:text-2xl text-gray-700 leading-relaxed">
+              once a week, you get an imessage with what actually matters.
+            </p>
+            <div className="mt-8 pt-8 border-t border-gray-100 grid sm:grid-cols-2 gap-8">
+              <div className="space-y-2">
+                <div className="text-3xl">🚫</div>
+                <p className="font-medium text-gray-900">no app to open</p>
+              </div>
+              <div className="space-y-2">
+                <div className="text-3xl">🧘</div>
+                <p className="font-medium text-gray-900">just awareness</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* How it works */}
-      <section className="py-16 sm:py-24 bg-gray-50">
+      <section className="py-24 sm:py-32 bg-white relative">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl sm:text-5xl font-bold text-center text-gray-900 mb-16 lowercase">
+          <h2 className="text-4xl sm:text-5xl font-bold text-center text-gray-900 mb-20">
             how it works
           </h2>
 
-          <div className="grid sm:grid-cols-3 gap-12">
+          <div className="grid sm:grid-cols-3 gap-12 relative">
+            {/* Connecting Line (Desktop) */}
+            <div className="hidden sm:block absolute top-8 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-blue-200 via-blue-400 to-blue-200 -z-10"></div>
+
             {/* Step 1 */}
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl font-bold shadow-lg">
+            <div className="text-center space-y-6 group">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-white border-2 border-blue-100 text-blue-600 flex items-center justify-center text-2xl font-bold shadow-lg group-hover:scale-110 group-hover:border-blue-500 transition-all duration-300 bg-gradient-to-br from-white to-blue-50">
                 1
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 lowercase">
+              <h3 className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
                 connect your bank
               </h3>
-              <p className="text-lg text-gray-600 lowercase">
-                secure plaid integration (one-time setup)
+              <p className="text-lg text-gray-600 leading-relaxed">
+                secure plaid integration. takes 30 seconds, one-time setup.
               </p>
             </div>
 
             {/* Step 2 */}
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-500 text-white flex items-center justify-center text-2xl font-bold shadow-lg">
+            <div className="text-center space-y-6 group">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl font-bold shadow-lg shadow-blue-200 group-hover:scale-110 transition-all duration-300 ring-4 ring-blue-50">
                 2
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 lowercase">
+              <h3 className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
                 get weekly updates
               </h3>
-              <p className="text-lg text-gray-600 lowercase">
-                every sunday, an imessage with your balance, recent spending, and any red flags
+              <p className="text-lg text-gray-600 leading-relaxed">
+                every sunday, an imessage with your balance, spending, and insights.
               </p>
             </div>
 
             {/* Step 3 */}
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl font-bold shadow-lg">
+            <div className="text-center space-y-6 group">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-white border-2 border-blue-100 text-blue-600 flex items-center justify-center text-2xl font-bold shadow-lg group-hover:scale-110 group-hover:border-blue-500 transition-all duration-300 bg-gradient-to-br from-white to-blue-50">
                 3
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 lowercase">
+              <h3 className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
                 stay aware
               </h3>
-              <p className="text-lg text-gray-600 lowercase">
-                a simple check-in that keeps you on top of your money, without stressing over it
+              <p className="text-lg text-gray-600 leading-relaxed">
+                a simple check-in that keeps you on top of your money, stress-free.
               </p>
             </div>
           </div>
@@ -191,60 +227,73 @@ export default function Home() {
       </section>
 
       {/* Why this works */}
-      <section className="py-16 sm:py-24 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl sm:text-5xl font-bold text-center text-gray-900 mb-12 lowercase">
+      <section className="py-24 sm:py-32 bg-gray-900 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl"></div>
+        
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <h2 className="text-4xl sm:text-5xl font-bold text-center mb-16">
             why this works
           </h2>
 
-          <div className="space-y-6 text-center text-lg sm:text-xl text-gray-700 lowercase">
-            <p>
+          <div className="space-y-12 text-center text-lg sm:text-xl text-gray-300">
+            <p className="font-light">
               you don&apos;t need another app telling you what to do with your money.
             </p>
-            <p className="text-2xl sm:text-3xl font-bold text-gray-900">
-              you just need to know where you&apos;re at.
+            <p className="text-3xl sm:text-4xl font-bold text-white leading-tight">
+              you just need to know <br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">where you&apos;re at.</span>
             </p>
-            <p>
+            <p className="leading-relaxed max-w-2xl mx-auto">
               seeing the numbers once a week. noticing patterns. staying intentional. that alone can ease the anxiety of &quot;i don&apos;t even know what&apos;s going on with my money.&quot;
             </p>
-            <p>
-              no judgment. no lectures. no $200/month financial advisor.
-            </p>
-            <p className="text-gray-500">
-              trilogy gives you clarity. what you do with it is totally up to you.
-            </p>
+            <div className="pt-8 border-t border-gray-800">
+              <p className="text-gray-400 italic">
+                no judgment. no lectures. no $200/month financial advisor.
+              </p>
+              <p className="text-white font-medium mt-4">
+                trilogy gives you clarity. what you do with it is totally up to you.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Final CTA */}
-      <section className="py-16 sm:py-24 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
-          <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 lowercase">
+      <section className="py-24 sm:py-32 bg-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-white to-blue-50/50"></div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-10 relative z-10">
+          <h2 className="text-5xl sm:text-6xl font-bold text-gray-900 tracking-tight">
             ready to stay aware?
           </h2>
 
-          <a
-            href="https://shorturl.at/KGbiL"
-            className="inline-flex items-center px-10 py-5 text-xl font-semibold rounded-full bg-blue-600 text-white hover:bg-blue-700 focus:ring-4 focus:ring-blue-600/20 transition-all lowercase shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-          >
-            start now
-          </a>
+          <div className="flex flex-col items-center gap-6">
+            <a
+              href="https://shorturl.at/KGbiL"
+              className="relative inline-flex items-center px-12 py-6 text-xl font-bold rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 overflow-hidden group"
+            >
+              <span className="relative z-10">start now</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+            </a>
 
-          <p className="text-sm text-gray-500 lowercase">
-            we&apos;ll open your messages app — just hit send.
-          </p>
+            <p className="text-sm text-gray-500 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+              we&apos;ll open your messages app — just hit send.
+            </p>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 bg-white">
+      <footer className="border-t border-gray-100 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
-            <span className="text-xl font-bold text-gray-900 lowercase">
+            <span className="text-xl font-bold text-gray-900 lowercase tracking-tight">
               trilogy
             </span>
-            <div className="flex items-center space-x-6 text-sm text-gray-600 lowercase">
+            <div className="flex items-center space-x-8 text-sm font-medium text-gray-500">
               <a href="/privacy" className="hover:text-blue-600 transition-colors">
                 privacy
               </a>
@@ -252,7 +301,7 @@ export default function Home() {
                 sign in
               </a>
             </div>
-            <p className="text-sm text-gray-500 lowercase">© 2025 trilogy</p>
+            <p className="text-sm text-gray-400">© 2025 trilogy</p>
           </div>
         </div>
       </footer>
