@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   let body: { success_url?: string; cancel_url?: string; customer_email?: string; trial_days?: number; phone?: string | null } = {};
   try {
     body = await req.json();
-  } catch {}
+  } catch { }
 
   // Use SDK default API version to avoid type mismatches during deploy
   const stripe = new Stripe(stripeSecretKey);
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price: stripePriceId, quantity: 1 }],
-      success_url: (body.success_url || `${req.nextUrl.origin}/onboard/contact`) + "?checkout=success",
+      success_url: (body.success_url || `${req.nextUrl.origin}/dashboard`) + "?checkout=success",
       cancel_url: body.cancel_url || `${req.nextUrl.origin}/onboard/checkout`,
       customer_email: body.customer_email,
       allow_promotion_codes: true,
