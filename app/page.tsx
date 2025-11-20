@@ -53,7 +53,7 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
                 <a
                   href="https://shorturl.at/KGbiL"
-                  className="w-full sm:w-auto px-8 py-4 text-lg font-semibold rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-500/30 hover:-translate-y-1"
+                  className="px-10 py-4 text-lg font-semibold rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-500/30 hover:-translate-y-1"
                 >
                   start now
                 </a>
@@ -70,68 +70,54 @@ export default function Home() {
                 <div className="absolute -inset-4 bg-gradient-to-tr from-blue-100 to-indigo-100 rounded-[3.5rem] blur-xl opacity-70"></div>
                 
                 {/* iPhone frame */}
-                <div className="relative bg-gray-900 rounded-[3rem] p-3 shadow-2xl ring-1 ring-gray-900/5">
-                  <div className="bg-white rounded-[2.5rem] overflow-hidden h-[600px] w-[300px] relative">
+                <div className="relative bg-black rounded-[3rem] p-3 shadow-2xl">
+                  <div className="bg-white rounded-[2.5rem] overflow-hidden" style={{ width: "280px", height: "560px" }}>
                     {/* Status bar */}
-                    <div className="flex items-center justify-between px-6 py-4 bg-white/90 backdrop-blur-sm sticky top-0 z-20">
+                    <div className="flex items-center justify-between px-6 py-3 bg-white">
                       <span className="text-sm font-semibold text-gray-900">9:41</span>
-                      <div className="flex items-center space-x-1.5">
-                        <div className="w-4 h-2.5 bg-gray-900 rounded-[1px]"></div>
-                        <div className="w-0.5 h-1 bg-gray-900"></div>
+                      <div className="flex items-center space-x-1">
+                        <div className="w-4 h-4 border border-gray-900 rounded-sm"></div>
                       </div>
                     </div>
 
-                    {/* Chat Interface */}
-                    <div className="flex flex-col h-full bg-white pb-20 overflow-y-auto no-scrollbar">
-                      <div className="px-4 py-2 text-center">
-                        <span className="text-xs font-medium text-gray-400">iMessage • Today 9:41 AM</span>
-                      </div>
-
-                      <div className="flex-1 px-4 space-y-4 pt-4">
-                        {/* Trilogy Message */}
-                        <div className="flex flex-col items-start space-y-1 animate-fade-in-up delay-100">
-                          <div className="bg-[#007AFF] text-white rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%] shadow-sm">
-                            <p className="text-sm font-medium mb-1 opacity-90">Weekly Summary</p>
-                            <p className="text-base font-semibold">You spent $450 this week 💸</p>
-                          </div>
-                          <div className="bg-[#007AFF] text-white rounded-2xl px-4 py-3 max-w-[85%] shadow-sm">
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between gap-4">
-                                <span>🛍️ Amazon</span>
-                                <span className="font-medium">$315</span>
-                              </div>
-                              <div className="flex justify-between gap-4">
-                                <span>💅 Sephora</span>
-                                <span className="font-medium">$94</span>
-                              </div>
-                              <div className="flex justify-between gap-4">
-                                <span>🚗 Uber</span>
-                                <span className="font-medium">$25</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="bg-[#007AFF] text-white rounded-2xl rounded-bl-sm px-4 py-3 max-w-[85%] shadow-sm">
-                            <p className="text-sm">Amazon&apos;s popping off... maybe chill on the cart? 😏</p>
-                          </div>
+                    {/* SMS content */}
+                    <div className="px-4 py-6 bg-white h-full overflow-y-auto no-scrollbar">
+                      <p className="text-xs text-gray-400 mb-2 text-center">
+                        today 8:03 AM
+                      </p>
+                      {/* Trilogy's message (blue bubble, left-aligned) */}
+                      <div className="bg-blue-500 rounded-3xl rounded-tl-sm p-4 shadow-md max-w-[240px] animate-fade-in-up delay-100">
+                        <p className="text-white text-sm font-semibold mb-2">
+                          weekly summary: nov 10 → nov 16
+                        </p>
+                        <p className="text-white text-sm mb-3">
+                          you spent $450 this week with amazon leading the way.
+                        </p>
+                        <div className="space-y-1.5 text-white text-sm mb-3">
+                          <p>🛍️ general merchandise $315</p>
+                          <p>💅 personal care $94</p>
+                          <p>🚗 transportation $25</p>
                         </div>
-
-                        {/* User Message */}
-                        <div className="flex flex-col items-end space-y-1 pt-4 animate-fade-in-up delay-300">
-                          <div className="bg-[#E9E9EB] text-black rounded-2xl rounded-tr-sm px-4 py-3 max-w-[80%]">
-                            <p className="text-sm">Oof. Break down Sephora for me?</p>
-                          </div>
-                        </div>
+                        <p className="text-white text-sm">
+                          balances: td bank $3,589
+                        </p>
+                        <p className="text-white text-sm mt-3 italic">
+                          amazon&apos;s got the spotlight—maybe give your cart a little space? 😏
+                        </p>
                       </div>
-                    </div>
-                    
-                    {/* Bottom Input Area */}
-                    <div className="absolute bottom-0 w-full bg-white/90 backdrop-blur-md border-t border-gray-100 p-4 pb-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0"></div>
-                        <div className="flex-1 h-8 rounded-full border border-gray-200"></div>
+                      
+                      {/* User's response (gray bubble, right-aligned) */}
+                      <div className="flex justify-end mt-3 animate-fade-in-up delay-300">
+                        <div className="bg-gray-200 rounded-3xl rounded-tr-sm p-4 shadow-md max-w-[200px]">
+                          <p className="text-gray-900 text-sm">
+                            break down personal care
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
+                  {/* iPhone notch */}
+                  <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-black rounded-full" style={{ width: "100px", height: "25px" }}></div>
                 </div>
               </div>
             </div>
