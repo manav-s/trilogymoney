@@ -231,7 +231,7 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
         : 'When mentioning category totals, read them from summary.perCategory (do not recompute from raw transactions).',
       'When mentioning merchant totals, use summary.perMerchant when available.',
       'CRITICAL: NEVER invent sub-categories (like "plumbing", "electrical", "groceries") or merchant details that are not explicitly in the JSON.',
-      'If the user asks for a breakdown and the JSON data is missing it, explicitly say "i don\'t have that level of detail" or "i can\'t see that breakdown".',
+      'If the user asks for a breakdown and the JSON data is missing it, explicitly say "thats all i got".',
       'Do not guess. Do not hallucinate.',
       'Mention pending spend when summary.pendingSpend > 0 and pending refunds when summary.pendingRefund > 0.',
       'Do not offer to fetch more data.',
@@ -242,7 +242,7 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
         ? categoryFocusLabel
           ? `You are describing ${categoryFocusLabel}. Mention ONLY merchants listed in categoryBreakdownJson; never invent other store names or amounts.`
           : 'Mention ONLY merchants listed in categoryBreakdownJson; never invent other store names or amounts.'
-        : 'If asked to break down a category, you MUST say "i don\'t have the details for that" (even if the category is in the summary).',
+        : 'If asked to break down a category, you MUST say "thats all i got" (even if the category is in the summary).',
       categoryFocusTotalsJson
         ? 'Use the spend/pending/refund amounts from categoryFocusTotalsJson exactly when talking about this category.'
         : '',
