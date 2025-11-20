@@ -124,7 +124,7 @@ export default function StepA() {
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/20 outline-none transition-all lowercase"
+              className="w-full px-6 py-5 text-lg rounded-2xl border-2 border-transparent bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all duration-300 lowercase shadow-sm hover:bg-gray-100 focus:shadow-lg"
               placeholder="john doe"
             />
           </div>
@@ -141,7 +141,7 @@ export default function StepA() {
               required
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value.trim().toLowerCase() })}
-              className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/20 outline-none transition-all"
+              className="w-full px-6 py-5 text-lg rounded-2xl border-2 border-transparent bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all duration-300 shadow-sm hover:bg-gray-100 focus:shadow-lg"
               placeholder="you@example.com"
             />
             <p className="text-sm text-gray-500 mt-2 lowercase">required — used for receipts and alerts</p>
@@ -153,12 +153,12 @@ export default function StepA() {
               your timezone
             </label>
             {!showTimezoneSelect ? (
-              <div className="flex items-center justify-between p-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
-                <span className="text-gray-900">{getTimezoneAbbreviation(formData.timezone)}</span>
+              <div className="flex items-center justify-between p-5 bg-indigo-50/50 border border-indigo-100 rounded-2xl hover:bg-indigo-50 transition-colors duration-300">
+                <span className="text-gray-900 font-medium">{getTimezoneAbbreviation(formData.timezone)}</span>
                 <button
                   type="button"
                   onClick={() => setShowTimezoneSelect(true)}
-                  className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                  className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold px-3 py-1 rounded-lg hover:bg-indigo-100/50 transition-colors"
                 >
                   change
                 </button>

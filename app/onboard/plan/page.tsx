@@ -56,11 +56,33 @@ export default function PlanPage() {
     <div className="min-h-screen bg-white">
       <div className="max-w-2xl mx-auto px-4 py-16">
         <h1 className="text-4xl font-bold text-gray-900 mb-6 lowercase">your weekly money plan</h1>
-        <ul className="list-disc pl-5 space-y-2 text-gray-700 lowercase">
-          <li>automate minimum payments this week</li>
-          <li>build a 1‑month cushion with a monthly transfer</li>
-          <li>weekly check‑in keeps you consistent</li>
-        </ul>
+        <div className="space-y-4">
+          {[
+            { icon: "⚡️", text: "automate minimum payments this week" },
+            { icon: "🛡️", text: "build a 1‑month cushion with a monthly transfer" },
+            { icon: "📊", text: "weekly check‑in keeps you consistent" }
+          ].map((item, i) => (
+            <div 
+              key={i}
+              className="flex items-center p-5 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-500 ease-out hover:-translate-y-0.5 hover:border-indigo-100"
+              style={{ 
+                animation: `fadeInUp 0.6s ease-out forwards`,
+                animationDelay: `${i * 150}ms`,
+                opacity: 0,
+                transform: 'translateY(10px)'
+              }}
+            >
+              <span className="text-2xl mr-4 bg-indigo-50 w-12 h-12 flex items-center justify-center rounded-full">{item.icon}</span>
+              <span className="text-lg text-gray-700 lowercase font-medium">{item.text}</span>
+            </div>
+          ))}
+        </div>
+        <style jsx global>{`
+          @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
         <div className="mt-10 flex">
           <button
             onClick={async () => {
