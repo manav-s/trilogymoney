@@ -14,7 +14,7 @@ function nextPath(status: string | null | undefined): string {
     case "analysis_complete":
       return "/onboard/plan";
     case "plaid_connected":
-      return "/onboard/checkout";
+      return "/onboard/contact";
     case "subscribed":
     case "complete":
       return "/dashboard";
