@@ -88,16 +88,17 @@ export default function StepA() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-2xl mx-auto px-4 py-16">
+    <div className="min-h-screen bg-gray-50 relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-50"></div>
+      <div className="max-w-2xl mx-auto px-4 py-16 relative z-10">
         {/* Progress Bar */}
         <div className="mb-12">
           <div className="flex items-center justify-between text-sm text-gray-500 mb-2 lowercase">
             <span>step 1 of 3</span>
             <span>33% complete</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 h-2 rounded-full transition-all duration-500 ease-out" style={{ width: "33%" }}></div>
+          <div className="w-full bg-gray-200/50 rounded-full h-2 backdrop-blur-sm">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2 rounded-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(37,99,235,0.3)]" style={{ width: "33%" }}></div>
           </div>
         </div>
 
@@ -124,7 +125,7 @@ export default function StepA() {
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-6 py-5 text-lg rounded-2xl border-2 border-transparent bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all duration-300 lowercase shadow-sm hover:bg-gray-100 focus:shadow-lg"
+              className="w-full px-6 py-5 text-lg rounded-2xl border border-white/20 bg-white/60 backdrop-blur-xl text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-300 lowercase shadow-sm hover:bg-white/80 focus:shadow-lg"
               placeholder="john doe"
             />
           </div>
@@ -141,7 +142,7 @@ export default function StepA() {
               required
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value.trim().toLowerCase() })}
-              className="w-full px-6 py-5 text-lg rounded-2xl border-2 border-transparent bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all duration-300 shadow-sm hover:bg-gray-100 focus:shadow-lg"
+              className="w-full px-6 py-5 text-lg rounded-2xl border border-white/20 bg-white/60 backdrop-blur-xl text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-300 shadow-sm hover:bg-white/80 focus:shadow-lg"
               placeholder="you@example.com"
             />
             <p className="text-sm text-gray-500 mt-2 lowercase">required — used for receipts and alerts</p>
@@ -153,12 +154,12 @@ export default function StepA() {
               your timezone
             </label>
             {!showTimezoneSelect ? (
-              <div className="flex items-center justify-between p-5 bg-indigo-50/50 border border-indigo-100 rounded-2xl hover:bg-indigo-50 transition-colors duration-300">
+              <div className="flex items-center justify-between p-5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-2xl hover:bg-white/80 transition-colors duration-300 shadow-sm">
                 <span className="text-gray-900 font-medium">{getTimezoneAbbreviation(formData.timezone)}</span>
                 <button
                   type="button"
                   onClick={() => setShowTimezoneSelect(true)}
-                  className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold px-3 py-1 rounded-lg hover:bg-indigo-100/50 transition-colors"
+                  className="text-sm text-blue-600 hover:text-blue-700 font-semibold px-3 py-1 rounded-lg hover:bg-blue-50 transition-colors"
                 >
                   change
                 </button>
@@ -189,7 +190,7 @@ export default function StepA() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full px-10 py-5 text-xl font-semibold rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 focus:ring-4 focus:ring-indigo-600/20 transition-all duration-300 lowercase shadow-lg hover:shadow-xl hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-10 py-5 text-xl font-semibold rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 focus:ring-4 focus:ring-blue-600/20 transition-all duration-300 lowercase shadow-lg hover:shadow-blue-500/30 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? "creating account..." : "continue →"}
           </button>

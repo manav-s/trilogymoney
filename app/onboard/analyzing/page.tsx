@@ -51,11 +51,33 @@ export default function AnalyzingPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-        <p className="text-xl font-semibold text-gray-900 lowercase mb-2">building your plan…</p>
-        <p className="text-gray-600 lowercase transition-all duration-300">{STEPS[idx]}</p>
+    <div className="min-h-screen bg-black flex items-center justify-center font-mono p-4">
+      <div className="max-w-md w-full space-y-4">
+        <div className="flex items-center gap-2 mb-8">
+          <div className="w-3 h-3 rounded-full bg-red-500"></div>
+          <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+          <div className="w-3 h-3 rounded-full bg-green-500"></div>
+        </div>
+        
+        <div className="space-y-2 text-sm sm:text-base">
+          {STEPS.map((step, i) => (
+            <div key={step} className={`flex items-center gap-3 transition-opacity duration-300 ${i > idx ? 'opacity-0' : i === idx ? 'opacity-100' : 'opacity-50'}`}>
+              <span className={i <= idx ? "text-green-500" : "text-gray-600"}>
+                {i < idx ? "✓" : i === idx ? ">" : " "}
+              </span>
+              <span className={i === idx ? "text-white animate-pulse" : "text-gray-400"}>
+                {step}...
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="h-1 w-full bg-gray-800 rounded-full mt-8 overflow-hidden">
+          <div 
+            className="h-full bg-green-500 transition-all duration-300 ease-out"
+            style={{ width: `${((idx + 1) / STEPS.length) * 100}%` }}
+          ></div>
+        </div>
       </div>
     </div>
   );

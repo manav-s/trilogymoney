@@ -214,16 +214,17 @@ export default function QuizPage() {
   const goBack = () => setStep((s) => Math.max(s - 1, 0));
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-2xl mx-auto px-4 py-16">
+    <div className="min-h-screen bg-gray-50 relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-50"></div>
+      <div className="max-w-2xl mx-auto px-4 py-16 relative z-10">
         {/* progress */}
         <div className="mb-8">
           <div className="flex items-center justify-between text-sm text-gray-500 mb-2 lowercase">
             <span>question {step + 1} of {QUESTIONS.length}</span>
             <span>{progress}%</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 h-2 rounded-full transition-all duration-500 ease-out" style={{ width: `${progress}%` }}></div>
+          <div className="w-full bg-gray-200/50 rounded-full h-2 backdrop-blur-sm">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2 rounded-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(37,99,235,0.3)]" style={{ width: `${progress}%` }}></div>
           </div>
         </div>
 
@@ -245,9 +246,11 @@ export default function QuizPage() {
               <button
                 key={opt}
                 onClick={onClick}
-                className={`px-6 py-4 rounded-2xl border-2 transition-all duration-200 ${active ? "border-indigo-600 bg-gradient-to-br from-indigo-50 to-purple-50 shadow-md scale-[1.02]" : "border-gray-300 bg-white hover:border-indigo-400 hover:shadow-md hover:scale-[1.01]"} lowercase text-left`}
+                className={`px-6 py-5 rounded-2xl border transition-all duration-300 ${active ? "border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/10 scale-[1.02]" : "border-white/40 bg-white/60 backdrop-blur-md hover:border-blue-300 hover:bg-white/80 hover:shadow-md hover:scale-[1.01]"} lowercase text-left group`}
               >
-                {labelFor(current.key, opt)}
+                <span className={`text-lg font-medium ${active ? "text-blue-700" : "text-gray-700 group-hover:text-gray-900"}`}>
+                  {labelFor(current.key, opt)}
+                </span>
               </button>
             );
           })}
