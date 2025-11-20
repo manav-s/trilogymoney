@@ -101,8 +101,12 @@ export default function Home() {
                         <p className="text-white text-sm">
                           balances: td bank $3,589
                         </p>
-                        <p className="text-white text-sm mt-3 italic">
-                          amazon&apos;s got the spotlight—maybe give your cart a little space? 😏
+                      </div>
+                      
+                      {/* Second message bubble */}
+                      <div className="bg-blue-500 rounded-3xl rounded-bl-sm p-4 shadow-md max-w-[240px] mt-2 animate-fade-in-up delay-200">
+                        <p className="text-white text-sm italic">
+                          lay off the doordash for a few days damn �
                         </p>
                       </div>
                       
