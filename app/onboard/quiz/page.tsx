@@ -95,6 +95,12 @@ const LABEL_OVERRIDES: Partial<Record<keyof Answers, Record<string, string>>> = 
     retiring_early_and_leaving_the_rat_race: 'retiring early',
     nothing: 'nothing',
   },
+  q3: {
+    pay_down_card: 'pay down debt',
+    build_1mo_cushion: 'build emergency fund',
+    stop_leak_spend: 'stop overspending',
+    start_investing: 'start investing',
+  },
   q5: {
     often: 'often — I delay opening my banking apps',
     sometimes: 'sometimes — depends on the week',
@@ -120,7 +126,7 @@ const labelFor = (key: keyof Answers, value: string): string =>
 const QUESTIONS: Question[] = [
   { key: "q1", label: "most days, money feels…", options: ["calm","under_control","manageable","tense","overwhelming"], variant: 'spectrum' },
   { key: "q2", label: "what quietly worries you the most?", options: ["interest_charges","surprise_bills","overspending","not_saving","not_investing"], type: 'multi' },
-  { key: "q3", label: "if we nailed one win in 90 days, you’d want…", options: ["pay_down_card","build_1mo_cushion","stop_leak_spend","automate_bills","start_investing"] },
+  { key: "q3", label: "if we nailed one win in 90 days, you'd want…", options: ["pay_down_card","build_1mo_cushion","stop_leak_spend","start_investing"] },
   { key: "q4", label: "the moment you drift off‑track is usually…", options: ["payday_slips","weekend_spend","late_night_scroll","unexpected_bill","social_plans"] },
   { key: "q5", label: "are you ever nervous to check your balances?", options: ["often","sometimes","rarely","never"] },
   { key: "q6", label: "any guilty pleasures?", options: ["food_delivery","prime","coffee","none"], type: 'multi', exclusiveValues: ["none"] },
