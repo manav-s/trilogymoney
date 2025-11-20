@@ -101,6 +101,13 @@ const LABEL_OVERRIDES: Partial<Record<keyof Answers, Record<string, string>>> = 
     stop_leak_spend: 'stop overspending',
     start_investing: 'start investing',
   },
+  q4: {
+    payday_slips: 'right after payday',
+    weekend_spend: 'social plans on the weekend',
+    late_night_scroll: 'late night impulse buys',
+    unexpected_bill: 'big surprise expense',
+    social_plans: "not saying 'no' to dinner plans",
+  },
   q5: {
     often: 'often — I delay opening my banking apps',
     sometimes: 'sometimes — depends on the week',
