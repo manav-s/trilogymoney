@@ -47,16 +47,27 @@ export async function POST(req: NextRequest) {
         let userId: string | null = null;
 
         if (phone) {
-          const updated = await prisma.user.updateMany({ where: { phone }, data: dataToSet });
-          if (updated.count > 0) {
-            const user = await prisma.user.findUnique({ where: { phone }, select: { id: true } });
-            userId = user?.id ?? null;
+          try {
+            const user = await prisma.user.update({
+              where: { phone },
+              data: dataToSet,
+              select: { id: true },
+            });
+            userId = user.id;
+          } catch (error) {
+            // User not found - this is okay, they might not exist yet
+            console.info('stripe.checkout.user_not_found_by_phone', { phone });
           }
         } else if (session.customer_email) {
-          const updated = await prisma.user.updateMany({ where: { email: session.customer_email }, data: dataToSet });
-          if (updated.count > 0) {
-            const user = await prisma.user.findUnique({ where: { email: session.customer_email }, select: { id: true } });
-            userId = user?.id ?? null;
+          try {
+            const user = await prisma.user.update({
+              where: { email: session.customer_email },
+              data: dataToSet,
+              select: { id: true },
+            });
+            userId = user.id;
+          } catch (error) {
+            console.info('stripe.checkout.user_not_found_by_email', { email: session.customer_email });
           }
         }
 
