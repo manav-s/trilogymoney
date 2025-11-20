@@ -8,6 +8,7 @@ import { getTransactions, buildTransactionsSummary, isExcludedFromSummary } from
 import { buildWeeklyDigestContext, extractHighlights } from '@/lib/weeklyDigest';
 
 const MAX_TRANSACTIONS_FOR_WELCOME_DIGEST = 500;
+const WELCOME_DUPLICATE_WINDOW_HOURS = 24;
 
 type UserForDigest = {
   id: string;
@@ -78,12 +79,9 @@ async function sendWelcomeMessage(userId: string, phone: string): Promise<void> 
 
 async function sendFirstDigestIfPossible(user: UserForDigest): Promise<void> {
   if (!user.phone) return;
-  let lastRange: { from: string; to: string } | null = null;
-  let lastSummary: ReturnType<typeof buildTransactionsSummary> | null = null;
-  let lastBalances: Awaited<ReturnType<typeof getBalancesBreakdown>> | null = null;
   try {
     console.info('post-onboarding.digest_start', { userId: user.id, phone: user.phone });
-
+    
     const hasActiveAccounts = await prisma.plaidAccount.count({
       where: { isActive: true, item: { userId: user.id } },
     });
@@ -102,9 +100,8 @@ async function sendFirstDigestIfPossible(user: UserForDigest): Promise<void> {
     }
 
     const digestRange = getWelcomeDigestRange();
-    lastRange = digestRange;
     console.info('post-onboarding.fetching_transactions', { userId: user.id, range: digestRange });
-
+    
     const transactionsResult = await getTransactions({
       userId: user.id,
       from: digestRange.from,
@@ -114,53 +111,55 @@ async function sendFirstDigestIfPossible(user: UserForDigest): Promise<void> {
     });
     const filteredTransactions = transactionsResult.transactions.filter((txn) => !isExcludedFromSummary(txn));
 
-    console.info('post-onboarding.transactions_fetched', {
-      userId: user.id,
+    console.info('post-onboarding.transactions_fetched', { 
+      userId: user.id, 
       total: transactionsResult.transactions.length,
-      filtered: filteredTransactions.length,
+      filtered: filteredTransactions.length 
     });
 
+    if (filteredTransactions.length === 0) {
+      console.info('post-onboarding.no_transactions', { userId: user.id });
+      await sendMessage({
+        to: user.phone,
+        body: `accounts connected! i'll send your first weekly digest once there's spending to summarize.`,
+        userId: user.id,
+        shouldPersist: true,
+      });
+      return;
+    }
+
     console.info('post-onboarding.building_summary', { userId: user.id });
-    lastSummary = buildTransactionsSummary(filteredTransactions, digestRange);
-    lastBalances = await getBalancesBreakdown({ userId: user.id });
-    const highlights = extractHighlights(lastSummary);
+    const digestSummary = buildTransactionsSummary(filteredTransactions, digestRange);
+    const balances = await getBalancesBreakdown({ userId: user.id });
+    const highlights = extractHighlights(digestSummary);
     const digestContext = buildWeeklyDigestContext({
-      summary: lastSummary,
+      summary: digestSummary,
       transactions: filteredTransactions,
-      balances: lastBalances,
+      balances,
       timezone: user.timezone,
       range: digestRange,
       highlights,
     });
 
-    let digestMessage: string | null = null;
-
-    if (filteredTransactions.length > 0) {
-      console.info('post-onboarding.generating_message', { userId: user.id, highlights });
-      digestMessage = await generateWeeklyDigestMessage(digestContext);
-      if (!digestMessage) {
-        logError('post-onboarding.no_digest_message', undefined, {
-          userId: user.id,
-          transactionCount: filteredTransactions.length,
-          summaryTotalSpend: lastSummary.totalSpend,
-        });
-      } else {
-        console.info('post-onboarding.message_generated', {
-          userId: user.id,
-          messageLength: digestMessage.length,
-        });
-      }
-    } else {
-      console.info('post-onboarding.no_transactions', { userId: user.id });
-    }
-
-    if (!digestMessage && lastSummary && lastBalances) {
-      digestMessage = buildPlaintextDigestMessage({
-        range: digestRange,
-        summary: lastSummary,
-        balances: lastBalances,
+    console.info('post-onboarding.generating_message', { userId: user.id, highlights });
+    const digestMessage = await generateWeeklyDigestMessage(digestContext);
+    if (!digestMessage) {
+      logError('post-onboarding.no_digest_message', undefined, { 
+        userId: user.id,
+        transactionCount: filteredTransactions.length,
+        summaryTotalSpend: digestSummary.totalSpend,
       });
+      // Fallback: send a simple summary instead of failing silently
+      await sendMessage({
+        to: user.phone,
+        body: `accounts connected! i've got ${filteredTransactions.length} transaction${filteredTransactions.length === 1 ? '' : 's'} from the last week. your first full weekly digest will arrive next sunday.`,
+        userId: user.id,
+        shouldPersist: true,
+      });
+      return;
     }
+
+    console.info('post-onboarding.message_generated', { userId: user.id, messageLength: digestMessage.length });
 
     const now = new Date();
     const digestQuery = {
@@ -191,10 +190,11 @@ async function sendFirstDigestIfPossible(user: UserForDigest): Promise<void> {
       snapshotPersisted = true;
       console.info('post-onboarding.snapshot_persisted', { userId: user.id });
     } catch (persistError) {
-      logError('post-onboarding.persist_failed', persistError, {
+      logError('post-onboarding.persist_failed', persistError, { 
         userId: user.id,
         snapshotCount: snapshotTransactions.length,
       });
+      // Attempt a lightweight fallback so cron still has a timestamp
       try {
         await prisma.user.update({
           where: { id: user.id },
@@ -206,49 +206,28 @@ async function sendFirstDigestIfPossible(user: UserForDigest): Promise<void> {
       }
     }
 
-    const messageBody =
-      digestMessage ||
-      buildPlaintextDigestMessage({
-        range: digestRange,
-        summary: lastSummary!,
-        balances: lastBalances!,
-      });
-
     console.info('post-onboarding.sending_digest', { userId: user.id });
     await sendMessage({
       to: user.phone,
-      body: messageBody,
+      body: digestMessage,
       userId: user.id,
       shouldPersist: true,
     });
     console.info('post-onboarding.digest_sent', { userId: user.id, snapshotPersisted });
   } catch (error) {
-    logError('post-onboarding.digest_error', error, {
+    logError('post-onboarding.digest_error', error, { 
       userId: user.id,
       errorMessage: error instanceof Error ? error.message : String(error),
       errorStack: error instanceof Error ? error.stack : undefined,
     });
+    // Fallback: send a simple message so user knows something happened
     try {
-      if (lastSummary && lastBalances && lastRange) {
-        const fallbackMessage = buildPlaintextDigestMessage({
-          range: lastRange,
-          summary: lastSummary,
-          balances: lastBalances,
-        });
-        await sendMessage({
-          to: user.phone,
-          body: fallbackMessage,
-          userId: user.id,
-          shouldPersist: true,
-        });
-      } else {
-        await sendMessage({
-          to: user.phone,
-          body: `accounts connected! i'm processing your first digest—check back in a moment or wait for next sunday's weekly summary.`,
-          userId: user.id,
-          shouldPersist: true,
-        });
-      }
+      await sendMessage({
+        to: user.phone,
+        body: `accounts connected! i'm processing your first digest—check back in a moment or wait for next sunday's weekly summary.`,
+        userId: user.id,
+        shouldPersist: true,
+      });
     } catch (fallbackError) {
       logError('post-onboarding.fallback_send_failed', fallbackError, { userId: user.id });
     }
@@ -278,55 +257,5 @@ function normalizeCategoryLabel(label: string | null | undefined): string | null
     .replace(/\s+/g, ' ')
     .trim();
   return normalized || null;
-}
-
-function buildPlaintextDigestMessage(args: {
-  range: { from: string; to: string };
-  summary: ReturnType<typeof buildTransactionsSummary>;
-  balances: Awaited<ReturnType<typeof getBalancesBreakdown>>;
-}): string {
-  const { range, summary, balances } = args;
-  const lines: string[] = [];
-  lines.push(`weekly summary: ${range.from} → ${range.to}`);
-  lines.push('');
-
-  if (summary.count === 0) {
-    lines.push(`no transactions posted yet. i'm watching and will nudge the moment something clears.`);
-  } else {
-    lines.push(
-      `spent ${formatCurrency(summary.totalSpend)} across ${summary.count} purchase${summary.count === 1 ? '' : 's'}.`
-    );
-    const topCategories = summary.perCategory
-      .filter((cat) => cat.spendAmount > 0)
-      .slice(0, 3);
-    if (topCategories.length) {
-      lines.push('');
-      lines.push('category breakdown:');
-      for (const cat of topCategories) {
-        const label = normalizeCategoryLabel(cat.label) || 'uncategorized';
-        lines.push(`- ${label} ${formatCurrency(cat.spendAmount)}`);
-      }
-    }
-    if (summary.pendingSpend > 0) {
-      lines.push('');
-      lines.push(`pending to watch: ${formatCurrency(summary.pendingSpend)} still clearing.`);
-    }
-  }
-
-  lines.push('');
-  lines.push('balances:');
-  lines.push(`cash ${formatCurrency(balances.cash.total)}`);
-  lines.push(`credit owes ${formatCurrency(balances.credit.owedTotal)}`);
-  lines.push('');
-  lines.push('reply anytime for a deeper cut.');
-
-  return lines.join('\n');
-}
-
-function formatCurrency(amount: number): string {
-  const numeric = Number.isFinite(amount) ? amount : 0;
-  const rounded = Math.round(numeric);
-  const formatted = Math.abs(rounded).toLocaleString('en-US');
-  return `$${formatted}`;
 }
 
