@@ -87,7 +87,7 @@ export default function Home() {
                       </p>
                       {/* Trilogy's message (blue bubble, left-aligned) */}
                       <div className="bg-blue-500 rounded-3xl rounded-tl-sm p-4 shadow-md max-w-[240px] animate-fade-in-up delay-100">
-                        <p className="text-white text-sm font-semibold mb-2">
+                        <p className="text-white text-sm mb-2">
                           weekly summary: nov 10 → nov 16
                         </p>
                         <p className="text-white text-sm mb-3">
@@ -105,8 +105,8 @@ export default function Home() {
                       
                       {/* Second message bubble */}
                       <div className="bg-blue-500 rounded-3xl rounded-bl-sm p-4 shadow-md max-w-[240px] mt-2 animate-fade-in-up delay-200">
-                        <p className="text-white text-sm italic">
-                          lay off the doordash for a few days damn �
+                        <p className="text-white text-sm">
+                          lay off the doordash for a few days damn 😭
                         </p>
                       </div>
                       
@@ -114,7 +114,7 @@ export default function Home() {
                       <div className="flex justify-end mt-3 animate-fade-in-up delay-300">
                         <div className="bg-gray-200 rounded-3xl rounded-tr-sm p-4 shadow-md max-w-[200px]">
                           <p className="text-gray-900 text-sm">
-                            break down personal care
+                            ok fine
                           </p>
                         </div>
                       </div>
