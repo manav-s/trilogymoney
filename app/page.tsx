@@ -38,7 +38,7 @@ export default function Home() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
                 </span>
-                iMessage Native
+                the only imessage native finance tracker
               </div>
 
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 leading-[1.1]">
@@ -86,7 +86,7 @@ export default function Home() {
                         today 8:03 AM
                       </p>
                       {/* Trilogy's message (blue bubble, left-aligned) */}
-                      <div className="bg-blue-500 rounded-3xl rounded-tl-sm p-4 shadow-md max-w-[240px] animate-fade-in-up delay-100">
+                      <div className="bg-blue-500 rounded-3xl rounded-bl-sm p-4 shadow-md max-w-[240px] animate-fade-in-up delay-100">
                         <p className="text-white text-sm mb-2">
                           weekly summary: nov 10 → nov 16
                         </p>
@@ -112,7 +112,7 @@ export default function Home() {
                       
                       {/* User's response (gray bubble, right-aligned) */}
                       <div className="flex justify-end mt-3 animate-fade-in-up delay-300">
-                        <div className="bg-gray-200 rounded-3xl rounded-tr-sm p-4 shadow-md max-w-[200px]">
+                        <div className="bg-gray-200 rounded-3xl rounded-br-sm p-4 shadow-md max-w-[200px]">
                           <p className="text-gray-900 text-sm">
                             ok fine
                           </p>
