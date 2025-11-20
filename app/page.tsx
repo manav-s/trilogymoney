@@ -246,7 +246,7 @@ export default function Home() {
 
             <div className="space-y-8 pt-8 border-t border-white/10">
               <p className="text-lg text-gray-400 leading-relaxed max-w-2xl mx-auto lowercase">
-                seeing the numbers once a week. noticing patterns. staying intentional. that alone can ease the anxiety of "i don&apos;t even know what&apos;s going on with my money."
+                seeing the numbers once a week. noticing patterns. staying intentional. that alone can ease the anxiety of &quot;i don&apos;t even know what&apos;s going on with my money.&quot;
               </p>
               
               <div className="inline-block px-6 py-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
