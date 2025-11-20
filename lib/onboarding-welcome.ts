@@ -80,11 +80,16 @@ async function sendWelcomeMessage(userId: string, phone: string): Promise<void> 
 async function sendFirstDigestIfPossible(user: UserForDigest): Promise<void> {
   if (!user.phone) return;
   try {
+    console.info('post-onboarding.digest_start', { userId: user.id, phone: user.phone });
+    
     const hasActiveAccounts = await prisma.plaidAccount.count({
       where: { isActive: true, item: { userId: user.id } },
     });
 
+    console.info('post-onboarding.account_check', { userId: user.id, hasActiveAccounts });
+
     if (hasActiveAccounts === 0) {
+      console.info('post-onboarding.no_accounts', { userId: user.id });
       await sendMessage({
         to: user.phone,
         body: `i'll keep watching for new accounts. once you link something i'll send a weekly summary automatically. need the link again?`,
@@ -95,6 +100,8 @@ async function sendFirstDigestIfPossible(user: UserForDigest): Promise<void> {
     }
 
     const digestRange = getWelcomeDigestRange();
+    console.info('post-onboarding.fetching_transactions', { userId: user.id, range: digestRange });
+    
     const transactionsResult = await getTransactions({
       userId: user.id,
       from: digestRange.from,
@@ -104,7 +111,14 @@ async function sendFirstDigestIfPossible(user: UserForDigest): Promise<void> {
     });
     const filteredTransactions = transactionsResult.transactions.filter((txn) => !isExcludedFromSummary(txn));
 
+    console.info('post-onboarding.transactions_fetched', { 
+      userId: user.id, 
+      total: transactionsResult.transactions.length,
+      filtered: filteredTransactions.length 
+    });
+
     if (filteredTransactions.length === 0) {
+      console.info('post-onboarding.no_transactions', { userId: user.id });
       await sendMessage({
         to: user.phone,
         body: `accounts connected! i'll send your first weekly digest once there's spending to summarize.`,
@@ -114,6 +128,7 @@ async function sendFirstDigestIfPossible(user: UserForDigest): Promise<void> {
       return;
     }
 
+    console.info('post-onboarding.building_summary', { userId: user.id });
     const digestSummary = buildTransactionsSummary(filteredTransactions, digestRange);
     const balances = await getBalancesBreakdown({ userId: user.id });
     const highlights = extractHighlights(digestSummary);
@@ -126,9 +141,14 @@ async function sendFirstDigestIfPossible(user: UserForDigest): Promise<void> {
       highlights,
     });
 
+    console.info('post-onboarding.generating_message', { userId: user.id, highlights });
     const digestMessage = await generateWeeklyDigestMessage(digestContext);
     if (!digestMessage) {
-      logError('post-onboarding.no_digest_message', undefined, { userId: user.id });
+      logError('post-onboarding.no_digest_message', undefined, { 
+        userId: user.id,
+        transactionCount: filteredTransactions.length,
+        summaryTotalSpend: digestSummary.totalSpend,
+      });
       // Fallback: send a simple summary instead of failing silently
       await sendMessage({
         to: user.phone,
@@ -138,6 +158,8 @@ async function sendFirstDigestIfPossible(user: UserForDigest): Promise<void> {
       });
       return;
     }
+
+    console.info('post-onboarding.message_generated', { userId: user.id, messageLength: digestMessage.length });
 
     const now = new Date();
     const digestQuery = {
@@ -149,6 +171,7 @@ async function sendFirstDigestIfPossible(user: UserForDigest): Promise<void> {
     const snapshotTransactions = filteredTransactions.slice(0, MAX_TRANSACTIONS_FOR_WELCOME_DIGEST);
 
     try {
+      console.info('post-onboarding.persisting_snapshot', { userId: user.id, snapshotCount: snapshotTransactions.length });
       await prisma.user.update({
         where: { id: user.id },
         data: {
@@ -163,19 +186,29 @@ async function sendFirstDigestIfPossible(user: UserForDigest): Promise<void> {
           }),
         },
       });
+      console.info('post-onboarding.snapshot_persisted', { userId: user.id });
     } catch (persistError) {
-      logError('post-onboarding.persist_failed', persistError, { userId: user.id });
+      logError('post-onboarding.persist_failed', persistError, { 
+        userId: user.id,
+        snapshotCount: snapshotTransactions.length,
+      });
       return;
     }
 
+    console.info('post-onboarding.sending_digest', { userId: user.id });
     await sendMessage({
       to: user.phone,
       body: digestMessage,
       userId: user.id,
       shouldPersist: true,
     });
+    console.info('post-onboarding.digest_sent', { userId: user.id });
   } catch (error) {
-    logError('post-onboarding.digest_error', error, { userId: user.id });
+    logError('post-onboarding.digest_error', error, { 
+      userId: user.id,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
     // Fallback: send a simple message so user knows something happened
     try {
       await sendMessage({
