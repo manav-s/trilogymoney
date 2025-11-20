@@ -10,67 +10,59 @@ import { buildWeeklyDigestContext, extractHighlights } from '@/lib/weeklyDigest'
 const MAX_TRANSACTIONS_FOR_WELCOME_DIGEST = 500;
 const WELCOME_DUPLICATE_WINDOW_HOURS = 24;
 
-type MinimalUser = {
+type UserForDigest = {
   id: string;
-  phone: string | null;
+  phone: string;
   timezone: string;
-  messagingStatus: string;
-  billingStatus: string | null;
-  isActive: boolean;
-  welcomeSentAt: Date | null;
 };
 
 export async function postOnboardingWelcome(userId: string): Promise<void> {
   try {
+    // Atomic check-and-set: only proceed if welcomeSentAt is null
+    // This prevents race conditions when multiple triggers fire simultaneously
+    const now = new Date();
+    const updateResult = await prisma.user.updateMany({
+      where: {
+        id: userId,
+        welcomeSentAt: null, // Only update if not already set
+        messagingStatus: 'active',
+        isActive: true,
+        billingStatus: { in: ['active', 'trialing'] },
+      },
+      data: { welcomeSentAt: now },
+    });
+
+    // If no rows were updated, someone else already sent the welcome (or user not eligible)
+    if (updateResult.count === 0) {
+      return;
+    }
+
+    // Fetch user details now that we've won the race
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
         phone: true,
         timezone: true,
-        messagingStatus: true,
-        billingStatus: true,
-        isActive: true,
-        welcomeSentAt: true,
       },
     });
 
-    if (!user) {
-      return;
-    }
-
-    if (!isUserEligibleForWelcome(user)) {
-      return;
-    }
-    if (!user.phone) {
+    if (!user || !user.phone) {
       return;
     }
 
     await sendWelcomeMessage(user.id, user.phone);
-    await sendFirstDigestIfPossible(user);
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { welcomeSentAt: new Date() },
+    await sendFirstDigestIfPossible({
+      id: user.id,
+      phone: user.phone,
+      timezone: user.timezone,
     });
   } catch (error) {
     logError('post-onboarding.error', error, { userId });
   }
 }
 
-function isUserEligibleForWelcome(user: MinimalUser): boolean {
-  if (!user.phone) return false;
-  if (user.messagingStatus !== 'active') return false;
-  if (user.isActive === false) return false;
-  if (user.billingStatus !== 'active' && user.billingStatus !== 'trialing') return false;
-  if (user.welcomeSentAt) {
-    const hoursSinceWelcome = (Date.now() - user.welcomeSentAt.getTime()) / (1000 * 60 * 60);
-    if (hoursSinceWelcome < WELCOME_DUPLICATE_WINDOW_HOURS) {
-      return false;
-    }
-  }
-  return true;
-}
+// Removed isUserEligibleForWelcome - eligibility now checked atomically in updateMany WHERE clause
 
 async function sendWelcomeMessage(userId: string, phone: string): Promise<void> {
   const welcomeBody = `welcome to trilogy! you're live now.
@@ -85,7 +77,7 @@ async function sendWelcomeMessage(userId: string, phone: string): Promise<void> 
   });
 }
 
-async function sendFirstDigestIfPossible(user: MinimalUser): Promise<void> {
+async function sendFirstDigestIfPossible(user: UserForDigest): Promise<void> {
   if (!user.phone) return;
   try {
     const hasActiveAccounts = await prisma.plaidAccount.count({
@@ -137,6 +129,13 @@ async function sendFirstDigestIfPossible(user: MinimalUser): Promise<void> {
     const digestMessage = await generateWeeklyDigestMessage(digestContext);
     if (!digestMessage) {
       logError('post-onboarding.no_digest_message', undefined, { userId: user.id });
+      // Fallback: send a simple summary instead of failing silently
+      await sendMessage({
+        to: user.phone,
+        body: `accounts connected! i've got ${filteredTransactions.length} transaction${filteredTransactions.length === 1 ? '' : 's'} from the last week. your first full weekly digest will arrive next sunday.`,
+        userId: user.id,
+        shouldPersist: true,
+      });
       return;
     }
 
@@ -177,6 +176,17 @@ async function sendFirstDigestIfPossible(user: MinimalUser): Promise<void> {
     });
   } catch (error) {
     logError('post-onboarding.digest_error', error, { userId: user.id });
+    // Fallback: send a simple message so user knows something happened
+    try {
+      await sendMessage({
+        to: user.phone,
+        body: `accounts connected! i'm processing your first digest—check back in a moment or wait for next sunday's weekly summary.`,
+        userId: user.id,
+        shouldPersist: true,
+      });
+    } catch (fallbackError) {
+      logError('post-onboarding.fallback_send_failed', fallbackError, { userId: user.id });
+    }
   }
 }
 
