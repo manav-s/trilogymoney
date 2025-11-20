@@ -1,8 +1,11 @@
 BEGIN:VCARD
 VERSION:3.0
-N:;Trilogy;;;
-FN:Trilogy
-TEL;TYPE=CELL:+16468941360
-URL:https://trytrilogy.com
-NOTE:Trilogy iMessage contact
+PRODID:-//Apple Inc.//iPhone OS 18.1//EN
+N:;Trilogy ✨;;;
+NICKNAME:
+NOTE:👇           Tap "Create New Contact"          👇
+item1.TEL;type=pref:+16468941360
+item1.X-ABLabel:Mobile
+item2.URL;type=pref:https://trytrilogy.com
+item2.X-ABLabel:Homepage
 END:VCARD
