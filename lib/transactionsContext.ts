@@ -2,7 +2,7 @@ import type { TransactionQuery } from './transactionQuery';
 import type { TransactionSummary } from './transactions';
 import { RECENT_FALLBACK_LIMIT } from './transactionQuery';
 
-export type StoredQuerySource = 'weekly_digest' | 'monthly_digest' | 'adhoc';
+export type StoredQuerySource = 'weekly_digest' | 'welcome_digest' | 'monthly_digest' | 'adhoc';
 
 export type StoredTransactionsQuery = {
   kind: TransactionQuery['kind'];
@@ -21,6 +21,7 @@ export type StoredTransactionsQuery = {
 
 const SOURCE_TTL_MS: Record<StoredQuerySource, number> = {
   weekly_digest: 1000 * 60 * 60 * 72, // 72h
+  welcome_digest: 1000 * 60 * 60 * 72, // same stickiness as weekly
   monthly_digest: 1000 * 60 * 60 * 24 * 10, // ~10 days
   adhoc: 1000 * 60 * 60 * 48, // 48h
 };

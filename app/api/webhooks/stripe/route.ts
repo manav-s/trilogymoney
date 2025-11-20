@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/db";
+import { postOnboardingWelcome } from "@/lib/onboarding-welcome";
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -41,10 +42,26 @@ export async function POST(req: NextRequest) {
           isActive: true,
         };
 
+        let updatedUserId: string | null = null;
+
         if (phone) {
-          await prisma.user.updateMany({ where: { phone }, data: dataToSet });
+          const result = await prisma.user.updateMany({ where: { phone }, data: dataToSet });
+          if (result.count > 0) {
+            const updatedUser = await prisma.user.findUnique({ where: { phone }, select: { id: true } });
+            updatedUserId = updatedUser?.id ?? null;
+          }
         } else if (session.customer_email) {
-          await prisma.user.updateMany({ where: { email: session.customer_email }, data: dataToSet });
+          const result = await prisma.user.updateMany({ where: { email: session.customer_email }, data: dataToSet });
+          if (result.count > 0) {
+            const updatedUser = await prisma.user.findUnique({ where: { email: session.customer_email }, select: { id: true } });
+            updatedUserId = updatedUser?.id ?? null;
+          }
+        }
+
+        if (updatedUserId) {
+          void postOnboardingWelcome(updatedUserId).catch((error) => {
+            console.error("stripe.webhook.welcome_failed", { userId: updatedUserId, error });
+          });
         }
         break;
       }
