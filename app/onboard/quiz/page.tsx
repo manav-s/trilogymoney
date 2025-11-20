@@ -246,11 +246,11 @@ export default function QuizPage() {
                   {current.options.map((opt, i) => {
                     const isSelected = selected === opt;
                     const emoji = {
-                      calm: "😌",
-                      under_control: "😎",
+                      calm: "😁",
+                      under_control: "🙂",
                       manageable: "😐",
-                      tense: "😖",
-                      overwhelming: "🤯"
+                      tense: "😕",
+                      overwhelming: "😰"
                     }[opt] || "🤔";
                     
                     return (
