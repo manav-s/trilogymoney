@@ -18,6 +18,7 @@ type Question = {
   label: string;
   options: string[];
   type?: 'single' | 'multi';
+  variant?: 'default' | 'spectrum';
   exclusiveValues?: string[]; // options that are exclusive (selecting them clears others)
 };
 
@@ -108,7 +109,7 @@ const labelFor = (key: keyof Answers, value: string): string =>
   LABEL_OVERRIDES[key]?.[value] ?? LABELS[value] ?? value.replace(/_/g, ' ');
 
 const QUESTIONS: Question[] = [
-  { key: "q1", label: "most days, money feels…", options: ["calm","under_control","manageable","tense","overwhelming"] },
+  { key: "q1", label: "most days, money feels…", options: ["calm","under_control","manageable","tense","overwhelming"], variant: 'spectrum' },
   { key: "q2", label: "what quietly worries you the most?", options: ["interest_charges","surprise_bills","overspending","not_saving","not_investing","retiring_early_and_leaving_the_rat_race","nothing"], type: 'multi', exclusiveValues: ["nothing"] },
   { key: "q3", label: "if we nailed one win in 90 days, you’d want…", options: ["pay_down_card","build_1mo_cushion","stop_leak_spend","automate_bills","start_investing"] },
   { key: "q4", label: "the moment you drift off‑track is usually…", options: ["payday_slips","weekend_spend","late_night_scroll","unexpected_bill","social_plans"] },
@@ -230,30 +231,94 @@ export default function QuizPage() {
 
         {/* question */}
         <h1 className="text-3xl font-bold text-gray-900 mb-6 lowercase">{current?.label}</h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {current?.options.map((opt) => {
-            const active = isMulti
-              ? Array.isArray(selected) && (selected as string[]).includes(opt)
-              : selected === opt;
-            const onClick = () => {
-              if (isMulti) {
-                toggleMulti(current, opt);
-              } else {
-                setAnswers({ ...answers, [current.key]: opt });
-              }
-            };
-            return (
-              <button
-                key={opt}
-                onClick={onClick}
-                className={`px-6 py-5 rounded-2xl border transition-all duration-300 ${active ? "border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/10 scale-[1.02]" : "border-white/40 bg-white/60 backdrop-blur-md hover:border-blue-300 hover:bg-white/80 hover:shadow-md hover:scale-[1.01]"} lowercase text-left group`}
-              >
-                <span className={`text-lg font-medium ${active ? "text-blue-700" : "text-gray-700 group-hover:text-gray-900"}`}>
-                  {labelFor(current.key, opt)}
-                </span>
-              </button>
-            );
-          })}
+        <div className="grid grid-cols-1 gap-3">
+          {current?.variant === 'spectrum' ? (
+            <div className="py-8">
+              {/* Emoji Spectrum Slider */}
+              <div className="relative mb-12 px-4">
+                {/* Track */}
+                <div className="absolute top-1/2 left-4 right-4 h-2 bg-gray-200 rounded-full -translate-y-1/2">
+                  <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-green-400 via-yellow-400 to-red-500 rounded-full opacity-50"></div>
+                </div>
+                
+                {/* Emojis */}
+                <div className="relative flex justify-between">
+                  {current.options.map((opt, i) => {
+                    const isSelected = selected === opt;
+                    const emoji = {
+                      calm: "😌",
+                      under_control: "😎",
+                      manageable: "😐",
+                      tense: "😖",
+                      overwhelming: "🤯"
+                    }[opt] || "🤔";
+                    
+                    return (
+                      <button
+                        key={opt}
+                        onClick={() => setAnswers({ ...answers, [current.key]: opt })}
+                        className={`relative group transition-all duration-300 ${isSelected ? 'scale-125 z-10' : 'hover:scale-110'}`}
+                      >
+                        <div className={`w-12 h-12 flex items-center justify-center rounded-full text-3xl bg-white shadow-lg border-2 transition-all duration-300 ${isSelected ? 'border-blue-500 shadow-blue-500/30' : 'border-transparent hover:border-gray-200'}`}>
+                          {emoji}
+                        </div>
+                        {/* Label tooltip for non-selected items */}
+                        {!selected && (
+                          <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            {opt.replace(/_/g, ' ')}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Selected Description Card */}
+              <div className={`transition-all duration-500 ${selected ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                {selected && (
+                  <div className="bg-white/60 backdrop-blur-xl border border-white/20 p-6 rounded-2xl text-center shadow-lg">
+                    <p className="text-xl font-medium text-gray-900 mb-2">
+                      {labelFor(current.key, selected as string).split('—')[0]}
+                    </p>
+                    <p className="text-gray-600">
+                      {labelFor(current.key, selected as string).split('—')[1] || labelFor(current.key, selected as string)}
+                    </p>
+                  </div>
+                )}
+                {!selected && (
+                  <div className="text-center text-gray-400 py-6">
+                    tap an emoji to select
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            /* Standard List Options */
+            current?.options.map((opt) => {
+              const active = isMulti
+                ? Array.isArray(selected) && (selected as string[]).includes(opt)
+                : selected === opt;
+              const onClick = () => {
+                if (isMulti) {
+                  toggleMulti(current, opt);
+                } else {
+                  setAnswers({ ...answers, [current.key]: opt });
+                }
+              };
+              return (
+                <button
+                  key={opt}
+                  onClick={onClick}
+                  className={`px-6 py-5 rounded-2xl border transition-all duration-300 ${active ? "border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/10 scale-[1.02]" : "border-white/40 bg-white/60 backdrop-blur-md hover:border-blue-300 hover:bg-white/80 hover:shadow-md hover:scale-[1.01]"} lowercase text-left group`}
+                >
+                  <span className={`text-lg font-medium ${active ? "text-blue-700" : "text-gray-700 group-hover:text-gray-900"}`}>
+                    {labelFor(current.key, opt)}
+                  </span>
+                </button>
+              );
+            })
+          )}
         </div>
 
         {/* nav */}
