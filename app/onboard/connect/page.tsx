@@ -32,7 +32,6 @@ export default function ConnectPage() {
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [loadingExchange, setLoadingExchange] = useState(false);
-  const [creatingCheckout, setCreatingCheckout] = useState(false);
 
   const fetchAccounts = async (phone: string) => {
     const res = await fetch(`/api/accounts/list?phone=${encodeURIComponent(phone)}`);
@@ -112,21 +111,8 @@ export default function ConnectPage() {
 
   const totalAccounts = items.flatMap((it) => it.accounts).length;
 
-  const goToCheckout = async () => {
-    const phone = sessionStorage.getItem(ONBOARDING_PHONE_KEY);
-    if (!phone) return;
-    setCreatingCheckout(true);
-    try {
-      const res = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone }),
-      });
-      const data = await res.json();
-      if (data?.url) window.location.href = data.url as string;
-    } finally {
-      setCreatingCheckout(false);
-    }
+  const goToNext = () => {
+    router.push('/onboard/contact');
   };
 
   return (
@@ -202,11 +188,11 @@ export default function ConnectPage() {
 
         <div className="mt-10">
           <button
-            onClick={goToCheckout}
-            disabled={totalAccounts === 0 || creatingCheckout || loadingExchange}
-            className="px-8 py-4 rounded-full bg-gradient-to-r from-gray-900 to-gray-800 text-white lowercase disabled:opacity-50 hover:from-gray-800 hover:to-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+            onClick={goToNext}
+            disabled={totalAccounts === 0 || loadingExchange}
+            className="w-full px-10 py-5 text-xl font-semibold rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 focus:ring-4 focus:ring-blue-600/20 transition-all duration-300 lowercase shadow-lg hover:shadow-blue-500/30 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
-            {creatingCheckout ? 'redirecting…' : 'next'}
+            next
           </button>
         </div>
       </div>

@@ -53,16 +53,8 @@ export default function ContactPage() {
 
       <div className="fixed bottom-8 left-0 right-0 px-6">
         <button
-          onClick={async () => {
-            const phone = typeof window !== 'undefined' ? sessionStorage.getItem(ONBOARDING_PHONE_KEY) : null;
-            if (phone) {
-              await fetch('/api/onboard/complete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone }),
-              }).catch(() => {});
-            }
-            window.location.href = '/dashboard';
+          onClick={() => {
+            window.location.href = '/onboard/checkout';
           }}
           className="w-full max-w-md mx-auto block bg-gray-900 text-white py-4 rounded-full font-medium text-lg shadow-lg active:scale-[0.98] transition-transform"
         >
