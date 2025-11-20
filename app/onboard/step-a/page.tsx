@@ -14,7 +14,7 @@ export default function StepA() {
     email: "",
     timezone: "America/Los_Angeles",
   });
-  const [showTimezoneSelect, setShowTimezoneSelect] = useState(false);
+
 
   // no-op logs in production
 
@@ -35,8 +35,6 @@ export default function StepA() {
       const detected = detectTimezone(onboardingPhone);
       if (detected) {
         setFormData((prev) => ({ ...prev, timezone: detected.timezone }));
-      } else {
-        setShowTimezoneSelect(true);
       }
     }
   }, [router]);
@@ -148,43 +146,7 @@ export default function StepA() {
             <p className="text-sm text-gray-500 mt-2 lowercase">required — used for receipts and alerts</p>
           </div>
 
-          {/* Timezone */}
-          <div>
-            <label htmlFor="timezone" className="block text-sm font-medium text-gray-700 mb-2 lowercase">
-              your timezone
-            </label>
-            {!showTimezoneSelect ? (
-              <div className="flex items-center justify-between p-5 bg-white/60 backdrop-blur-xl border border-white/20 rounded-2xl hover:bg-white/80 transition-colors duration-300 shadow-sm">
-                <span className="text-gray-900 font-medium">{getTimezoneAbbreviation(formData.timezone)}</span>
-                <button
-                  type="button"
-                  onClick={() => setShowTimezoneSelect(true)}
-                  className="text-sm text-blue-600 hover:text-blue-700 font-semibold px-3 py-1 rounded-lg hover:bg-blue-50 transition-colors"
-                >
-                  change
-                </button>
-              </div>
-            ) : (
-              <select
-                id="timezone"
-                value={formData.timezone}
-                onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-gray-300 bg-white text-gray-900 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/20 outline-none transition-all"
-              >
-                {US_TIMEZONES.map((tz) => {
-                  const abbr = getTimezoneAbbreviation(tz.timezone);
-                  return (
-                    <option key={tz.timezone} value={tz.timezone}>
-                      {tz.displayName.replace(/\((.*?)\)/, `(${abbr})`)}
-                    </option>
-                  );
-                })}
-              </select>
-            )}
-            <p className="text-sm text-gray-500 mt-2 lowercase">
-              we detected this from your browser
-            </p>
-          </div>
+
 
           {/* Submit */}
           <button
