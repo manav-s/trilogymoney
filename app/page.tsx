@@ -218,33 +218,44 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Why this works */}
-      <section className="py-24 sm:py-32 bg-gray-900 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl"></div>
-        
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <h2 className="text-4xl sm:text-5xl font-bold text-center mb-16">
+      {/* Why this works Section */}
+      <section className="py-24 sm:py-32 bg-gray-900 relative overflow-hidden">
+        {/* Subtle background glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-4xl opacity-20 pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl mix-blend-screen animate-float delay-100"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/30 rounded-full blur-3xl mix-blend-screen animate-float delay-300"></div>
+        </div>
+
+        <div className="max-w-3xl mx-auto px-6 lg:px-8 relative z-10 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-12 lowercase tracking-tight">
             why this works
           </h2>
 
-          <div className="space-y-12 text-center text-lg sm:text-xl text-gray-300">
-            <p className="font-light">
-              you don&apos;t need another app telling you what to do with your money.
-            </p>
-            <p className="text-3xl sm:text-4xl font-bold text-white leading-tight">
-              you just need to know <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">where you&apos;re at.</span>
-            </p>
-            <p className="leading-relaxed max-w-2xl mx-auto">
-              seeing the numbers once a week. noticing patterns. staying intentional. that alone can ease the anxiety of &quot;i don&apos;t even know what&apos;s going on with my money.&quot;
-            </p>
-            <div className="pt-8 border-t border-gray-800">
-              <p className="text-gray-400 italic">
-                no judgment. no lectures. no $200/month financial advisor.
+          <div className="space-y-12">
+            <div className="space-y-6">
+              <p className="text-xl sm:text-2xl text-gray-300 font-light leading-relaxed lowercase">
+                you don&apos;t need another app telling you what to do with your money.
               </p>
-              <p className="text-white font-medium mt-4">
+              <p className="text-3xl sm:text-4xl font-semibold text-white leading-tight lowercase">
+                you just need to know <br className="hidden sm:block" />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
+                  where you&apos;re at.
+                </span>
+              </p>
+            </div>
+
+            <div className="space-y-8 pt-8 border-t border-white/10">
+              <p className="text-lg text-gray-400 leading-relaxed max-w-2xl mx-auto lowercase">
+                seeing the numbers once a week. noticing patterns. staying intentional. that alone can ease the anxiety of "i don&apos;t even know what&apos;s going on with my money."
+              </p>
+              
+              <div className="inline-block px-6 py-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
+                <p className="text-sm text-gray-300 lowercase">
+                  no judgment. no lectures. no $200/month financial advisor.
+                </p>
+              </div>
+
+              <p className="text-lg text-white font-medium lowercase">
                 trilogy gives you clarity. what you do with it is totally up to you.
               </p>
             </div>
