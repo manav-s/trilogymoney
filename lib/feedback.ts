@@ -24,6 +24,7 @@ export function detectFeedbackIntent(userText: string): {
         /annoying/i,
         /terrible/i,
         /worst/i,
+        /\b(fuck|shit|bitch|damn|crap|suck|stupid|idiot)/i,
     ];
 
     // Explicit feedback patterns
