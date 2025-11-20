@@ -1,10 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 
 const ONBOARDING_PHONE_KEY = "onboarding_phone";
 
 export default function ContactPage() {
+  const [loading, setLoading] = useState(false);
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center pt-10 px-6 pb-10">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Add to Contacts</h1>
@@ -53,12 +55,25 @@ export default function ContactPage() {
 
       <div className="fixed bottom-8 left-0 right-0 px-6">
         <button
-          onClick={() => {
-            window.location.href = '/onboard/checkout';
+          onClick={async () => {
+            setLoading(true);
+            try {
+              const phone = sessionStorage.getItem(ONBOARDING_PHONE_KEY);
+              const res = await fetch("/api/stripe/checkout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ phone }),
+              });
+              const data = await res.json();
+              if (data.url) window.location.href = data.url as string;
+            } finally {
+              setLoading(false);
+            }
           }}
-          className="w-full max-w-md mx-auto block bg-gray-900 text-white py-4 rounded-full font-medium text-lg shadow-lg active:scale-[0.98] transition-transform"
+          disabled={loading}
+          className="w-full max-w-md mx-auto block bg-gray-900 text-white py-4 rounded-full font-medium text-lg shadow-lg active:scale-[0.98] transition-transform disabled:opacity-60"
         >
-          Continue
+          {loading ? 'redirecting...' : 'Continue'}
         </button>
       </div>
     </div>
