@@ -166,7 +166,12 @@ export default function ConnectPage() {
             <PlaidLink
               token={linkToken}
               onSuccess={onSuccess}
-              className="px-6 py-3 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white focus:outline-none focus:ring-0 outline-none ring-0 border-0 shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 hover:-translate-y-0.5 inline-block cursor-pointer"
+              className="px-6 py-3 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white focus:outline-none focus:ring-0 outline-none ring-0 border-0 shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 hover:-translate-y-0.5 inline-block cursor-pointer lowercase font-medium"
+              style={{ 
+                textDecoration: 'none',
+                display: 'inline-block',
+                color: 'white'
+              }}
             >
               add account
             </PlaidLink>
