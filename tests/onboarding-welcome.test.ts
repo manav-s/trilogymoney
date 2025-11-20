@@ -50,6 +50,8 @@ describe('postOnboardingWelcome', () => {
     });
     extractHighlightsMock.mockReturnValue(['shopping']);
     buildTransactionsSummaryMock.mockReturnValue({
+      from: '2025-11-13',
+      to: '2025-11-20',
       totalSpend: 100,
       totalRefund: 0,
       pendingSpend: 0,
@@ -196,6 +198,79 @@ describe('postOnboardingWelcome', () => {
       expect.objectContaining({ body: 'here is your first digest!' }),
     );
     expect(prismaMock.user.update).toHaveBeenCalledTimes(2);
+  });
+
+  it('sends fallback digest when llm output is null', async () => {
+    prismaMock.user.updateMany.mockResolvedValueOnce({ count: 1 });
+    prismaMock.user.findUnique.mockResolvedValueOnce({
+      id: 'user-1',
+      phone: '+15551234567',
+      timezone: 'America/New_York',
+    });
+    prismaMock.plaidAccount.count.mockResolvedValue(1);
+    getTransactionsMock.mockResolvedValue({
+      transactions: [
+        {
+          id: 'txn-1',
+          amount: 42,
+          category: 'shopping',
+          pending: false,
+          merchant: 'Amazon',
+          date: '2025-11-19',
+        },
+      ],
+    });
+    generateWeeklyDigestMessageMock.mockResolvedValue(null);
+    prismaMock.user.update.mockResolvedValue({});
+
+    const { postOnboardingWelcome } = await import('../lib/onboarding-welcome');
+    await postOnboardingWelcome('user-1');
+
+    expect(sendMessageMock).toHaveBeenCalledTimes(2);
+    expect(sendMessageMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        body: expect.stringContaining('weekly summary:'),
+      }),
+    );
+  });
+
+  it('delivers a digest even when there are zero transactions', async () => {
+    prismaMock.user.updateMany.mockResolvedValueOnce({ count: 1 });
+    prismaMock.user.findUnique.mockResolvedValueOnce({
+      id: 'user-1',
+      phone: '+15551234567',
+      timezone: 'America/New_York',
+    });
+    prismaMock.plaidAccount.count.mockResolvedValue(1);
+    getTransactionsMock.mockResolvedValue({
+      transactions: [],
+    });
+    buildTransactionsSummaryMock.mockReturnValueOnce({
+      from: '2025-11-13',
+      to: '2025-11-20',
+      totalSpend: 0,
+      totalRefund: 0,
+      pendingSpend: 0,
+      pendingRefund: 0,
+      count: 0,
+      pendingCount: 0,
+      perMerchant: [],
+      perCategory: [],
+    });
+    prismaMock.user.update.mockResolvedValue({});
+
+    const { postOnboardingWelcome } = await import('../lib/onboarding-welcome');
+    await postOnboardingWelcome('user-1');
+
+    expect(generateWeeklyDigestMessageMock).not.toHaveBeenCalled();
+    expect(sendMessageMock).toHaveBeenCalledTimes(2);
+    expect(sendMessageMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        body: expect.stringContaining('weekly summary:'),
+      }),
+    );
   });
 });
 
