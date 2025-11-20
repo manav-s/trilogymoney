@@ -52,7 +52,7 @@ Return the bare token ONLY.`;
     clearTimeout(timeout);
     if (!res.ok) {
       let errText = '';
-      try { errText = await res.text(); } catch {}
+      try { errText = await res.text(); } catch { }
       logError('llm.intent', undefined, { reason: 'openai_error', status: res.status, model: MODEL, body: errText?.slice(0, 200) });
       return 'chat';
     }
@@ -84,7 +84,7 @@ Return the bare token ONLY.`;
           data = await res.json();
           rawText = extractTextFromOpenAI(data);
         }
-      } catch {}
+      } catch { }
     }
     if (!rawText) {
       logError('llm.intent', undefined, { reason: 'empty_completion', model: MODEL });
@@ -109,7 +109,7 @@ export async function generateReply(tool: Intent, context: Record<string, unknow
     logError('llm.reply', undefined, { reason: 'missing_api_key' });
     return 'sorry the model is having trouble';
   }
-const system = `You are Trilogy, a concise, warm money coach over SMS.
+  const system = `You are Trilogy, a concise, warm money coach over SMS.
 style: lowercase, short, playful-but-respectful, no doom.
 format: default to one short line; use up to two lines only when presenting numbers or lists. put numbers first. plain language. no emojis.
 behavior: answer directly; do NOT add a question at the end unless a question is strictly required to proceed (e.g., choose dates). never append soft check-ins like “does that help?”. avoid menus/boilerplate.
@@ -128,7 +128,7 @@ tools you can call (server will provide data when needed):
       },
       body: JSON.stringify({
         model: MODEL,
-        messages: [ { role: 'system', content: system }, { role: 'user', content: user } ],
+        messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
         max_tokens: 120,
       }),
       signal: controller.signal,
@@ -136,7 +136,7 @@ tools you can call (server will provide data when needed):
     clearTimeout(timeout);
     if (!res.ok) {
       let errText = '';
-      try { errText = await res.text(); } catch {}
+      try { errText = await res.text(); } catch { }
       logError('llm.reply', undefined, { reason: 'openai_error', status: res.status, model: MODEL, body: errText?.slice(0, 200) });
       return 'sorry the model is having trouble';
     }
@@ -155,7 +155,7 @@ tools you can call (server will provide data when needed):
           },
           body: JSON.stringify({
             model: MODEL,
-            input: [ { role: 'system', content: system }, { role: 'user', content: user } ],
+            input: [{ role: 'system', content: system }, { role: 'user', content: user }],
             max_output_tokens: 120,
           }),
           signal: controller2.signal,
@@ -165,7 +165,7 @@ tools you can call (server will provide data when needed):
           data = await res.json();
           rawText = extractTextFromOpenAI(data);
         }
-      } catch {}
+      } catch { }
     }
     if (!rawText) {
       logError('llm.reply', undefined, { reason: 'empty_completion', model: MODEL });
@@ -230,7 +230,9 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
         ? 'When mentioning category totals, quote from categorySummaryLines exactly (do not recompute).'
         : 'When mentioning category totals, read them from summary.perCategory (do not recompute from raw transactions).',
       'When mentioning merchant totals, use summary.perMerchant when available.',
-      'Do not invent numbers. If the requested merchant/category/date is missing, say you can’t see it.',
+      'CRITICAL: NEVER invent sub-categories (like "plumbing", "electrical", "groceries") or merchant details that are not explicitly in the JSON.',
+      'If the user asks for a breakdown and the JSON data is missing it, explicitly say "i don\'t have that level of detail" or "i can\'t see that breakdown".',
+      'Do not guess. Do not hallucinate.',
       'Mention pending spend when summary.pendingSpend > 0 and pending refunds when summary.pendingRefund > 0.',
       'Do not offer to fetch more data.',
       rangeLabel
@@ -240,7 +242,7 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
         ? categoryFocusLabel
           ? `You are describing ${categoryFocusLabel}. Mention ONLY merchants listed in categoryBreakdownJson; never invent other store names or amounts.`
           : 'Mention ONLY merchants listed in categoryBreakdownJson; never invent other store names or amounts.'
-        : '',
+        : 'If asked to break down a category, say you don\'t have those details.',
       categoryFocusTotalsJson
         ? 'Use the spend/pending/refund amounts from categoryFocusTotalsJson exactly when talking about this category.'
         : '',
@@ -279,7 +281,7 @@ Transactions JSON: ${transactionsJson}`;
   const analysisStr = toShortJson(analysis);
   const balances = ctx.balances as { total: number; count: number } | undefined;
   const txns = ctx.txns as { date: string; merchant: string; amount: number }[] | undefined;
-  const txnLine = (txns || []).slice(0,3).map(t => `$${t.amount.toFixed(2)} ${t.merchant} (${t.date})`).join('; ');
+  const txnLine = (txns || []).slice(0, 3).map(t => `$${t.amount.toFixed(2)} ${t.merchant} (${t.date})`).join('; ');
   return `You are chatting over SMS. Give ONE concise reply.
 Default for casual/small‑talk: one very short line (≈3–7 words). Use ≤2 lines only when showing numbers.
 Do not include a question unless you truly cannot proceed without a specific detail (e.g., dates). If not required, end with a statement (no question mark).
@@ -371,7 +373,7 @@ format: heading + short paragraphs. keep output compact, no bullet characters ot
       let errText = '';
       try {
         errText = await res.text();
-      } catch {}
+      } catch { }
       logError('llm.weekly_digest', undefined, {
         reason: 'openai_error',
         status: res.status,
@@ -407,7 +409,7 @@ format: heading + short paragraphs. keep output compact, no bullet characters ot
           data = await res.json();
           rawText = extractTextFromOpenAI(data);
         }
-      } catch {}
+      } catch { }
     }
     if (!rawText) {
       logError('llm.weekly_digest', undefined, { reason: 'empty_completion', model: MODEL });
