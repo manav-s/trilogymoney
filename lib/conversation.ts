@@ -25,10 +25,6 @@ import { decryptMessage, encryptMessage } from '@/lib/encryption';
 
 const WEEKLY_DIGEST_STICKY_MS = 1000 * 60 * 60 * 72;
 const WEEKLY_DIGEST_DEFAULT_LIMIT = 500;
-const DIGEST_SNAPSHOT_SOURCES: Array<StoredTransactionsQuery['source']> = [
-  'weekly_digest',
-  'welcome_digest',
-];
 const DIGEST_FOLLOWUP_BASE_REGEX =
   /\b(?:category|categories|break ?down|food|drink|pending|balance|balances|weekly\s+summary|weekly\s+digest|top\s+merchant|merchant)\b/i;
 
@@ -162,7 +158,7 @@ export async function handleLLMConversation(phone: string, userText: string) {
       const limit = effectiveQuery.limit;
       const canUseDigestSnapshot =
         Boolean(digestRangeOverride) &&
-        isDigestSnapshotSource(storedQueryRaw?.source) &&
+        storedQueryRaw?.source === 'weekly_digest' &&
         Array.isArray(storedSnapshot) &&
         storedSnapshot.length > 0;
       let snapshotCategoryTransactions: TransactionSummary[] | null = null;
@@ -345,7 +341,7 @@ function getWeeklyDigestRangeOverride(args: {
   const matchResult = matchesDigestFollowup(normalizedText, digestLabels);
   if (!matchResult.matched) return null;
 
-  if (storedQuery && isDigestSnapshotSource(storedQuery.source)) {
+  if (storedQuery?.source === 'weekly_digest') {
     return {
       range: { from: storedQuery.from, to: storedQuery.to },
       label: storedQuery.label,
@@ -614,11 +610,6 @@ function normalizeLabel(label: string | null | undefined): string | null {
 
 function escapeRegex(input: string): string {
   return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function isDigestSnapshotSource(source: StoredTransactionsQuery['source'] | undefined): boolean {
-  if (!source) return false;
-  return DIGEST_SNAPSHOT_SOURCES.includes(source);
 }
 
 async function getRecentHistorySnippet(userId: string, days = 30, limit = 30): Promise<string> {
