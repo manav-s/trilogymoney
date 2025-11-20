@@ -1,41 +1,73 @@
 "use client";
 
+import Image from "next/image";
+
 const ONBOARDING_PHONE_KEY = "onboarding_phone";
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-2xl mx-auto px-4 py-16">
-        <h1 className="text-4xl font-bold text-gray-900 mb-6 lowercase">add trilogy to contacts</h1>
-        <p className="text-gray-600 lowercase mb-8">save our number so future messages don’t get lost</p>
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center pt-20 px-6 pb-32">
+      <h1 className="text-3xl font-serif text-gray-900 mb-6">Add to Contacts</h1>
+      
+      <div className="flex gap-2 mb-12">
+        <div className="w-12 h-1 bg-gray-900 rounded-full"></div>
+        <div className="w-12 h-1 bg-gray-900 rounded-full"></div>
+      </div>
 
-        <a
-          href="/trilogy.vcf"
-          className="px-8 py-4 rounded-full bg-indigo-600 text-white lowercase hover:bg-indigo-700"
-        >
-          add contact
-        </a>
-
-        <p className="text-gray-500 text-sm lowercase mt-4">on iphone, tapping will open the contact card to save</p>
-
-        <div className="mt-10">
-          <button
-            onClick={async () => {
-              const phone = typeof window !== 'undefined' ? sessionStorage.getItem(ONBOARDING_PHONE_KEY) : null;
-              if (phone) {
-                await fetch('/api/onboard/complete', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ phone }),
-                }).catch(() => {});
-              }
-              window.location.href = '/dashboard';
-            }}
-            className="px-8 py-4 rounded-full bg-gray-900 text-white lowercase"
-          >
-            continue
-          </button>
+      <div className="space-y-3 text-gray-500 text-lg mb-12 w-full max-w-xs">
+        <div className="flex gap-3">
+          <span className="font-medium text-gray-400">1.</span>
+          <p>Click the contact card below</p>
         </div>
+        <div className="flex gap-3">
+          <span className="font-medium text-gray-400">2.</span>
+          <p>Scroll to the bottom</p>
+        </div>
+        <div className="flex gap-3">
+          <span className="font-medium text-gray-400">3.</span>
+          <p>Select <span className="text-blue-500 font-medium">Create New Contact</span></p>
+        </div>
+      </div>
+
+      <a 
+        href="/trilogy.vcf"
+        className="bg-white rounded-[2.5rem] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)] p-8 w-72 flex flex-col items-center transition-transform active:scale-95"
+      >
+        <div className="w-28 h-28 rounded-full bg-gradient-to-b from-gray-100 to-gray-200 mb-6 flex items-center justify-center shadow-inner overflow-hidden">
+           <Image 
+             src="/favicon.ico" 
+             alt="Trilogy" 
+             width={64} 
+             height={64} 
+             className="w-16 h-16 object-contain opacity-80"
+           />
+        </div>
+        
+        <h2 className="text-2xl font-serif text-gray-900 mb-2 flex items-center gap-2">
+          Trilogy
+        </h2>
+        
+        <p className="text-blue-500 font-medium mb-1 text-lg">+1 (646) 894-1360</p>
+        <p className="text-gray-400 text-sm">New York, NY</p>
+      </a>
+
+      <div className="fixed bottom-8 left-0 right-0 px-6">
+        <button
+          onClick={async () => {
+            const phone = typeof window !== 'undefined' ? sessionStorage.getItem(ONBOARDING_PHONE_KEY) : null;
+            if (phone) {
+              await fetch('/api/onboard/complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone }),
+              }).catch(() => {});
+            }
+            window.location.href = '/dashboard';
+          }}
+          className="w-full max-w-md mx-auto block bg-gray-900 text-white py-4 rounded-full font-medium text-lg shadow-lg active:scale-[0.98] transition-transform"
+        >
+          Continue
+        </button>
       </div>
     </div>
   );
