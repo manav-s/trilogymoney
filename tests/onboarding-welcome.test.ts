@@ -4,7 +4,6 @@ const prismaMock = {
   user: {
     findUnique: vi.fn(),
     update: vi.fn(),
-    updateMany: vi.fn(),
   },
   plaidAccount: {
     count: vi.fn(),
@@ -71,14 +70,14 @@ describe('postOnboardingWelcome', () => {
   });
 
   it('sends welcome and digest when user has recent spend', async () => {
-    // updateMany succeeds (atomic check-and-set)
-    prismaMock.user.updateMany.mockResolvedValueOnce({ count: 1 });
-    
-    // findUnique after winning the race
     prismaMock.user.findUnique.mockResolvedValueOnce({
       id: 'user-1',
       phone: '+15551234567',
       timezone: 'America/New_York',
+      messagingStatus: 'active',
+      billingStatus: 'active',
+      isActive: true,
+      welcomeSentAt: null,
     });
 
     prismaMock.plaidAccount.count.mockResolvedValue(1);
@@ -118,35 +117,42 @@ describe('postOnboardingWelcome', () => {
       }),
     );
 
-    // updateMany sets welcomeSentAt atomically, update persists digest snapshot
-    expect(prismaMock.user.updateMany).toHaveBeenCalledTimes(1);
-    expect(prismaMock.user.update).toHaveBeenCalledTimes(1);
+    // First update persists digest snapshot, second stamps welcomeSentAt
+    expect(prismaMock.user.update).toHaveBeenCalledTimes(2);
+    expect(prismaMock.user.update.mock.calls[1]?.[0]?.data).toHaveProperty('welcomeSentAt');
   });
 
   it('skips when user was welcomed recently', async () => {
-    // updateMany returns 0 (welcomeSentAt already set, or user not eligible)
-    prismaMock.user.updateMany.mockResolvedValueOnce({ count: 0 });
+    prismaMock.user.findUnique.mockResolvedValueOnce({
+      id: 'user-1',
+      phone: '+15551234567',
+      timezone: 'America/New_York',
+      messagingStatus: 'active',
+      billingStatus: 'active',
+      isActive: true,
+      welcomeSentAt: new Date(Date.now() - 1000 * 60 * 30),
+    });
 
     const { postOnboardingWelcome } = await import('../lib/onboarding-welcome');
     await postOnboardingWelcome('user-1');
 
     expect(sendMessageMock).not.toHaveBeenCalled();
     expect(prismaMock.plaidAccount.count).not.toHaveBeenCalled();
-    expect(prismaMock.user.findUnique).not.toHaveBeenCalled();
   });
 
   it('falls back to link reminder when no accounts', async () => {
-    // updateMany succeeds (atomic check-and-set)
-    prismaMock.user.updateMany.mockResolvedValueOnce({ count: 1 });
-    
-    // findUnique after winning the race
     prismaMock.user.findUnique.mockResolvedValueOnce({
       id: 'user-1',
       phone: '+15551234567',
       timezone: 'America/New_York',
+      messagingStatus: 'active',
+      billingStatus: 'active',
+      isActive: true,
+      welcomeSentAt: null,
     });
 
     prismaMock.plaidAccount.count.mockResolvedValue(0);
+    prismaMock.user.update.mockResolvedValue({});
 
     const { postOnboardingWelcome } = await import('../lib/onboarding-welcome');
     await postOnboardingWelcome('user-1');
@@ -159,7 +165,8 @@ describe('postOnboardingWelcome', () => {
       }),
     );
     expect(getTransactionsMock).not.toHaveBeenCalled();
-    expect(prismaMock.user.updateMany).toHaveBeenCalledTimes(1);
+    expect(prismaMock.user.update).toHaveBeenCalledTimes(1);
+    expect(prismaMock.user.update.mock.calls[0]?.[0]?.data).toHaveProperty('welcomeSentAt');
   });
 });
 
