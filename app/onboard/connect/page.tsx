@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { PlaidLink } from "react-plaid-link";
+import { usePlaidLink } from "react-plaid-link";
 
 const ONBOARDING_PHONE_KEY = "onboarding_phone";
 
@@ -33,6 +33,7 @@ export default function ConnectPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [loadingExchange, setLoadingExchange] = useState(false);
   const [creatingCheckout, setCreatingCheckout] = useState(false);
+  const [shouldOpenPlaid, setShouldOpenPlaid] = useState(false);
 
   const fetchAccounts = async (phone: string) => {
     const res = await fetch(`/api/accounts/list?phone=${encodeURIComponent(phone)}`);
@@ -110,6 +111,29 @@ export default function ConnectPage() {
     }
   };
 
+  const onExit = () => {
+    // Reset so user can click again
+    setShouldOpenPlaid(false);
+  };
+
+  const { open, ready } = usePlaidLink({
+    token: linkToken || "",
+    onSuccess,
+    onExit,
+  });
+
+  // Auto-open when token is ready and user clicked the button
+  useEffect(() => {
+    if (shouldOpenPlaid && ready && linkToken) {
+      open();
+      setShouldOpenPlaid(false);
+    }
+  }, [shouldOpenPlaid, ready, linkToken, open]);
+
+  const handleAddAccountClick = () => {
+    setShouldOpenPlaid(true);
+  };
+
   const totalAccounts = items.flatMap((it) => it.accounts).length;
 
   const goToCheckout = async () => {
@@ -176,13 +200,13 @@ export default function ConnectPage() {
         </div>
 
         <div className="mt-6 flex justify-center">
-          {linkToken ? (
-            <PlaidLink token={linkToken} onSuccess={onSuccess}>
-              <button className="px-6 py-3 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white focus:outline-none focus:ring-0 outline-none ring-0 border-none shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 hover:-translate-y-0.5">add account</button>
-            </PlaidLink>
-          ) : (
-            <button disabled className="px-6 py-3 rounded-full bg-indigo-600 text-white opacity-50 focus:outline-none focus:ring-0 outline-none ring-0 border-none shadow-none">{isFetchingToken ? 'loading…' : 'add account'}</button>
-          )}
+          <button
+            onClick={handleAddAccountClick}
+            disabled={!linkToken || isFetchingToken || loadingExchange}
+            className="px-6 py-3 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white focus:outline-none focus:ring-0 outline-none ring-0 border-none shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-50"
+          >
+            {isFetchingToken ? 'loading…' : 'add account'}
+          </button>
           {tokenError && (
             <button
               onClick={() => {
