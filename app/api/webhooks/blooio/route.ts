@@ -95,7 +95,7 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
       sentAt: new Date(event.timestamp),
       expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
     },
-  }).catch(() => {});
+  }).catch(() => { });
 
   if (body === 'stop' || body === 'unsubscribe' || body === 'cancel') {
     await handleStopCommand(phone);
@@ -159,8 +159,9 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
     if (user.messagingStatus === 'inactive') {
       const magicLink = await generateMagicLink(phone);
       const messages = [
-        `hi there, can i help you??`,
-        `oh my bad, i'm trilogy. here's your onboarding link. 60 seconds and i'll start watching your accounts so you don't have to`,
+        `can i help you??`,
+        `oh my bad`,
+        `i'm trilogy. here is your onboarding link`,
         magicLink.trim(),
       ];
       for (let i = 0; i < messages.length; i++) {
@@ -183,8 +184,9 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
   } else if (isOnboardingMessage && !(user.onboardingStatus === 'complete' || user.onboardingStatus === 'subscribed')) {
     const magicLink = await generateMagicLink(phone);
     const messages = [
-      `hi there, can i help you??`,
-      `oh my bad, i'm trilogy. here's your onboarding link. 60 seconds and i'll start watching your accounts so you don't have to`,
+      `can i help you??`,
+      `oh my bad`,
+      `i'm trilogy. here is your onboarding link`,
       magicLink.trim(),
     ];
     for (let i = 0; i < messages.length; i++) {
@@ -205,8 +207,9 @@ async function handleNewUser(phone: string, _event: BlooioWebhookEvent) {
 
   const magicLink = await generateMagicLink(phone);
   const messages = [
-    `hi there, can i help you??`,
-    `oh my bad, i'm trilogy. here's your onboarding link. 60 seconds and i'll start watching your accounts so you don't have to`,
+    `can i help you??`,
+    `oh my bad`,
+    `i'm trilogy. here is your onboarding link`,
     magicLink.trim(),
   ];
 
