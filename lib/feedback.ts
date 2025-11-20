@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { logError } from '@/lib/logger';
 
@@ -73,7 +74,7 @@ export async function captureFeedback(params: {
                 userId: params.userId,
                 userMessage: params.userMessage,
                 sentiment: params.sentiment,
-                context: params.context ?? null,
+                context: params.context ? (params.context as Prisma.InputJsonValue) : undefined,
             },
         });
 
