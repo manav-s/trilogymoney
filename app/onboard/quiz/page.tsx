@@ -18,7 +18,7 @@ type Question = {
   label: string;
   options: string[];
   type?: 'single' | 'multi';
-  variant?: 'default' | 'spectrum';
+  variant?: 'default' | 'spectrum' | 'grid';
   exclusiveValues?: string[]; // options that are exclusive (selecting them clears others)
 };
 
@@ -86,6 +86,15 @@ const LABELS: Record<string, string> = {
 
 // Per-question label overrides for shared enums
 const LABEL_OVERRIDES: Partial<Record<keyof Answers, Record<string, string>>> = {
+  q2: {
+    interest_charges: 'paying interest',
+    surprise_bills: 'surprise bills',
+    overspending: 'overspending',
+    not_saving: 'not saving',
+    not_investing: 'not investing',
+    retiring_early_and_leaving_the_rat_race: 'retiring early',
+    nothing: 'nothing',
+  },
   q5: {
     often: 'often — I delay opening my banking apps',
     sometimes: 'sometimes — depends on the week',
@@ -110,7 +119,7 @@ const labelFor = (key: keyof Answers, value: string): string =>
 
 const QUESTIONS: Question[] = [
   { key: "q1", label: "most days, money feels…", options: ["calm","under_control","manageable","tense","overwhelming"], variant: 'spectrum' },
-  { key: "q2", label: "what quietly worries you the most?", options: ["interest_charges","surprise_bills","overspending","not_saving","not_investing","retiring_early_and_leaving_the_rat_race","nothing"], type: 'multi', exclusiveValues: ["nothing"] },
+  { key: "q2", label: "what quietly worries you the most?", options: ["interest_charges","surprise_bills","overspending","not_saving","not_investing","retiring_early_and_leaving_the_rat_race","nothing"], type: 'multi', exclusiveValues: ["nothing"], variant: 'grid' },
   { key: "q3", label: "if we nailed one win in 90 days, you’d want…", options: ["pay_down_card","build_1mo_cushion","stop_leak_spend","automate_bills","start_investing"] },
   { key: "q4", label: "the moment you drift off‑track is usually…", options: ["payday_slips","weekend_spend","late_night_scroll","unexpected_bill","social_plans"] },
   { key: "q5", label: "are you ever nervous to check your balances?", options: ["often","sometimes","rarely","never"] },
@@ -231,9 +240,9 @@ export default function QuizPage() {
 
         {/* question */}
         <h1 className="text-3xl font-bold text-gray-900 mb-6 lowercase">{current?.label}</h1>
-        <div className="grid grid-cols-1 gap-3">
+        <div className={`grid gap-3 ${current?.variant === 'grid' ? 'grid-cols-2' : 'grid-cols-1'}`}>
           {current?.variant === 'spectrum' ? (
-            <div className="py-8">
+            <div className="py-8 col-span-full">
               {/* Emoji Spectrum Slider */}
               <div className="relative mb-12 px-4">
                 {/* Track */}
