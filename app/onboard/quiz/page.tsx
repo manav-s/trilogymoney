@@ -109,10 +109,10 @@ const LABEL_OVERRIDES: Partial<Record<keyof Answers, Record<string, string>>> = 
     social_plans: "not saying 'no' to dinner plans",
   },
   q5: {
-    often: 'often — I delay opening my banking apps',
+    often: 'often — I avoid looking',
     sometimes: 'sometimes — depends on the week',
-    rarely: 'rarely — I feel mostly okay checking',
-    never: 'never — I check balances comfortably',
+    rarely: 'rarely — I feel fine checking',
+    never: 'never — no stress at all',
   },
   q6: {
     none: 'none of these are a thing for me',
