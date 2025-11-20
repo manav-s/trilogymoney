@@ -177,8 +177,12 @@ export default function ConnectPage() {
 
         <div className="mt-6 flex justify-center">
           {linkToken ? (
-            <PlaidLink token={linkToken} onSuccess={onSuccess}>
-              <button className="px-6 py-3 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white focus:outline-none focus:ring-0 outline-none ring-0 border-0 shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 hover:-translate-y-0.5">add account</button>
+            <PlaidLink
+              token={linkToken}
+              onSuccess={onSuccess}
+              className="px-6 py-3 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white focus:outline-none focus:ring-0 outline-none ring-0 border-0 shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 hover:-translate-y-0.5 inline-block cursor-pointer"
+            >
+              add account
             </PlaidLink>
           ) : (
             <button disabled className="px-6 py-3 rounded-full bg-indigo-600 text-white opacity-50 focus:outline-none focus:ring-0 outline-none ring-0 border-none shadow-none">{isFetchingToken ? 'loading…' : 'add account'}</button>
