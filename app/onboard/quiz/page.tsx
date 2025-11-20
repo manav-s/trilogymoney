@@ -115,9 +115,16 @@ const LABEL_OVERRIDES: Partial<Record<keyof Answers, Record<string, string>>> = 
     never: 'never — no stress at all',
   },
   q6: {
-    none: 'none of these are a thing for me',
+    food_delivery: 'food delivery',
+    prime: 'amazon prime',
+    coffee: 'coffee runs',
+    none: 'none of these',
   },
   q7: {
+    credit_card: 'credit card balance',
+    student: 'student loans',
+    auto: 'auto loan or lease',
+    other: 'other debt',
     none: 'no revolving debt right now',
   },
   q10: {
