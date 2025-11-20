@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/db";
+import { handlePostCheckoutActivation } from "@/lib/postCheckout";
 
 // Stripe webhook handler
 
@@ -43,10 +44,25 @@ export async function POST(req: NextRequest) {
           isActive: true,
         };
 
+        let userId: string | null = null;
+
         if (phone) {
-          await prisma.user.updateMany({ where: { phone }, data: dataToSet });
+          const updated = await prisma.user.updateMany({ where: { phone }, data: dataToSet });
+          if (updated.count > 0) {
+            const user = await prisma.user.findUnique({ where: { phone }, select: { id: true } });
+            userId = user?.id ?? null;
+          }
         } else if (session.customer_email) {
-          await prisma.user.updateMany({ where: { email: session.customer_email }, data: dataToSet });
+          const updated = await prisma.user.updateMany({ where: { email: session.customer_email }, data: dataToSet });
+          if (updated.count > 0) {
+            const user = await prisma.user.findUnique({ where: { email: session.customer_email }, select: { id: true } });
+            userId = user?.id ?? null;
+          }
+        }
+
+        // Trigger post-checkout activation flow
+        if (userId) {
+          await handlePostCheckoutActivation(userId);
         }
         break;
       }
