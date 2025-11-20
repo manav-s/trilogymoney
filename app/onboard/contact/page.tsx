@@ -44,7 +44,7 @@ export default function ContactPage() {
         </div>
         
         <h2 className="text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
-          Trilogy ✨
+          Trilogy 💸
         </h2>
         
         <p className="text-blue-500 font-medium mb-1 text-base">+1 (646) 894-1360</p>
