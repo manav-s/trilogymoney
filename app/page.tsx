@@ -1,3 +1,5 @@
+import { Lock, ShieldCheck, EyeOff } from "lucide-react";
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-white selection:bg-blue-100 selection:text-blue-900 overflow-x-hidden">
@@ -196,7 +198,7 @@ export default function Home() {
                 get weekly updates
               </h3>
               <p className="text-lg text-gray-600 leading-relaxed">
-                every sunday, an imessage with your balance, spending, and insights.
+                every week, an imessage with your balance, spending, and insights.
               </p>
             </div>
 
@@ -244,6 +246,61 @@ export default function Home() {
               </p>
               <p className="text-white font-medium mt-4">
                 trilogy gives you clarity. what you do with it is totally up to you.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Security Section */}
+      <section className="py-24 sm:py-32 bg-white relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 lowercase">
+              uncompromising security.
+            </h2>
+            <p className="text-lg text-gray-600 lowercase">
+              your financial data is protected by industry-leading encryption and security standards. built by microsoft security engineers.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
+            {/* Feature 1 */}
+            <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-gray-50 border border-gray-100">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6 text-blue-600">
+                <Lock className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3 lowercase">
+                bank-grade encryption
+              </h3>
+              <p className="text-gray-600 lowercase">
+                we utilize aes-256 encryption for all data at rest and in transit.
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-gray-50 border border-gray-100">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6 text-blue-600">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3 lowercase">
+                trusted infrastructure
+              </h3>
+              <p className="text-gray-600 lowercase">
+                we partner with plaid to securely connect your accounts without ever seeing your credentials.
+              </p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-gray-50 border border-gray-100">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6 text-blue-600">
+                <EyeOff className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3 lowercase">
+                privacy first
+              </h3>
+              <p className="text-gray-600 lowercase">
+                we do not sell your personal data. your financial privacy is our core commitment.
               </p>
             </div>
           </div>
