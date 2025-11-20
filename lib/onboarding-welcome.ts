@@ -170,7 +170,6 @@ async function sendFirstDigestIfPossible(user: UserForDigest): Promise<void> {
     };
     const snapshotTransactions = filteredTransactions.slice(0, MAX_TRANSACTIONS_FOR_WELCOME_DIGEST);
 
-    let snapshotPersisted = false;
     try {
       console.info('post-onboarding.persisting_snapshot', { userId: user.id, snapshotCount: snapshotTransactions.length });
       await prisma.user.update({
@@ -187,23 +186,13 @@ async function sendFirstDigestIfPossible(user: UserForDigest): Promise<void> {
           }),
         },
       });
-      snapshotPersisted = true;
       console.info('post-onboarding.snapshot_persisted', { userId: user.id });
     } catch (persistError) {
       logError('post-onboarding.persist_failed', persistError, { 
         userId: user.id,
         snapshotCount: snapshotTransactions.length,
       });
-      // Attempt a lightweight fallback so cron still has a timestamp
-      try {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { lastWeeklyDigestAt: now },
-        });
-        console.info('post-onboarding.persist_fallback_success', { userId: user.id });
-      } catch (fallbackError) {
-        logError('post-onboarding.persist_fallback_failed', fallbackError, { userId: user.id });
-      }
+      return;
     }
 
     console.info('post-onboarding.sending_digest', { userId: user.id });
@@ -213,7 +202,7 @@ async function sendFirstDigestIfPossible(user: UserForDigest): Promise<void> {
       userId: user.id,
       shouldPersist: true,
     });
-    console.info('post-onboarding.digest_sent', { userId: user.id, snapshotPersisted });
+    console.info('post-onboarding.digest_sent', { userId: user.id });
   } catch (error) {
     logError('post-onboarding.digest_error', error, { 
       userId: user.id,
