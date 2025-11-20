@@ -33,13 +33,13 @@ export default function ContactPage() {
         href="/trilogy.vcf"
         className="bg-white rounded-[2rem] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)] p-6 w-64 flex flex-col items-center transition-transform active:scale-95"
       >
-        <div className="w-20 h-20 rounded-full bg-gradient-to-b from-gray-100 to-gray-200 mb-4 flex items-center justify-center shadow-inner overflow-hidden">
+        <div className="w-20 h-20 rounded-full mb-4 overflow-hidden shadow-lg">
            <Image 
-             src="/favicon.ico" 
+             src="/trilogy-contact-icon.jpg" 
              alt="Trilogy" 
-             width={48} 
-             height={48} 
-             className="w-12 h-12 object-contain opacity-80"
+             width={80} 
+             height={80} 
+             className="w-full h-full object-cover"
            />
         </div>
         
