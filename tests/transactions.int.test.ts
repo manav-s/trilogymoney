@@ -152,6 +152,55 @@ describe('lib/transactions getTransactions', () => {
     expect(result.moreAvailable).toBe(false);
   });
 
+  it('filters by category using normalized names', async () => {
+    prismaMock.user.findUnique.mockResolvedValue({ id: 'user-1', billingStatus: 'active' });
+    prismaMock.plaidItem.findMany.mockResolvedValue([
+      { id: 'item-1', accessToken: 'enc-token-1', institutionName: null },
+    ]);
+    prismaMock.plaidAccount.findMany.mockResolvedValue([{ accountId: 'acc-1' }]);
+    decryptMock.mockReturnValue('access-1');
+    plaidClientMock.transactionsGet.mockResolvedValue({
+      data: {
+        accounts: [{ account_id: 'acc-1', name: 'Checking', mask: null }],
+        transactions: [
+          {
+            transaction_id: 'tx-1',
+            account_id: 'acc-1',
+            amount: 18,
+            iso_currency_code: 'USD',
+            merchant_name: 'Chipotle',
+            name: 'CHIPOTLE',
+            date: '2025-11-06',
+            pending: false,
+            personal_finance_category: { primary: 'FOOD_AND_DRINK' },
+          },
+          {
+            transaction_id: 'tx-2',
+            account_id: 'acc-1',
+            amount: 40,
+            iso_currency_code: 'USD',
+            merchant_name: 'Lyft',
+            name: 'LYFT',
+            date: '2025-11-05',
+            pending: false,
+            personal_finance_category: { primary: 'TRANSPORTATION' },
+          },
+        ],
+        total_transactions: 2,
+      },
+    });
+
+    const { getTransactions } = await import('../lib/transactions');
+    const result = await getTransactions({ userId: 'user-1', limit: 10, category: 'Food and Drink' });
+
+    expect(result.transactions).toHaveLength(1);
+    expect(result.transactions[0].merchant).toBe('Chipotle');
+    expect(result.summary.count).toBe(1);
+    expect(result.summary.perCategory).toEqual(
+      expect.arrayContaining([expect.objectContaining({ label: 'FOOD_AND_DRINK', count: 1 })])
+    );
+  });
+
   it('marks moreAvailable when total exceeds fetched transactions', async () => {
     prismaMock.user.findUnique.mockResolvedValue({ id: 'user-1', billingStatus: 'active' });
     prismaMock.plaidItem.findMany.mockResolvedValue([

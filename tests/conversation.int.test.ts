@@ -19,78 +19,81 @@ const prismaMock = {
 };
 
 const chooseIntentMock = vi.fn();
+const parseLLMIntentMock = vi.fn();
 const getTransactionsMock = vi.fn();
 const generateReplyMock = vi.fn();
 const sendMessageMock = vi.fn();
+const detectFeedbackIntentMock = vi.fn(() => ({ isFeedback: false, sentiment: null }));
+const captureFeedbackMock = vi.fn();
 
-vi.mock('@/lib/db', () => ({ prisma: prismaMock }));
-vi.mock('@/lib/transactionQuery', () => {
-  const parse = (text: string) => {
-    const lower = text.toLowerCase();
-    if (lower.includes('today')) {
-      return {
-        query: {
-          kind: 'recent',
-          from: '2025-11-10',
-          to: '2025-11-10',
-          limit: 50,
-        },
-        overrideRange: true,
-      };
-    }
-    if (lower.includes('amazon')) {
-      return {
-        query: {
-          kind: 'merchantSpend',
-          merchant: 'amazon',
-          from: '2025-11-08',
-          to: '2025-11-09',
-          limit: 100,
-        },
-        overrideRange: false,
-      };
-    }
-    if (lower.includes('general merchandise')) {
-      return {
-        query: {
-          kind: 'recent',
-          from: '2025-11-08',
-          to: '2025-11-09',
-          limit: 500,
-        },
-        overrideRange: false,
-      };
-    }
-    if (lower.includes('food')) {
-      return {
-        query: {
-          kind: 'merchantSpend',
-          merchant: 'food',
-          from: '2025-11-08',
-          to: '2025-11-09',
-          limit: 100,
-        },
-        overrideRange: false,
-      };
-    }
+const mockParseTransactions = (text: string) => {
+  const lower = text.toLowerCase();
+  if (lower.includes('today')) {
+    return {
+      query: {
+        kind: 'recent',
+        from: '2025-11-10',
+        to: '2025-11-10',
+        limit: 50,
+      },
+      overrideRange: true,
+    };
+  }
+  if (lower.includes('amazon')) {
+    return {
+      query: {
+        kind: 'merchantSpend',
+        merchant: 'amazon',
+        from: '2025-11-08',
+        to: '2025-11-09',
+        limit: 100,
+      },
+      overrideRange: false,
+    };
+  }
+  if (lower.includes('general merchandise')) {
     return {
       query: {
         kind: 'recent',
         from: '2025-11-08',
         to: '2025-11-09',
-        limit: 50,
+        limit: 500,
       },
       overrideRange: false,
     };
-  };
+  }
+  if (lower.includes('food')) {
+    return {
+      query: {
+        kind: 'merchantSpend',
+        merchant: 'food',
+        from: '2025-11-08',
+        to: '2025-11-09',
+        limit: 100,
+      },
+      overrideRange: false,
+    };
+  }
   return {
-    RECENT_FALLBACK_LIMIT: 50,
-    parseTransactionsQuery: (text: string) => parse(text).query,
-    parseTransactionsQueryWithOverrides: parse,
+    query: {
+      kind: 'recent',
+      from: '2025-11-08',
+      to: '2025-11-09',
+      limit: 50,
+    },
+    overrideRange: false,
   };
-});
+};
+
+vi.mock('@/lib/db', () => ({ prisma: prismaMock }));
+vi.mock('@/lib/transactionQuery', () => ({
+  RECENT_FALLBACK_LIMIT: 50,
+  parseTransactionsQuery: (text: string) => mockParseTransactions(text).query,
+  parseTransactionsQueryWithOverrides: mockParseTransactions,
+}));
 vi.mock('@/lib/llm', () => ({
   chooseIntentFromText: chooseIntentMock,
+  parseLLMIntent: parseLLMIntentMock,
   generateReply: generateReplyMock,
 }));
 const isExcludedFromSummaryMock = vi.fn((txn?: { category?: string | null }) => {
@@ -197,6 +200,10 @@ vi.mock('@/lib/balances', () => ({
   getBalances: vi.fn(),
   getBalancesBreakdown: vi.fn(),
 }));
+vi.mock('@/lib/feedback', () => ({
+  detectFeedbackIntent: detectFeedbackIntentMock,
+  captureFeedback: captureFeedbackMock,
+}));
 vi.mock('@/lib/transactionsContext', () => {
   const ONE_HOUR_MS = 1000 * 60 * 60;
   return {
@@ -255,9 +262,39 @@ describe('handleLLMConversation stored query reuse', () => {
     prismaMock.message.findMany.mockReset();
     prismaMock.message.create.mockReset();
     chooseIntentMock.mockReset();
+    parseLLMIntentMock.mockReset();
     getTransactionsMock.mockReset();
     generateReplyMock.mockReset();
     sendMessageMock.mockReset();
+    detectFeedbackIntentMock.mockReset();
+    captureFeedbackMock.mockReset();
+
+    chooseIntentMock.mockResolvedValue('transactions');
+    parseLLMIntentMock.mockImplementation(async (userText: string) => {
+      const intent = await chooseIntentMock(userText);
+      const parsed = mockParseTransactions(userText);
+      const merchant =
+        parsed.query.kind === 'merchantSpend' ? parsed.query.merchant ?? null : null;
+      const dateRange = parsed.overrideRange
+        ? { from: parsed.query.from, to: parsed.query.to }
+        : null;
+      const rawRange = { from: parsed.query.from, to: parsed.query.to };
+      return {
+        intent: (intent ?? 'transactions') as 'transactions' | 'balances' | 'chat',
+        useWeeklySnapshot: false,
+        params: {
+          dateRange,
+          rawRange,
+          merchant,
+          category: null,
+          limit: parsed.query.limit,
+        },
+        confidence: 1,
+        clarificationNeeded: null,
+      };
+    });
+    detectFeedbackIntentMock.mockReturnValue({ isFeedback: false, sentiment: null });
+    captureFeedbackMock.mockResolvedValue({ success: true });
   });
 
   function mockUserWithStoredQuery(
@@ -585,6 +622,8 @@ describe('handleLLMConversation stored query reuse', () => {
   });
 
   it('derives weekly digest range from lastWeeklyDigestAt when stored query is missing', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2025-11-18T12:00:00Z'));
     const lastWeeklyDigestAt = new Date('2025-11-17T12:00:00Z');
     mockUserWithoutStoredQuery({ lastWeeklyDigestAt });
     mockTransactionsReturn({
@@ -618,6 +657,7 @@ describe('handleLLMConversation stored query reuse', () => {
         rangeLabel: 'weekly digest 2025-11-10 → 2025-11-16',
       }),
     );
+    vi.useRealTimers();
   });
 
   it('mirrors the weekly digest flow with mocked data', async () => {
@@ -776,6 +816,8 @@ describe('handleLLMConversation stored query reuse', () => {
   });
 
   it('uses the latest weekly digest range when multiple digests exist', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2025-11-18T12:00:00Z'));
     mockUserWithStoredQuery(
       {
         from: '2025-11-10',
@@ -816,6 +858,7 @@ describe('handleLLMConversation stored query reuse', () => {
         rangeLabel: 'weekly digest nov 10 → nov 16',
       }),
     );
+    vi.useRealTimers();
   });
 
   it('honors explicit today overrides even after a digest', async () => {

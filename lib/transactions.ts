@@ -93,18 +93,17 @@ function maskString(value: string, maxLength = 200): string {
   return `${value.slice(0, maxLength)}…`;
 }
 
-function matchesMerchant(summary: TransactionSummary, needle?: string): boolean {
+function matchesMerchant(summary: TransactionSummary, needle?: string | null): boolean {
   if (!needle) return true;
   const lower = needle.trim().toLowerCase();
   if (!lower) return true;
-  return (
+  return Boolean(
     summary.merchant?.toLowerCase().includes(lower) ||
-    summary.description?.toLowerCase().includes(lower) ||
-    false
+      summary.description?.toLowerCase().includes(lower)
   );
 }
 
-function matchesCategory(summary: TransactionSummary, needle?: string): boolean {
+function matchesCategory(summary: TransactionSummary, needle?: string | null): boolean {
   if (!needle) return true;
   const normalizedNeedle = normalizeCategoryKey(needle);
   if (!normalizedNeedle) return true;
@@ -487,13 +486,13 @@ export async function getTransactions(args: GetTransactionsArgs): Promise<GetTra
     return b.date.localeCompare(a.date);
   });
 
-  if (filtered.length > targetRows) {
-    moreAvailable = true;
-  }
-
-  const summary = buildTransactionsSummary(filtered, { from: startDate, to: endDate });
   const transactions = filtered.slice(0, targetRows);
-  const result: GetTransactionsResult = { transactions, moreAvailable, summary };
+  const summary = buildTransactionsSummary(transactions, { from: startDate, to: endDate });
+  const result: GetTransactionsResult = {
+    transactions,
+    moreAvailable: moreAvailable || filtered.length > transactions.length,
+    summary,
+  };
 
   if (process.env.PLAID_LOG_TRANSACTIONS === '1') {
     const snapshot = {

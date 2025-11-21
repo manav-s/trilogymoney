@@ -1,5 +1,13 @@
 import { prisma } from '@/lib/db';
-import { chooseIntentFromText, generateReply } from '@/lib/llm';
+import {
+  chooseIntentFromText,
+  generateReply,
+  parseLLMIntent,
+  type ConversationMessage,
+  type IntentParsingServerContext,
+  type Intent,
+  type ParsedIntent,
+} from '@/lib/llm';
 import { getBalancesBreakdown } from '@/lib/balances';
 import {
   getTransactions,
@@ -11,6 +19,7 @@ import {
   parseTransactionsQueryWithOverrides,
   TransactionQuery,
   type ParsedTransactionsQueryResult,
+  RECENT_FALLBACK_LIMIT,
 } from '@/lib/transactionQuery';
 import {
   buildStoredTransactionsQuery,
@@ -28,6 +37,22 @@ const WEEKLY_DIGEST_STICKY_MS = 1000 * 60 * 60 * 72;
 const WEEKLY_DIGEST_DEFAULT_LIMIT = 500;
 const DIGEST_FOLLOWUP_BASE_REGEX =
   /\b(?:category|categories|break ?down|food|drink|pending|balance|balances|weekly\s+summary|weekly\s+digest|top\s+merchant|merchant)\b/i;
+const CATEGORY_WHITELIST = [
+  'Food and Drink',
+  'Transportation',
+  'Shopping',
+  'General Merchandise',
+  'General Services',
+  'Entertainment',
+  'Bills and Utilities',
+  'Health and Wellness',
+  'Travel',
+  'Personal Care',
+  'Home Improvement',
+];
+const CATEGORY_NORMALIZED_MAP = new Map(
+  CATEGORY_WHITELIST.map((label) => [normalizeLabel(label) ?? label.toLowerCase(), label])
+);
 
 export async function handleLLMConversation(phone: string, userText: string) {
   const user = await prisma.user.findUnique({ where: { phone } });
@@ -37,6 +62,8 @@ export async function handleLLMConversation(phone: string, userText: string) {
   if (!(isPaid && isActive)) return;
 
   const history = await getRecentHistorySnippet(user.id, 30, 30);
+  const conversationMessages = convertHistorySnippetToMessages(history);
+  const storedQueryRaw = (user.lastTransactionsQuery as StoredTransactionsQuery | null) ?? null;
 
   // Check for feedback/frustration early
   const feedbackDetection = detectFeedbackIntent(userText);
@@ -73,42 +100,36 @@ export async function handleLLMConversation(phone: string, userText: string) {
   let body = '';
   try {
     const profile = { name: user.name, timezone: user.timezone, preferredTime: user.preferredTime } as const;
-    const intent = await chooseIntentFromText(userText);
-    const parsedResult = parseTransactionsQueryWithOverrides(userText);
+    const serverContext: IntentParsingServerContext = {
+      currentDate: new Date().toISOString().slice(0, 10),
+      lastWeeklyDigestAt: user.lastWeeklyDigestAt ?? null,
+      lastTransactionsQuery: storedQueryRaw
+        ? {
+            range: { from: storedQueryRaw.from, to: storedQueryRaw.to },
+            category: storedQueryRaw.categoryFocusNormalized ?? null,
+            merchant: storedQueryRaw.kind === 'merchantSpend' ? storedQueryRaw.merchant : null,
+            label: storedQueryRaw.label,
+          }
+        : null,
+    };
 
-    // Use LLM to enhance parsing (handles dates like "november 18th" better than regex)
-    const llmParsed = await import('./llm').then(m => m.parseQueryParams(userText, new Date().toISOString().slice(0, 10)));
-
-    // If LLM found a date range, override the regex parser's result
-    if (llmParsed.dateRange) {
-      parsedResult.query.from = llmParsed.dateRange.from;
-      parsedResult.query.to = llmParsed.dateRange.to;
-      parsedResult.overrideRange = true;
-
-      // If LLM found a date but NO merchant, clear any bad merchant the regex may have set
-      if (!llmParsed.merchant) {
-        parsedResult.query = {
-          kind: 'recent',
-          limit: parsedResult.query.limit,
-          from: llmParsed.dateRange.from,
-          to: llmParsed.dateRange.to,
-        };
-      }
+    const llmParsedIntent = await parseLLMIntent(userText, conversationMessages, serverContext);
+    if (llmParsedIntent.clarificationNeeded) {
+      await sendMessage({
+        to: phone,
+        body: llmParsedIntent.clarificationNeeded,
+        userId: user.id,
+        shouldPersist: true,
+      });
+      return;
     }
+    const intent = llmParsedIntent.intent;
+    const parsedResult: ParsedTransactionsQueryResult =
+      llmParsedIntent.intent === 'transactions'
+        ? convertParsedIntentToQuery(llmParsedIntent, serverContext)
+        : parseTransactionsQueryWithOverrides(userText);
 
-    // If LLM found a merchant (regardless of date), use it
-    if (llmParsed.merchant) {
-      const finalRange = llmParsed.dateRange ?? { from: parsedResult.query.from, to: parsedResult.query.to };
-      parsedResult.query = {
-        kind: 'merchantSpend',
-        limit: 100,
-        merchant: llmParsed.merchant,
-        from: finalRange.from,
-        to: finalRange.to,
-      };
-    }
-
-    const storedQueryRaw = (user.lastTransactionsQuery as StoredTransactionsQuery | null) ?? null;
+    const llmCategoryInfo = normalizeCategoryName(llmParsedIntent.params.category ?? null);
     const storedQueryFresh = storedQueryRaw
       ? shouldReuseStoredQuery(parsedResult, storedQueryRaw)
       : false;
@@ -116,20 +137,32 @@ export async function handleLLMConversation(phone: string, userText: string) {
       Array.isArray(storedQueryRaw?.storedTransactions) && storedQueryRaw.storedTransactions.length > 0
         ? storedQueryRaw.storedTransactions
         : null;
-    const digestRangeOverride = getWeeklyDigestRangeOverride({
+    let digestRangeOverride = getWeeklyDigestRangeOverride({
       lastWeeklyDigestAt: user.lastWeeklyDigestAt ?? null,
       history,
       userText,
       parsedResult,
       storedQuery: storedQueryRaw,
     });
+    if (llmParsedIntent.useWeeklySnapshot) {
+      const override = buildWeeklySnapshotOverrideFromLLM({
+        storedQuery: storedQueryRaw,
+        categoryInfo: llmCategoryInfo,
+        lastWeeklyDigestAt: user.lastWeeklyDigestAt ?? null,
+      });
+      if (override) {
+        digestRangeOverride = override;
+      }
+    }
     const storedCategoryFocusNormalized =
       typeof storedQueryRaw?.categoryFocusNormalized === 'string' && storedQueryRaw.categoryFocusNormalized
         ? storedQueryRaw.categoryFocusNormalized
         : null;
     const storedCategoryFocusDisplay = storedQueryRaw?.categoryFocusDisplay ?? null;
-    let categoryFocusNormalized = digestRangeOverride?.matchedLabelNormalized ?? null;
-    let categoryFocusDisplay = digestRangeOverride?.matchedLabelDisplay ?? null;
+    let categoryFocusNormalized =
+      llmCategoryInfo?.normalized ?? digestRangeOverride?.matchedLabelNormalized ?? null;
+    let categoryFocusDisplay =
+      llmCategoryInfo?.display ?? digestRangeOverride?.matchedLabelDisplay ?? null;
 
     let effectiveQuery: TransactionQuery = parsedResult.query;
     let rangeLabel = formatRangeLabel({ from: effectiveQuery.from, to: effectiveQuery.to });
@@ -686,6 +719,117 @@ function normalizeLabel(label: string | null | undefined): string | null {
 
 function escapeRegex(input: string): string {
   return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function convertHistorySnippetToMessages(history: string): ConversationMessage[] {
+  if (!history) return [];
+  return history
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map(line => {
+      const lower = line.toLowerCase();
+      const separatorIndex = line.indexOf(':');
+      const content = separatorIndex >= 0 ? line.slice(separatorIndex + 1).trim() : line;
+      if (lower.startsWith('you:')) {
+        return { role: 'user' as const, content };
+      }
+      if (lower.startsWith('trilogy:')) {
+        return { role: 'assistant' as const, content };
+      }
+      return null;
+    })
+    .filter((msg): msg is ConversationMessage => Boolean(msg));
+}
+
+function convertParsedIntentToQuery(
+  parsedIntent: ParsedIntent,
+  serverContext: IntentParsingServerContext
+): ParsedTransactionsQueryResult {
+  const overrideRange = Boolean(parsedIntent.params.dateRange);
+  const range =
+    parsedIntent.params.dateRange ??
+    parsedIntent.params.rawRange ??
+    getDefaultRangeFromCurrentDate(serverContext.currentDate);
+
+  const limit = clampLimit(parsedIntent.params.limit);
+  const merchant = parsedIntent.params.merchant;
+  const query: TransactionQuery =
+    merchant && merchant.trim().length > 0
+      ? {
+          kind: 'merchantSpend',
+          limit,
+          merchant,
+          from: range.from,
+          to: range.to,
+        }
+      : {
+          kind: 'recent',
+          limit,
+          from: range.from,
+          to: range.to,
+        };
+
+  return {
+    query,
+    overrideRange,
+  };
+}
+
+function clampLimit(limit: number | null | undefined): number {
+  if (typeof limit !== 'number' || Number.isNaN(limit)) {
+    return RECENT_FALLBACK_LIMIT;
+  }
+  return Math.max(1, Math.min(500, Math.round(limit)));
+}
+
+function getDefaultRangeFromCurrentDate(currentDate: string, lookbackDays = 7): { from: string; to: string } {
+  const toDate = buildDateFromIso(currentDate) ?? new Date();
+  const fromDate = new Date(toDate);
+  fromDate.setUTCDate(fromDate.getUTCDate() - lookbackDays);
+  return { from: toIsoDay(fromDate), to: toIsoDay(toDate) };
+}
+
+function buildDateFromIso(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  const parsed = new Date(dateStr);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function normalizeCategoryName(
+  raw: string | null | undefined
+): { normalized: string; display: string } | null {
+  if (!raw) return null;
+  const normalized = normalizeLabel(raw);
+  if (!normalized) return null;
+  if (CATEGORY_NORMALIZED_MAP.has(normalized)) {
+    return { normalized, display: CATEGORY_NORMALIZED_MAP.get(normalized)! };
+  }
+  for (const [key, display] of CATEGORY_NORMALIZED_MAP.entries()) {
+    if (key.includes(normalized) || normalized.includes(key)) {
+      return { normalized: key, display };
+    }
+  }
+  return null;
+}
+
+function buildWeeklySnapshotOverrideFromLLM(args: {
+  storedQuery: StoredTransactionsQuery | null;
+  categoryInfo: { normalized: string; display: string } | null;
+  lastWeeklyDigestAt: Date | null;
+}): WeeklyDigestRangeOverride | null {
+  const { storedQuery, categoryInfo, lastWeeklyDigestAt } = args;
+  if (!storedQuery || storedQuery.source !== 'weekly_digest') return null;
+  if (!lastWeeklyDigestAt) return null;
+  const digestAge = Date.now() - lastWeeklyDigestAt.getTime();
+  if (digestAge > WEEKLY_DIGEST_STICKY_MS) return null;
+  return {
+    range: { from: storedQuery.from, to: storedQuery.to },
+    label: storedQuery.label,
+    limit: storedQuery.limit,
+    matchedLabelNormalized: categoryInfo?.normalized ?? storedQuery.categoryFocusNormalized ?? null,
+    matchedLabelDisplay: categoryInfo?.display ?? storedQuery.categoryFocusDisplay ?? null,
+  };
 }
 
 async function getRecentHistorySnippet(userId: string, days = 30, limit = 30): Promise<string> {

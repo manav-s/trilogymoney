@@ -10,6 +10,171 @@ import { logError } from './logger';
 import { TransactionSummary } from './transactions';
 import { TransactionQuery } from './transactionQuery';
 
+export type ConversationMessage = { role: 'user' | 'assistant'; content: string };
+
+export type ParsedIntent = {
+  intent: Intent;
+  useWeeklySnapshot: boolean;
+  params: {
+    dateRange: { from: string; to: string } | null;
+    rawRange?: { from: string; to: string } | null;
+    merchant: string | null;
+    category: string | null;
+    limit: number;
+  };
+  confidence: number;
+  clarificationNeeded?: string | null;
+};
+
+export type IntentParsingServerContext = {
+  currentDate: string;
+  lastWeeklyDigestAt: Date | null;
+  lastTransactionsQuery: {
+    range: { from: string; to: string };
+    category: string | null;
+    merchant: string | null;
+    label: string;
+  } | null;
+};
+
+const DEFAULT_PARSED_INTENT: ParsedIntent = {
+  intent: 'chat',
+  useWeeklySnapshot: false,
+  params: {
+    dateRange: null,
+    rawRange: null,
+    merchant: null,
+    category: null,
+    limit: 50,
+  },
+  confidence: 0,
+  clarificationNeeded: null,
+};
+
+function cloneDefaultParsedIntent(): ParsedIntent {
+  return {
+    ...DEFAULT_PARSED_INTENT,
+    params: { ...DEFAULT_PARSED_INTENT.params },
+  };
+}
+
+export async function parseLLMIntent(
+  userText: string,
+  conversationHistory: ConversationMessage[],
+  serverContext: IntentParsingServerContext
+): Promise<ParsedIntent> {
+  if (!OPENAI_API_KEY) {
+    logError('llm.parseIntent', undefined, { reason: 'missing_api_key' });
+    return cloneDefaultParsedIntent();
+  }
+
+  const digestHoursAgo =
+    serverContext.lastWeeklyDigestAt == null
+      ? null
+      : Math.floor((Date.now() - serverContext.lastWeeklyDigestAt.getTime()) / (1000 * 60 * 60));
+  const lastQueryLabel = serverContext.lastTransactionsQuery?.label ?? null;
+  const lastQueryCategory = serverContext.lastTransactionsQuery?.category ?? null;
+  const lastQueryRange = serverContext.lastTransactionsQuery?.range ?? null;
+
+  const systemPrompt = [
+    'You are a query parser for a financial SMS bot.',
+    `Current date: ${serverContext.currentDate}`,
+    digestHoursAgo != null ? `Last weekly digest sent: ${digestHoursAgo}h ago.` : '',
+    lastQueryLabel
+      ? `Last transactions context: ${lastQueryLabel}${
+          lastQueryCategory ? ` (category: ${lastQueryCategory})` : ''
+        }${lastQueryRange ? ` [${lastQueryRange.from} → ${lastQueryRange.to}]` : ''}.`
+      : '',
+    `Return ONLY JSON with this shape:
+{
+  "intent": "transactions" | "balances" | "chat",
+  "useWeeklySnapshot": boolean,
+  "params": {
+    "dateRange": { "from": "YYYY-MM-DD", "to": "YYYY-MM-DD" } | null,
+    "merchant": "name" | null,
+    "category": "category name" | null,
+    "limit": number
+  },
+  "confidence": number (0-1),
+  "clarificationNeeded": "string" | null
+}
+
+Rules:
+- Prefer reusing the weekly snapshot when the user references the last digest within 72 hours (set useWeeklySnapshot true).
+- Use conversation history to infer dates/categories for follow-ups like "break that down".
+- Set clarificationNeeded when confidence < 0.6 so the bot can ask the user for more detail.
+- Valid Plaid categories include: Food and Drink, Transportation, Shopping, General Merchandise, General Services, Entertainment, Bills and Utilities, Health and Wellness, Travel, Personal Care, Home Improvement. Pick one of these when possible.
+- Do NOT invent dates or merchants not implied by the message or history.
+- Default limit is 50 unless the user explicitly asks for more.`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const trimmedHistory = conversationHistory
+    .slice(-5)
+    .map((msg) => ({
+      role: msg.role,
+      content: msg.content.length > 200 ? msg.content.slice(0, 200) : msg.content,
+    }));
+
+  try {
+    const messages = [
+      { role: 'system' as const, content: systemPrompt },
+      ...trimmedHistory,
+      { role: 'user' as const, content: userText },
+    ];
+
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages,
+        max_tokens: 200,
+        response_format: { type: 'json_object' },
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new Error(`openai_error_${res.status}: ${errText?.slice(0, 200)}`);
+    }
+
+    const data = await res.json();
+    const parsedRaw = extractTextFromOpenAI(data);
+    if (!parsedRaw) {
+      throw new Error('empty_llm_parse_result');
+    }
+    const parsed = JSON.parse(parsedRaw) as ParsedIntent;
+    if (!parsed.intent || !parsed.params) {
+      throw new Error('invalid_llm_parse_shape');
+    }
+    if (!parsed.params.limit || parsed.params.limit <= 0 || parsed.params.limit > 500) {
+      parsed.params.limit = 50;
+    }
+    if (!parsed.params.dateRange) {
+      parsed.params.dateRange = null;
+    } else {
+      const { from, to } = parsed.params.dateRange;
+      if (!from || !to) {
+        parsed.params.dateRange = null;
+      }
+    }
+    if (parsed.params.rawRange && (!parsed.params.rawRange.from || !parsed.params.rawRange.to)) {
+      parsed.params.rawRange = null;
+    }
+    parsed.useWeeklySnapshot = Boolean(parsed.useWeeklySnapshot);
+    parsed.clarificationNeeded = parsed.clarificationNeeded ?? null;
+    return parsed;
+  } catch (err) {
+    logError('llm.parseIntent', err, { userText });
+    return cloneDefaultParsedIntent();
+  }
+}
+
 export async function chooseIntentFromText(userText: string): Promise<Intent> {
   const lowered = (userText || '').toLowerCase();
   const wantsInstitutions = /\b(institution|bank)\b/.test(lowered);

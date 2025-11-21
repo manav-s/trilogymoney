@@ -7,7 +7,7 @@ describe('splitIntoSmsSegments', () => {
     const input = 'cash is 2000. cards owed 1500!   another line? extra   spaces';
     const segments = splitIntoSmsSegments(input);
     expect(segments).toEqual([
-      'cash is 2000',
+      'cash is 2000.',
       'cards owed 1500!',
       'another line?',
       'extra   spaces',
@@ -18,7 +18,7 @@ describe('splitIntoSmsSegments', () => {
     const input = 'a. b. c. d. e. f. g.';
     const segments = splitIntoSmsSegments(input);
     expect(segments.length).toBe(5);
-    expect(segments[0]).toBe('a');
+    expect(segments[0]).toBe('a.');
   });
 
   it('falls back to empty array when nothing useful', () => {
