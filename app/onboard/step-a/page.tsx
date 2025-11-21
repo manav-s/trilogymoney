@@ -86,9 +86,9 @@ export default function StepA() {
   }
 
   return (
-    <div className="h-screen bg-gray-50 relative overflow-hidden flex flex-col justify-center">
+    <div className="min-h-screen bg-gray-50 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-50"></div>
-      <div className="w-full max-w-2xl mx-auto px-4 py-8 relative z-10">
+      <div className="max-w-2xl mx-auto px-4 py-16 relative z-10">
         {/* Progress Bar */}
         <div className="mb-12">
           <div className="flex items-center justify-between text-sm text-gray-500 mb-2 lowercase">

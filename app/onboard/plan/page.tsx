@@ -53,8 +53,8 @@ export default function PlanPage() {
   }, [router]);
 
   return (
-    <div className="h-screen bg-white overflow-hidden flex flex-col justify-center">
-      <div className="w-full max-w-2xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-white">
+      <div className="max-w-2xl mx-auto px-4 py-16">
         <h1 className="text-4xl font-bold text-gray-900 mb-6 lowercase">your weekly money plan</h1>
         <div className="space-y-4">
           {[
