@@ -242,6 +242,16 @@ export async function handleLLMConversation(phone: string, userText: string) {
 
       const transactionsJson = JSON.stringify(txns.transactions);
       const summaryJson = JSON.stringify(txns.summary);
+
+      // TEMPORARY DEBUG LOGGING
+      console.log('===== TRANSACTION DEBUG LOG =====');
+      console.log('User Query:', userText);
+      console.log('Effective Query:', JSON.stringify(effectiveQuery, null, 2));
+      console.log('Transactions Count:', txns.transactions.length);
+      console.log('Transactions JSON:', transactionsJson);
+      console.log('Summary JSON:', summaryJson);
+      console.log('Range Label:', rangeLabel);
+      console.log('=================================');
       const queryForPrompt: TransactionQuery = effectiveQuery;
       const categorySummaryLines = txns.summary.perCategory.map((bucket) => {
         const spend = Math.round(bucket.spendAmount);
