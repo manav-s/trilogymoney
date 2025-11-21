@@ -84,11 +84,28 @@ export async function handleLLMConversation(phone: string, userText: string) {
       parsedResult.query.from = llmParsed.dateRange.from;
       parsedResult.query.to = llmParsed.dateRange.to;
       parsedResult.overrideRange = true;
+
+      // If LLM found a date but NO merchant, clear any bad merchant the regex may have set
+      if (!llmParsed.merchant) {
+        parsedResult.query = {
+          kind: 'recent',
+          limit: parsedResult.query.limit,
+          from: llmParsed.dateRange.from,
+          to: llmParsed.dateRange.to,
+        };
+      }
     }
 
-    // If LLM found a merchant, use it (but only if regex didn't already find one)
-    if (llmParsed.merchant && parsedResult.query.kind === 'merchantSpend' && !parsedResult.query.merchant) {
-      parsedResult.query.merchant = llmParsed.merchant;
+    // If LLM found a merchant (regardless of date), use it
+    if (llmParsed.merchant) {
+      const finalRange = llmParsed.dateRange ?? { from: parsedResult.query.from, to: parsedResult.query.to };
+      parsedResult.query = {
+        kind: 'merchantSpend',
+        limit: 100,
+        merchant: llmParsed.merchant,
+        from: finalRange.from,
+        to: finalRange.to,
+      };
     }
 
     const storedQueryRaw = (user.lastTransactionsQuery as StoredTransactionsQuery | null) ?? null;
