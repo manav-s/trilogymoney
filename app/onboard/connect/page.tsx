@@ -116,9 +116,9 @@ export default function ConnectPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="h-screen bg-white overflow-hidden flex flex-col">
       {/* Navigation (copied from homepage) */}
-      <nav className="flex items-center justify-between p-6 lg:px-8 max-w-7xl mx-auto">
+      <nav className="flex items-center justify-between p-6 lg:px-8 max-w-7xl mx-auto w-full shrink-0">
         <div className="flex items-center">
           <span className="text-xl font-bold text-gray-900 lowercase">
             trilogy
@@ -130,7 +130,7 @@ export default function ConnectPage() {
           </a>
         </div>
       </nav>
-      <div className="max-w-2xl mx-auto px-4 py-16">
+      <div className="w-full max-w-2xl mx-auto px-4 py-6 flex-1 flex flex-col justify-center">
         <h1 className="text-4xl font-bold text-gray-900 mb-2 lowercase">connect your accounts</h1>
         <p className="text-gray-600 lowercase mb-6">add your bank accounts and credit cards</p>
 

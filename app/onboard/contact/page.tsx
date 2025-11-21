@@ -8,7 +8,7 @@ const ONBOARDING_PHONE_KEY = "onboarding_phone";
 export default function ContactPage() {
   const [loading, setLoading] = useState(false);
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center pt-10 px-6 pb-10">
+    <div className="h-screen bg-gray-50 flex flex-col items-center justify-center px-6 pb-10 overflow-hidden">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Add to Contacts</h1>
       
       <div className="flex gap-2 mb-8">

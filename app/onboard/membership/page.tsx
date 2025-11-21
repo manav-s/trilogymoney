@@ -24,11 +24,11 @@ export default function MembershipPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 relative overflow-hidden">
+    <div className="h-screen bg-gray-50 relative overflow-hidden flex flex-col justify-center">
       {/* Background Pattern */}
       <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-50"></div>
       
-      <div className="max-w-2xl mx-auto px-4 py-16 relative z-10">
+      <div className="w-full max-w-2xl mx-auto px-4 py-8 relative z-10">
         {/* Hero Stat Card */}
         <div className="mb-12 transform hover:scale-[1.02] transition-transform duration-500">
           <div className="bg-white/60 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-xl text-center relative overflow-hidden group">
