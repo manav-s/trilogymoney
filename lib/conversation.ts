@@ -75,6 +75,22 @@ export async function handleLLMConversation(phone: string, userText: string) {
     const profile = { name: user.name, timezone: user.timezone, preferredTime: user.preferredTime } as const;
     const intent = await chooseIntentFromText(userText);
     const parsedResult = parseTransactionsQueryWithOverrides(userText);
+
+    // Use LLM to enhance parsing (handles dates like "november 18th" better than regex)
+    const llmParsed = await import('./llm').then(m => m.parseQueryParams(userText, new Date().toISOString().slice(0, 10)));
+
+    // If LLM found a date range, override the regex parser's result
+    if (llmParsed.dateRange) {
+      parsedResult.query.from = llmParsed.dateRange.from;
+      parsedResult.query.to = llmParsed.dateRange.to;
+      parsedResult.overrideRange = true;
+    }
+
+    // If LLM found a merchant, use it (but only if regex didn't already find one)
+    if (llmParsed.merchant && parsedResult.query.kind === 'merchantSpend' && !parsedResult.query.merchant) {
+      parsedResult.query.merchant = llmParsed.merchant;
+    }
+
     const storedQueryRaw = (user.lastTransactionsQuery as StoredTransactionsQuery | null) ?? null;
     const storedQueryFresh = storedQueryRaw
       ? shouldReuseStoredQuery(parsedResult, storedQueryRaw)

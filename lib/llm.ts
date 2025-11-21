@@ -100,6 +100,83 @@ Return the bare token ONLY.`;
   }
 }
 
+export type ParsedQueryParams = {
+  dateRange: { from: string; to: string } | null;
+  merchant: string | null;
+};
+
+/**
+ * Use the LLM to extract structured query parameters (date range, merchant)
+ * from a natural language query. This handles edge cases better than regex.
+ */
+export async function parseQueryParams(userText: string, currentDate: string): Promise<ParsedQueryParams> {
+  if (!OPENAI_API_KEY) {
+    return { dateRange: null, merchant: null };
+  }
+
+  const system = `You are a query parser. Extract structured data from user queries.
+Current date: ${currentDate}
+
+Extract:
+1. Date range (from/to in YYYY-MM-DD format)
+2. Merchant name (if mentioned)
+
+Return ONLY valid JSON:
+{
+  "dateRange": { "from": "YYYY-MM-DD", "to": "YYYY-MM-DD" } or null,
+  "merchant": "merchant name" or null
+}
+
+Examples:
+- "tell me about spend on november 18th" → { "dateRange": { "from": "2025-11-18", "to": "2025-11-18" }, "merchant": null }
+- "how much did I spend on the 18th?" → { "dateRange": { "from": "2025-11-18", "to": "2025-11-18" }, "merchant": null }
+- "what about november 20th" → { "dateRange": { "from": "2025-11-20", "to": "2025-11-20" }, "merchant": null }
+- "starbucks spending" → { "dateRange": null, "merchant": "starbucks" }
+- "today" → { "dateRange": { "from": "${currentDate}", "to": "${currentDate}" }, "merchant": null }
+- "this month" → { "dateRange": { "from": "${currentDate.slice(0, 8)}01", "to": "${currentDate}" }, "merchant": null }
+
+CRITICAL: If no clear date is mentioned, return null for dateRange.`;
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: userText },
+        ],
+        max_tokens: 80,
+        response_format: { type: 'json_object' },
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      return { dateRange: null, merchant: null };
+    }
+
+    const data = await res.json();
+    const rawText = extractTextFromOpenAI(data);
+    if (!rawText) {
+      return { dateRange: null, merchant: null };
+    }
+
+    const parsed = JSON.parse(rawText) as ParsedQueryParams;
+    return parsed;
+  } catch (err) {
+    logError('llm.parseQuery', err, { userText });
+    return { dateRange: null, merchant: null };
+  }
+}
+
 /**
  * Ask the model to produce the final SMS copy given tool results.
  * Pass only small, non-sensitive summaries.
