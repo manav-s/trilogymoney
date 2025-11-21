@@ -171,7 +171,13 @@ export default function ConnectPage() {
                 textDecoration: 'none',
                 display: 'inline-block',
                 color: 'white',
-                backgroundColor: '#2563eb'
+                backgroundColor: '#2563eb',
+                borderRadius: '9999px',
+                padding: '12px 24px',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: 500,
               }}
             >
               add account
