@@ -254,7 +254,7 @@ export default function QuizPage() {
             <span>{progress}%</span>
           </div>
           <div className="w-full bg-gray-200/50 rounded-full h-2 backdrop-blur-sm">
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2 rounded-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(37,99,235,0.3)]" style={{ width: `${progress}%` }}></div>
+            <div className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(37,99,235,0.3)]" style={{ width: `${progress}%` }}></div>
           </div>
         </div>
 
@@ -353,7 +353,7 @@ export default function QuizPage() {
         {/* nav */}
         <div className="mt-10 flex justify-between">
           <button onClick={goBack} disabled={step === 0} className="px-6 py-4 rounded-full bg-gray-100 text-gray-900 lowercase disabled:opacity-50 hover:bg-gray-200 transition-all duration-200">back</button>
-          <button onClick={goNext} disabled={!hasAnswer} className="px-8 py-4 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white lowercase hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">{isLast ? "finish" : "next →"}</button>
+          <button onClick={goNext} disabled={!hasAnswer} className="px-8 py-4 rounded-full bg-[#007AFF] text-white lowercase hover:bg-[#0051D5] disabled:opacity-50 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">{isLast ? "finish" : "next →"}</button>
         </div>
       </div>
     </div>

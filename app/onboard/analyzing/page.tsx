@@ -79,7 +79,7 @@ export default function AnalyzingPage() {
               >
                 {/* Progress Fill */}
                 <div
-                  className={`absolute inset-0 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 transition-all duration-1000 ${
+                  className={`absolute inset-0 bg-blue-500/10 transition-all duration-1000 ${
                     isActive || isComplete ? 'translate-x-0' : '-translate-x-full'
                   }`}
                   style={{
@@ -93,7 +93,7 @@ export default function AnalyzingPage() {
                   <div
                     className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ${
                       isComplete
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 scale-100'
+                        ? 'bg-blue-600 scale-100'
                         : isActive
                         ? 'bg-blue-100 scale-110 animate-pulse'
                         : 'bg-gray-100 scale-100'

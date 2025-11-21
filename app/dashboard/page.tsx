@@ -143,7 +143,7 @@ export default function DashboardPage() {
               <button
                 onClick={createLinkToken}
                 disabled={linking}
-                className="px-6 py-3 rounded-lg bg-indigo-600 text-white lowercase font-medium disabled:opacity-50 hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-900/30"
+                className="px-6 py-3 rounded-lg bg-blue-600 text-white lowercase font-medium disabled:opacity-50 hover:bg-blue-500 transition-colors shadow-lg shadow-blue-900/30"
               >
                 {linking ? 'opening link…' : 'add account'}
               </button>

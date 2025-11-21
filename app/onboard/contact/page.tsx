@@ -71,7 +71,7 @@ export default function ContactPage() {
             }
           }}
           disabled={loading}
-          className="w-full max-w-md mx-auto block bg-gray-900 text-white py-4 rounded-full font-medium text-lg shadow-lg active:scale-[0.98] transition-transform disabled:opacity-60"
+          className="w-full max-w-md mx-auto block bg-blue-600 text-white py-4 rounded-full font-medium text-lg shadow-lg active:scale-[0.98] transition-transform disabled:opacity-60 hover:bg-blue-700"
         >
           {loading ? 'redirecting...' : 'Continue'}
         </button>

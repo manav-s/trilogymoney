@@ -182,7 +182,7 @@ export default function Home() {
 
             {/* Step 1 */}
             <div className="text-center space-y-6 group">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-white border-2 border-blue-100 text-blue-600 flex items-center justify-center text-2xl font-bold shadow-lg group-hover:scale-110 group-hover:border-blue-500 transition-all duration-300 bg-gradient-to-br from-white to-blue-50">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-white border-2 border-blue-100 text-blue-600 flex items-center justify-center text-2xl font-bold shadow-lg group-hover:scale-110 group-hover:border-blue-500 transition-all duration-300 bg-blue-50">
                 1
               </div>
               <h3 className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
@@ -208,7 +208,7 @@ export default function Home() {
 
             {/* Step 3 */}
             <div className="text-center space-y-6 group">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-white border-2 border-blue-100 text-blue-600 flex items-center justify-center text-2xl font-bold shadow-lg group-hover:scale-110 group-hover:border-blue-500 transition-all duration-300 bg-gradient-to-br from-white to-blue-50">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-white border-2 border-blue-100 text-blue-600 flex items-center justify-center text-2xl font-bold shadow-lg group-hover:scale-110 group-hover:border-blue-500 transition-all duration-300 bg-blue-50">
                 3
               </div>
               <h3 className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">

@@ -166,7 +166,7 @@ export default function ConnectPage() {
             <PlaidLink
               token={linkToken}
               onSuccess={onSuccess}
-              className="px-6 py-3 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white focus:outline-none focus:ring-0 outline-none ring-0 border-0 shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 hover:-translate-y-0.5 inline-block cursor-pointer lowercase font-medium"
+              className="px-6 py-3 rounded-full bg-blue-600 text-white focus:outline-none focus:ring-0 outline-none ring-0 border-0 shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all duration-300 hover:-translate-y-0.5 inline-block cursor-pointer lowercase font-medium"
               style={{ 
                 textDecoration: 'none',
                 display: 'inline-block',
@@ -195,7 +195,7 @@ export default function ConnectPage() {
           <button
             onClick={goToNext}
             disabled={totalAccounts === 0 || loadingExchange}
-            className="w-full px-10 py-5 text-xl font-semibold rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 focus:ring-4 focus:ring-blue-600/20 transition-all duration-300 lowercase shadow-lg hover:shadow-blue-500/30 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+            className="w-full px-10 py-5 text-xl font-semibold rounded-full bg-blue-600 text-white hover:bg-blue-700 focus:ring-4 focus:ring-blue-600/20 transition-all duration-300 lowercase shadow-lg hover:shadow-blue-500/30 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
             next
           </button>

@@ -49,7 +49,7 @@ export default function CheckoutPage() {
               setLoading(false);
             }
           }}
-          className="px-8 py-4 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white lowercase hover:from-indigo-700 hover:to-purple-700 disabled:opacity-60 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+          className="px-8 py-4 rounded-full bg-blue-600 text-white lowercase hover:bg-blue-700 disabled:opacity-60 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
           disabled={loading}
         >
           {loading ? "redirecting…" : "continue to stripe →"}
