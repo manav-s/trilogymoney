@@ -8,122 +8,109 @@ datasource db {
 }
 
 model User {
-  id                String         @id @default(cuid())
-  // clerkId removed with Clerk
-  email             String?        @unique
-  phone             String?        @unique // E.164 format
-  phoneVerified     Boolean        @default(false)
-  timezone          String         @default("America/Los_Angeles")
-  preferredTime     String         @default("09:00") // HH:mm format
-  name              String?
-  
-  // Onboarding artifacts
-  quizAnswers       Json?
-  analysisSummary   Json?
-  
-  // Onboarding state
-  onboardingStatus  String         @default("pre_auth") // pre_auth -> profile_collected -> quiz_complete -> analysis_complete -> plaid_connected -> subscribed -> complete
-  consent           Boolean        @default(false)
-  
-  // Service status
-  isActive          Boolean        @default(true)
-  messagingStatus   String         @default("inactive") // inactive, active, stopped
-  lastWeeklyDigestAt DateTime?
-  lastTransactionsQuery Json?
-  welcomeSentAt     DateTime?
+  id                        String      @id @default(cuid())
+  email                     String?     @unique
+  phone                     String?     @unique
+  phoneVerified             Boolean     @default(false)
+  timezone                  String      @default("America/Los_Angeles")
+  preferredTime             String      @default("09:00")
+  name                      String?
+  onboardingStatus          String      @default("pre_auth")
+  consent                   Boolean     @default(false)
+  isActive                  Boolean     @default(true)
+  messagingStatus           String      @default("inactive")
+  createdAt                 DateTime    @default(now())
+  updatedAt                 DateTime    @updatedAt
+  analysisSummary           Json?
+  billingStatus             String?
+  quizAnswers               Json?
+  stripeCustomerId          String?
+  stripePriceId             String?
+  stripeSubscriptionId      String?
+  lastWeeklyDigestAt        DateTime?
+  lastTransactionsQuery     Json?
   postCheckoutBalanceSentAt DateTime?
+  lastBalanceUpdateAt       DateTime?
+  welcomeSentAt             DateTime?
+  messages                  Message[]
+  items                     PlaidItem[]
 
-  // Plaid
-  items             PlaidItem[]
-
-  // Billing
-  stripeCustomerId     String?
-  stripeSubscriptionId String?
-  stripePriceId        String?
-  billingStatus        String? // trialing | active | incomplete | canceled
-  
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  
-  messages          Message[]
-  
   @@index([phone])
 }
 
 model PlaidItem {
-  id              String       @id @default(cuid())
+  id              String         @id @default(cuid())
   userId          String
-  itemId          String       @unique
-  accessToken     String       @db.Text // Encrypted with ENCRYPTION_KEY
+  itemId          String         @unique
+  accessToken     String
   institutionName String?
   lastSync        DateTime?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
   accounts        PlaidAccount[]
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
 }
 
 model PlaidAccount {
-  id               String     @id @default(cuid())
+  id               String    @id @default(cuid())
   itemId           String
-  accountId        String     @unique
-  name             String
-  officialName     String?
-  mask             String?
-  type             String
-  subtype          String?
+  accountId        String    @unique
+  isActive         Boolean   @default(true)
+  lastSync         DateTime?
+  availableBalance Float?
   currency         String?
   currentBalance   Float?
-  availableBalance Float?
-  lastSync         DateTime?
-  isActive         Boolean    @default(true)
-  item             PlaidItem  @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  mask             String?
+  name             String
+  officialName     String?
+  subtype          String?
+  type             String
+  item             PlaidItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
   @@index([itemId])
 }
 
 model Message {
-  id        String      @id @default(cuid())
-  userId    String
-  direction String      // 'outbound' or 'inbound'
-  content   String      @db.Text // Encrypted with ENCRYPTION_KEY
-  
-  // Metadata (not encrypted)
-  status    String      // 'sent', 'delivered', 'failed', 'received'
-  provider  String?     @default("blooio")
-  providerId String?    // External message ID from SMS provider
-  error     String?     @db.Text
-  
-  sentAt    DateTime    @default(now())
-  expiresAt DateTime    // Auto-calculated: sentAt + 60 days
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  userId     String
+  direction  String
+  content    String
+  status     String
+  provider   String?  @default("blooio")
+  providerId String?
+  error      String?
+  sentAt     DateTime @default(now())
+  expiresAt  DateTime
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, sentAt])
-  @@index([expiresAt]) // For cleanup jobs
+  @@index([expiresAt])
 }
 
 model MagicLink {
-  id        String   @id // Short nanoid (8-10 chars)
-  phone     String   // E.164 format
+  id        String   @id
+  phone     String
   used      Boolean  @default(false)
-  expiresAt DateTime // 10 minutes from creation
+  expiresAt DateTime
   createdAt DateTime @default(now())
-  
-  @@index([expiresAt]) // For cleanup jobs
+
+  @@index([expiresAt])
   @@index([used, expiresAt])
 }
 
 model Feedback {
   id          String   @id @default(cuid())
-  userId      String   // Links to User but no explicit relation
-  userMessage String   @db.Text // The frustrated/feedback message
-  sentiment   String?  // 'frustrated' | 'feedback' | 'bug_report'
-  context     Json?    // Conversation context, recent history
+  userId      String
+  userMessage String
+  sentiment   String?
+  context     Json?
   resolved    Boolean  @default(false)
-  notes       String?  @db.Text // Admin notes
+  notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   @@index([userId, createdAt])
   @@index([resolved])
 }
