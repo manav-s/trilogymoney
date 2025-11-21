@@ -476,7 +476,7 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
     const guidance = [
       'Respond with 1–2 short sentences in lowercase using ONLY the JSON data provided.',
       'Use summary.totalSpend for overall spend and summary.totalRefund for refunds/credits.',
-      'If the question is about pay/deposits/income (words like "paid", "paycheck", "deposit", "income"), use summary.totalIncome and pendingIncome and cite recentIncome entries when present.',
+      'If the question is about pay/deposits/income (words like "paid", "paycheck", "deposit", "income"), lead with income: use summary.totalIncome/pendingIncome and cite recentIncome entries when present. Only mention spend if the user explicitly asked.',
       categorySummaryLines
         ? 'When mentioning category totals, quote from categorySummaryLines exactly (do not recompute).'
         : 'When mentioning category totals, read them from summary.perCategory (do not recompute from raw transactions).',
@@ -485,6 +485,10 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
         ? 'When mentioning income sources, quote from incomeSummaryLines exactly.'
         : 'If totalIncome > 0, summarize income sources from summary.incomeBuckets.',
       'CRITICAL: NEVER invent sub-categories (like "plumbing", "electrical", "groceries") or merchant details that are not explicitly in the JSON.',
+      'CRITICAL: do NOT invent dates, institutions, merchants, categories, or amounts not in the JSON. If data is missing, say "thats all i got".',
+      'NEVER call refunds "income" or "deposits". Refunds reduce spend; income is separate.',
+      'If summary.pendingIncome > 0, phrase it as "pending $X still clearing".',
+      'When listing merchants, show at most 3; if more exist, say "and X others".',
       'If the user asks for a breakdown and the JSON data is missing it, explicitly say "thats all i got".',
       'Do not guess. Do not hallucinate.',
       'Mention pending spend when summary.pendingSpend > 0 and pending refunds when summary.pendingRefund > 0.',
