@@ -170,7 +170,8 @@ export default function ConnectPage() {
               style={{ 
                 textDecoration: 'none',
                 display: 'inline-block',
-                color: 'white'
+                color: 'white',
+                backgroundColor: '#2563eb'
               }}
             >
               add account
