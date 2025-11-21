@@ -462,6 +462,7 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
     const question = ((ctx.userText as string) || '').trim();
     const questionLine = question ? `User question: "${question}".` : 'User question: transactions summary.';
     const query = (ctx.query as TransactionQuery | undefined) ?? null;
+    const history = (ctx.history as string) || '';
     const queryJson = JSON.stringify(query);
     const categorySummaryLines =
       Array.isArray(ctx.categorySummaryLines) && (ctx.categorySummaryLines as string[]).length > 0
@@ -518,6 +519,8 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
     const recentIncomeLine = recentIncome.length > 0 ? `Recent income: ${JSON.stringify(recentIncome)}` : '';
     return `${guidance}
 ${questionLine}
+Recent messages:
+${history}
 ${categoriesLine}
 ${categoryFocusLine}
 ${categoryBreakdownLine}
