@@ -58,10 +58,14 @@ export type TransactionsSummary = {
   pendingAmount: number;
   pendingSpend: number;
   pendingRefund: number;
+  totalIncome: number;
+  pendingIncome: number;
+  incomeCount: number;
   count: number;
   pendingCount: number;
   perMerchant: TransactionsSummaryBucket[];
   perCategory: TransactionsSummaryBucket[];
+  incomeBuckets: TransactionsSummaryBucket[];
 };
 
 export type GetTransactionsResult = {
@@ -129,9 +133,6 @@ const EXCLUDED_SUMMARY_CATEGORY_VALUES = new Set([
   'bank fees',
   'service charges',
   'interest',
-  'income',
-  'payroll',
-  'investment and retirement income',
   'cash advance',
   'cash withdrawal',
   'credit card payment',
@@ -148,8 +149,14 @@ const EXCLUDED_SUMMARY_CATEGORY_PREFIXES = [
   'cash withdrawal',
   'credit card payment',
   'credit card bill payment',
-  'investment and retirement income',
 ];
+
+const INCOME_CATEGORIES = new Set([
+  'income',
+  'payroll',
+  'deposit',
+  'investment and retirement income',
+]);
 
 export function isExcludedFromSummary(txn: TransactionSummary): boolean {
   const categoryKey = normalizeCategoryKey(txn.category);
@@ -158,6 +165,12 @@ export function isExcludedFromSummary(txn: TransactionSummary): boolean {
   return EXCLUDED_SUMMARY_CATEGORY_PREFIXES.some((prefix) =>
     categoryKey.startsWith(prefix)
   );
+}
+
+export function isIncome(txn: TransactionSummary): boolean {
+  const categoryKey = normalizeCategoryKey(txn.category);
+  if (!categoryKey) return false;
+  return INCOME_CATEGORIES.has(categoryKey);
 }
 
 function accumulateBucket(
@@ -256,12 +269,34 @@ export function buildTransactionsSummary(
   let pendingAmount = 0;
   let pendingSpend = 0;
   let pendingRefund = 0;
+  let totalIncome = 0;
+  let pendingIncome = 0;
+  let incomeCount = 0;
   let count = 0;
   let pendingCount = 0;
   const merchantMap = new Map<string, TransactionsSummaryBucket>();
   const categoryMap = new Map<string, TransactionsSummaryBucket>();
+  const incomeMap = new Map<string, TransactionsSummaryBucket>();
 
   for (const txn of transactions) {
+    if (isIncome(txn)) {
+      const incomeAmount = Math.abs(txn.amount);
+      totalIncome += incomeAmount;
+      incomeCount += 1;
+      if (txn.pending) {
+        pendingIncome += incomeAmount;
+      }
+
+      const merchantKey =
+        txn.merchant?.trim().toLowerCase() ||
+        txn.description?.trim().toLowerCase() ||
+        'unknown';
+      const merchantLabel = txn.merchant?.trim() || txn.description?.trim() || 'unknown merchant';
+      const normalizedTxn: TransactionSummary = { ...txn, amount: incomeAmount };
+      accumulateBucket(incomeMap, merchantKey, merchantLabel, normalizedTxn);
+      continue;
+    }
+
     if (isExcludedFromSummary(txn)) {
       continue;
     }
@@ -302,10 +337,14 @@ export function buildTransactionsSummary(
     pendingAmount,
     pendingSpend,
     pendingRefund,
+    totalIncome,
+    pendingIncome,
+    incomeCount,
     count,
     pendingCount,
     perMerchant: finalizeBuckets(merchantMap),
     perCategory: finalizeBuckets(categoryMap),
+    incomeBuckets: finalizeBuckets(incomeMap),
   };
 }
 
@@ -532,5 +571,3 @@ export async function getTransactions(args: GetTransactionsArgs): Promise<GetTra
 
   return result;
 }
-
-

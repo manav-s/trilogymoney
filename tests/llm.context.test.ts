@@ -41,16 +41,12 @@ const TEST_EXCLUDED_SUMMARY_CATEGORY_VALUES = new Set([
   'bank_fees',
   'service_charges',
   'interest',
-  'income',
-  'payroll',
-  'investment_and_retirement_income',
   'cash_advance',
   'cash_withdrawal',
   'credit_card_payment',
   'credit_card_bill_payment',
   'payment',
   'mortgage',
-  'deposit',
 ]);
 
 const TEST_EXCLUDED_SUMMARY_CATEGORY_PREFIXES = [
@@ -61,8 +57,14 @@ const TEST_EXCLUDED_SUMMARY_CATEGORY_PREFIXES = [
   'cash_withdrawal',
   'credit_card_payment',
   'credit_card_bill_payment',
-  'investment_and_retirement_income',
 ];
+
+const TEST_INCOME_CATEGORIES = new Set([
+  'income',
+  'payroll',
+  'deposit',
+  'investment_and_retirement_income',
+]);
 
 function roundAmount(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100;
@@ -74,6 +76,13 @@ function isExcludedCategory(category?: string | null): boolean {
   if (!key) return false;
   if (TEST_EXCLUDED_SUMMARY_CATEGORY_VALUES.has(key)) return true;
   return TEST_EXCLUDED_SUMMARY_CATEGORY_PREFIXES.some((prefix) => key.startsWith(prefix));
+}
+
+function isIncomeCategory(category?: string | null): boolean {
+  if (!category) return false;
+  const key = category.trim().toLowerCase();
+  if (!key) return false;
+  return TEST_INCOME_CATEGORIES.has(key);
 }
 
 function accumulateBucketTotals(
@@ -146,12 +155,31 @@ function computeSummaryForFixture(
   let pendingAmount = 0;
   let pendingSpend = 0;
   let pendingRefund = 0;
+  let totalIncome = 0;
+  let pendingIncome = 0;
+  let incomeCount = 0;
   let count = 0;
   let pendingCount = 0;
   const merchantMap = new Map<string, BucketAccumulator>();
   const categoryMap = new Map<string, BucketAccumulator>();
+  const incomeMap = new Map<string, BucketAccumulator>();
 
   for (const txn of transactions) {
+    if (isIncomeCategory(txn.category)) {
+      const amt = Math.abs(txn.amount);
+      totalIncome += amt;
+      incomeCount += 1;
+      if (txn.pending) pendingIncome += amt;
+
+      const merchantKey =
+        txn.merchant?.trim().toLowerCase() ||
+        txn.description?.trim().toLowerCase() ||
+        'unknown';
+      const merchantLabel = txn.merchant?.trim() || txn.description?.trim() || 'unknown merchant';
+      accumulateBucketTotals(incomeMap, merchantKey, merchantLabel, { ...txn, amount: amt });
+      continue;
+    }
+
     if (isExcludedCategory(txn.category)) continue;
 
     totalAmount += txn.amount;
@@ -190,10 +218,14 @@ function computeSummaryForFixture(
     pendingAmount: roundAmount(pendingAmount),
     pendingSpend: roundAmount(pendingSpend),
     pendingRefund: roundAmount(pendingRefund),
+    totalIncome: roundAmount(totalIncome),
+    pendingIncome: roundAmount(pendingIncome),
+    incomeCount,
     count,
     pendingCount,
     perMerchant: finalizeBucketTotals(merchantMap),
     perCategory: finalizeBucketTotals(categoryMap),
+    incomeBuckets: finalizeBucketTotals(incomeMap),
   };
 }
 
@@ -732,6 +764,76 @@ describe('llm prompt includes onboarding context', () => {
       },
     });
   });
+
+  it('includes income totals and recent income when the user asks about getting paid', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'test');
+    let capturedUserContent = '';
+    mockFetchCapture((json) => {
+      const msgs = json?.messages ?? [];
+      const userMsg = msgs.find((m: any) => m.role === 'user');
+      capturedUserContent = userMsg?.content || '';
+    });
+
+    const incomeTx = {
+      id: 'inc-1',
+      date: '2025-11-15',
+      amount: -2000,
+      currency: 'USD',
+      merchant: 'Gusto',
+      description: 'Gusto Payroll',
+      category: 'payroll',
+      pending: false,
+      account: { id: 'acct-1', name: 'Checking', institution: 'Bank', mask: '1234' },
+    };
+
+    const { generateReply } = await import('../lib/llm');
+    await generateReply('transactions' as any, {
+      transactions: [incomeTx],
+      moreAvailable: false,
+      history: 'you: did i get paid?',
+      userText: 'did i get paid?',
+      profile: { name: 'Test User' },
+      summaryJson: JSON.stringify({
+        from: '2025-11-10',
+        to: '2025-11-16',
+        totalAmount: 0,
+        totalSpend: 0,
+        totalRefund: 0,
+        pendingAmount: 0,
+        pendingSpend: 0,
+        pendingRefund: 0,
+        totalIncome: 2000,
+        pendingIncome: 150,
+        incomeCount: 2,
+        count: 1,
+        pendingCount: 0,
+        perMerchant: [],
+        perCategory: [],
+        incomeBuckets: [
+          {
+            label: 'Gusto',
+            amount: 2000,
+            spendAmount: 2000,
+            refundAmount: 0,
+            pendingAmount: 0,
+            pendingSpendAmount: 0,
+            pendingRefundAmount: 0,
+            count: 1,
+            pendingCount: 0,
+          },
+        ],
+      }),
+      transactionsJson: JSON.stringify([incomeTx]),
+      incomeSummaryLines: ['Gusto: $2000 income'],
+      recentIncome: [{ date: '2025-11-15', merchant: 'Gusto', amount: 2000, pending: false }],
+      query: { kind: 'recent', limit: 50, from: '2025-11-10', to: '2025-11-16' },
+    });
+
+    expect(capturedUserContent).toContain('totalIncome');
+    expect(capturedUserContent).toContain('pendingIncome');
+    expect(capturedUserContent).toContain('Income summary lines:');
+    expect(capturedUserContent).toContain('Gusto: $2000 income');
+    expect(capturedUserContent).toContain('Recent income:');
+    expect(capturedUserContent).toContain('did i get paid');
+  });
 });
-
-

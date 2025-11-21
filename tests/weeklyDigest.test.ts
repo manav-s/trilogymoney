@@ -43,6 +43,9 @@ describe('weekly digest helpers', () => {
       pendingAmount: 15,
       pendingSpend: 15,
       pendingRefund: 0,
+      totalIncome: 0,
+      pendingIncome: 0,
+      incomeCount: 0,
       count: 5,
       pendingCount: 1,
       perMerchant: [
@@ -54,6 +57,7 @@ describe('weekly digest helpers', () => {
         makeBucket('GENERAL_MERCHANDISE', 150),
         makeBucket('FOOD_AND_DRINK', 55),
       ],
+      incomeBuckets: [],
     };
 
     const highlights = extractHighlights(summary);
@@ -72,10 +76,14 @@ describe('weekly digest helpers', () => {
       pendingAmount: 0,
       pendingSpend: 0,
       pendingRefund: 0,
+      totalIncome: 0,
+      pendingIncome: 0,
+      incomeCount: 0,
       count: 0,
       pendingCount: 0,
       perMerchant: [],
       perCategory: [],
+      incomeBuckets: [],
     };
 
     expect(extractHighlights(summary)).toEqual(['no_spend']);
@@ -92,6 +100,9 @@ describe('weekly digest helpers', () => {
       pendingAmount: 0,
       pendingSpend: 5.555,
       pendingRefund: 1.111,
+      totalIncome: 0,
+      pendingIncome: 0,
+      incomeCount: 0,
       count: 7,
       pendingCount: 2,
       perMerchant: [
@@ -110,6 +121,7 @@ describe('weekly digest helpers', () => {
         makeBucket('CATEGORY_E', 80),
         makeBucket('CATEGORY_F', 40),
       ],
+      incomeBuckets: [],
     };
 
     const transactions: TransactionSummary[] = [
@@ -234,4 +246,3 @@ describe('generateWeeklyDigestMessage', () => {
     delete process.env.OPENAI_API_KEY;
   });
 });
-

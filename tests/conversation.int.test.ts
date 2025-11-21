@@ -100,6 +100,11 @@ const isExcludedFromSummaryMock = vi.fn((txn?: { category?: string | null }) => 
   const category = txn?.category?.toString().toLowerCase() ?? '';
   return category.includes('transfer');
 });
+const isIncomeMock = vi.fn((txn?: { category?: string | null }) => {
+  const category = txn?.category?.toString().toLowerCase() ?? '';
+  const labels = ['income', 'payroll', 'deposit', 'investment and retirement income'];
+  return labels.some((label) => category.includes(label));
+});
 const buildTransactionsSummaryMock = vi.fn((transactions: any[], params: { from: string; to: string }) => {
   const merchantMap = new Map<string, any>();
   const categoryMap = new Map<string, any>();
@@ -170,16 +175,21 @@ const buildTransactionsSummaryMock = vi.fn((transactions: any[], params: { from:
     pendingAmount: pendingSpend - pendingRefund,
     pendingSpend,
     pendingRefund,
+    totalIncome: 0,
+    pendingIncome: 0,
+    incomeCount: 0,
     count: transactions.length,
     pendingCount,
     perMerchant: Array.from(merchantMap.values()),
     perCategory: Array.from(categoryMap.values()),
+    incomeBuckets: [],
   };
 });
 
 vi.mock('@/lib/transactions', () => ({
   getTransactions: getTransactionsMock,
   isExcludedFromSummary: isExcludedFromSummaryMock,
+  isIncome: isIncomeMock,
   buildTransactionsSummary: buildTransactionsSummaryMock,
 }));
 vi.mock('@/lib/blooio', () => ({
@@ -359,10 +369,14 @@ describe('handleLLMConversation stored query reuse', () => {
           pendingAmount: 0,
           pendingSpend: 0,
           pendingRefund: 0,
+          totalIncome: 0,
+          pendingIncome: 0,
+          incomeCount: 0,
           count: 0,
           pendingCount: 0,
           perMerchant: [],
           perCategory: [],
+          incomeBuckets: [],
         },
       moreAvailable: overrides?.moreAvailable ?? false,
     });
@@ -745,10 +759,14 @@ describe('handleLLMConversation stored query reuse', () => {
         pendingAmount: 0,
         pendingSpend: 0,
         pendingRefund: 0,
+        totalIncome: 0,
+        pendingIncome: 0,
+        incomeCount: 0,
         count: 0,
         pendingCount: 0,
         perMerchant: [],
         perCategory: [],
+        incomeBuckets: [],
       },
     });
     const { handleLLMConversation } = await import('../lib/conversation');
@@ -1363,4 +1381,3 @@ type StoredTransactionsQuery = {
   categoryFocusDisplay?: string | null;
   storedTransactions?: Array<Record<string, unknown>>;
 };
-

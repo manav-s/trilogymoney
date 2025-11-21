@@ -13,6 +13,7 @@ import {
   getTransactions,
   type TransactionSummary,
   isExcludedFromSummary,
+  isIncome,
   buildTransactionsSummary,
 } from '@/lib/transactions';
 import {
@@ -363,12 +364,34 @@ export async function handleLLMConversation(phone: string, userText: string) {
       if (directCategoryReply) {
         body = directCategoryReply;
       } else {
+        const incomeSummaryLines = txns.summary.incomeBuckets.map((bucket) => {
+          const spend = Math.round(bucket.spendAmount);
+          const refunds = Math.round(bucket.refundAmount);
+          if (refunds > 0) {
+            return `${bucket.label}: $${spend} income, $${refunds} refunds`;
+          }
+          return `${bucket.label}: $${spend} income`;
+        });
+
+        const recentIncome = txns.transactions
+          .filter((t) => isIncome(t))
+          .sort((a, b) => b.date.localeCompare(a.date))
+          .slice(0, 3)
+          .map((t) => ({
+            date: t.date,
+            merchant: t.merchant ?? t.description ?? 'unknown',
+            amount: Math.abs(t.amount),
+            pending: t.pending,
+          }));
+
         body = await generateReply('transactions', {
           transactions: txns.transactions,
           moreAvailable: txns.moreAvailable,
           transactionsJson,
           summaryJson,
           categorySummaryLines,
+          incomeSummaryLines,
+          recentIncome,
           history,
           userText,
           profile,
@@ -849,4 +872,3 @@ async function getRecentHistorySnippet(userId: string, days = 30, limit = 30): P
   }
   return lines.join('\n');
 }
-

@@ -451,6 +451,14 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
       typeof ctx.summaryJson === 'string'
         ? ctx.summaryJson
         : JSON.stringify(null);
+    const incomeSummaryLines =
+      Array.isArray(ctx.incomeSummaryLines) && (ctx.incomeSummaryLines as string[]).length > 0
+        ? (ctx.incomeSummaryLines as string[])
+        : null;
+    const recentIncome =
+      Array.isArray(ctx.recentIncome) && (ctx.recentIncome as unknown[]).length > 0
+        ? (ctx.recentIncome as Array<{ date: string; merchant: string | null; amount: number; pending?: boolean }>)
+        : [];
     const question = ((ctx.userText as string) || '').trim();
     const questionLine = question ? `User question: "${question}".` : 'User question: transactions summary.';
     const query = (ctx.query as TransactionQuery | undefined) ?? null;
@@ -468,14 +476,19 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
     const guidance = [
       'Respond with 1–2 short sentences in lowercase using ONLY the JSON data provided.',
       'Use summary.totalSpend for overall spend and summary.totalRefund for refunds/credits.',
+      'If the question is about pay/deposits/income (words like "paid", "paycheck", "deposit", "income"), use summary.totalIncome and pendingIncome and cite recentIncome entries when present.',
       categorySummaryLines
         ? 'When mentioning category totals, quote from categorySummaryLines exactly (do not recompute).'
         : 'When mentioning category totals, read them from summary.perCategory (do not recompute from raw transactions).',
       'When mentioning merchant totals, use summary.perMerchant when available.',
+      incomeSummaryLines
+        ? 'When mentioning income sources, quote from incomeSummaryLines exactly.'
+        : 'If totalIncome > 0, summarize income sources from summary.incomeBuckets.',
       'CRITICAL: NEVER invent sub-categories (like "plumbing", "electrical", "groceries") or merchant details that are not explicitly in the JSON.',
       'If the user asks for a breakdown and the JSON data is missing it, explicitly say "thats all i got".',
       'Do not guess. Do not hallucinate.',
       'Mention pending spend when summary.pendingSpend > 0 and pending refunds when summary.pendingRefund > 0.',
+      'Mention pending income when summary.pendingIncome > 0.',
       'Do not offer to fetch more data.',
       rangeLabel
         ? `Unless the user clearly asked for different dates, keep all amounts scoped to ${rangeLabel} and start your answer with "for ${rangeLabel},".`
@@ -497,12 +510,16 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
     const categoryFocusLine = categoryFocusLabel ? `Category focus: ${categoryFocusLabel}` : '';
     const categoryBreakdownLine = categoryBreakdownJson ? `Category breakdown JSON: ${categoryBreakdownJson}` : '';
     const categoryTotalsLine = categoryFocusTotalsJson ? `Category focus totals JSON: ${categoryFocusTotalsJson}` : '';
+    const incomeSummaryLine = incomeSummaryLines ? `Income summary lines: ${JSON.stringify(incomeSummaryLines)}` : '';
+    const recentIncomeLine = recentIncome.length > 0 ? `Recent income: ${JSON.stringify(recentIncome)}` : '';
     return `${guidance}
 ${questionLine}
 ${categoriesLine}
 ${categoryFocusLine}
 ${categoryBreakdownLine}
 ${categoryTotalsLine}
+${incomeSummaryLine}
+${recentIncomeLine}
 Query JSON: ${queryJson}
 Summary JSON: ${summaryJson}
 Transactions JSON: ${transactionsJson}`;
@@ -695,4 +712,3 @@ function extractTextFromOpenAI(data: unknown): string | null {
     return null;
   }
 }
-

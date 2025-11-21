@@ -134,7 +134,7 @@ export async function runWeeklyDigestForUser(
   }
 
   const filteredTransactions = transactionsResult.transactions.filter(
-    (txn) => !isExcludedFromSummary(txn)
+    (txn) => !isExcludedFromSummary(txn) || isIncome(txn)
   );
   const digestSummary = buildTransactionsSummary(filteredTransactions, digestRange);
   const highlights = extractHighlights(digestSummary);
