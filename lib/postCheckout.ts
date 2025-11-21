@@ -4,6 +4,7 @@ import { getBalancesBreakdown } from '@/lib/balances';
 import { generateReply } from '@/lib/llm';
 import { splitIntoSmsSegments } from '@/lib/sms';
 import { logError, logger } from '@/lib/logger';
+import { runWeeklyDigestForUser } from '@/lib/weeklyDigestJob';
 
 const WELCOME_SCRIPT = `welcome to trilogy! you're live now.
 
@@ -46,6 +47,10 @@ export async function handlePostCheckoutActivation(userId: string): Promise<void
 
     // Step 2: Send balance summary via LLM (idempotent)
     await sendBalanceSummary(user);
+
+    // Step 3: Kick off an immediate weekly digest using the shared job helper
+    const digestResult = await runWeeklyDigestForUser(user.id, { trigger: 'onboarding' });
+    logger.info('[post-checkout.weekly_digest]', { userId: user.id, status: digestResult.status, reason: (digestResult as { reason?: string }).reason });
 
     logger.info('[post-checkout.complete]', { userId });
   } catch (error) {
@@ -198,4 +203,3 @@ async function sendBalanceSummary(user: { id: string; phone: string | null; post
     throw error;
   }
 }
-
