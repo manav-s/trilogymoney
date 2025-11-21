@@ -112,7 +112,7 @@ export default function ConnectPage() {
   const totalAccounts = items.flatMap((it) => it.accounts).length;
 
   const goToNext = () => {
-    router.push('/onboard/contact');
+    router.push('/onboard/membership');
   };
 
   return (
