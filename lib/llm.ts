@@ -233,6 +233,8 @@ Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_inst
       'CRITICAL: NEVER invent sub-categories (like "plumbing", "electrical", "groceries") or merchant details that are not explicitly in the JSON.',
       'If the user asks for a breakdown and the JSON data is missing it, explicitly say "thats all i got".',
       'Do not guess. Do not hallucinate.',
+      'If the user asks about a specific date and no transactions in the JSON match that date, say "no spend for that date".',
+      'Do not infer transactions from other dates.',
       'Mention pending spend when summary.pendingSpend > 0 and pending refunds when summary.pendingRefund > 0.',
       'Do not offer to fetch more data.',
       rangeLabel
