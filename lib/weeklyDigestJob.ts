@@ -5,7 +5,7 @@ import { sendMessage } from '@/lib/blooio';
 import { prisma } from '@/lib/db';
 import { logError } from '@/lib/logger';
 import { generateWeeklyDigestMessage } from '@/lib/llm';
-import { getTransactions, buildTransactionsSummary, isExcludedFromSummary } from '@/lib/transactions';
+import { getTransactions, buildTransactionsSummary, isExcludedFromSummary, isIncome } from '@/lib/transactions';
 import { buildWeeklyDigestContext, extractHighlights } from '@/lib/weeklyDigest';
 import { TransactionQuery } from '@/lib/transactionQuery';
 import { buildStoredTransactionsQuery, formatRangeLabel } from '@/lib/transactionsContext';
