@@ -56,6 +56,13 @@ function normalizeCategoryLabel(label: string | null | undefined): string | null
   return normalized || null;
 }
 
+function splitDigestIntoMessages(message: string): string[] {
+  return message
+    .split(/\n\s*\n+/) // break on blank lines between sections
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
 export async function runWeeklyDigestForUser(
   userId: string,
   options: RunWeeklyDigestOptions = {}
@@ -160,11 +167,22 @@ export async function runWeeklyDigestForUser(
     return { status: 'failed', reason: 'llm_error' };
   }
 
+  const messageParts = splitDigestIntoMessages(message);
+  if (messageParts.length === 0) {
+    logError('weekly-digest.llm', undefined, {
+      userId: user.id,
+      range: digestRange,
+      trigger,
+      reason: 'empty_parts',
+    });
+    return { status: 'failed', reason: 'llm_error' };
+  }
+
   if (process.env.WEEKLY_DIGEST_DRY_RUN === '1') {
     console.info(`weekly-digest.${trigger}.dry_run`, {
       userId: user.id,
       range: digestRange,
-      message,
+      messageParts,
       highlights,
     });
     return { status: 'skipped', reason: 'dry_run' };
@@ -207,12 +225,17 @@ export async function runWeeklyDigestForUser(
   }
 
   try {
-    await sendMessage({
-      to: user.phone,
-      body: message,
-      userId: user.id,
-      shouldPersist: true,
-    });
+    for (let i = 0; i < messageParts.length; i++) {
+      await sendMessage({
+        to: user.phone,
+        body: messageParts[i],
+        userId: user.id,
+        shouldPersist: true,
+      });
+      if (i < messageParts.length - 1) {
+        await new Promise((r) => setTimeout(r, 150));
+      }
+    }
   } catch (error) {
     logError('weekly-digest.send', error, {
       userId: user.id,
