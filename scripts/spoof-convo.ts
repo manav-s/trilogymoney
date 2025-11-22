@@ -1,4 +1,4 @@
-import { handleLLMConversation } from '../lib/conversation';
+import { handleLLMConversationWithTools } from '../lib/conversationWithTools';
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -12,7 +12,7 @@ if (!phone || rest.length === 0) {
 }
 
 const message = rest.join(' ');
-handleLLMConversation(phone, message)
+handleLLMConversationWithTools(phone, message)
   .then(() => process.exit(0))
   .catch((err) => {
     console.error(err);

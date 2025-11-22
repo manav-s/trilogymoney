@@ -17,7 +17,7 @@ import { encryptMessage } from '@/lib/encryption';
 import { z } from 'zod';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { RATE_LIMIT_WINDOW_MS, MAX_MESSAGES_PER_WINDOW } from '@/lib/constants';
-import { handleLLMConversation } from '@/lib/conversation';
+import { handleLLMConversationWithTools } from '@/lib/conversationWithTools';
 
 const WEBHOOK_SECRET = process.env.BLOOIO_WEBHOOK_SECRET;
 
@@ -241,7 +241,7 @@ async function handleExistingUser(user: ExistingUserContext, event: BlooioWebhoo
 
   if (!onboardingComplete) {
     if (isPaid && isActive) {
-      await handleLLMConversation(user.phone, body);
+      await handleLLMConversationWithTools(user.phone, body);
     } else {
       if (body.includes('link') || body.includes('onboard') || body.includes('help')) {
         const magicLink = await generateMagicLink(user.phone);
@@ -252,8 +252,8 @@ async function handleExistingUser(user: ExistingUserContext, event: BlooioWebhoo
     }
     return;
   }
-  // Subscribed/complete users: route to conversational LLM (no tools yet)
-  await handleLLMConversation(user.phone, body);
+  // Subscribed/complete users: route to tools-based conversational LLM
+  await handleLLMConversationWithTools(user.phone, body);
   return;
 }
 
@@ -293,4 +293,3 @@ async function handleMessageStatus(event: BlooioWebhookEvent) {
     });
   }
 }
-
