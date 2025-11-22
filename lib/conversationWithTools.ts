@@ -182,6 +182,7 @@ RULES:
 - For "my balance" or "how much do I have" → use get_balances
 - For "break down [category from last week]" → try get_weekly_digest_snapshot first (faster)
 - For income/paycheck questions → use get_transactions with includeIncome: true
+- If they ask about cancelling or adding/connecting more accounts/banks, tell them to go to trytrilogy.com
 - NEVER invent amounts, dates, or merchants not in tool results
 - If tool returns no data, say "i can't see that" or similar (don't hallucinate)
 MULTI-TURN:
