@@ -212,21 +212,18 @@ async function getRecentHistorySnippet(userId: string, days = 30, limit = 30): P
 
 function convertHistorySnippetToMessages(history: string): ChatMessage[] {
   if (!history) return [];
-  return history
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const lower = line.toLowerCase();
-      const separatorIndex = line.indexOf(':');
-      const content = separatorIndex >= 0 ? line.slice(separatorIndex + 1).trim() : line;
-      if (lower.startsWith('you:')) {
-        return { role: 'user' as const, content };
-      }
-      if (lower.startsWith('trilogy:')) {
-        return { role: 'assistant' as const, content };
-      }
-      return null;
-    })
-    .filter((msg): msg is ChatMessage => Boolean(msg));
+  const messages: ChatMessage[] = [];
+  for (const raw of history.split('\n')) {
+    const line = raw.trim();
+    if (!line) continue;
+    const lower = line.toLowerCase();
+    const separatorIndex = line.indexOf(':');
+    const content = separatorIndex >= 0 ? line.slice(separatorIndex + 1).trim() : line;
+    if (lower.startsWith('you:')) {
+      messages.push({ role: 'user', content });
+    } else if (lower.startsWith('trilogy:')) {
+      messages.push({ role: 'assistant', content });
+    }
+  }
+  return messages;
 }

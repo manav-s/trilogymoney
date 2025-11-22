@@ -133,7 +133,7 @@ async function executeGetBalances(userId: string) {
       accounts: breakdown.credit.accounts.map((a) => ({
         name: a.name,
         institution: a.institution,
-        balance: a.balance,
+        balance: a.current ?? null,
         mask: a.mask,
       })),
     },
