@@ -9,6 +9,7 @@ import {
   getBalancesToolSchema,
   getTransactionsToolSchema,
   getWeeklyDigestSnapshotToolSchema,
+  logFeedbackToolSchema,
   type ToolCall,
   type ToolSchema,
 } from '@/lib/tools';
@@ -89,6 +90,7 @@ export async function handleLLMConversationWithTools(phone: string, userText: st
     { type: 'function' as const, function: getBalancesToolSchema() },
     { type: 'function' as const, function: getTransactionsToolSchema() },
     { type: 'function' as const, function: getWeeklyDigestSnapshotToolSchema() },
+    { type: 'function' as const, function: logFeedbackToolSchema() },
   ];
 
   let response = await callOpenAI({ messages, tools });
@@ -177,12 +179,14 @@ You have access to three tools:
 1. get_balances: Cash and credit card balances
 2. get_transactions: Recent spending with filters (dates, merchants, categories)
 3. get_weekly_digest_snapshot: Cached weekly summary (if available and recent)
+4. log_feedback: Log user frustration/bug feedback (use when user is upset)
 RULES:
 - For "what did I spend on" or "show me [merchant]" → use get_transactions
 - For "my balance" or "how much do I have" → use get_balances
 - For "break down [category from last week]" → try get_weekly_digest_snapshot first (faster)
 - For income/paycheck questions → use get_transactions with includeIncome: true
 - If they ask about cancelling or adding/connecting more accounts/banks, tell them to go to trytrilogy.com
+- If the user sounds frustrated/angry or is reporting a bug, call log_feedback with sentiment and move on
 - NEVER invent amounts, dates, or merchants not in tool results
 - If tool returns no data, say "i can't see that" or similar (don't hallucinate)
 MULTI-TURN:

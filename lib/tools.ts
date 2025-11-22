@@ -3,6 +3,7 @@ import { getBalancesBreakdown } from '@/lib/balances';
 import { getTransactions, isIncome, buildTransactionsSummary } from '@/lib/transactions';
 import { logError } from '@/lib/logger';
 import type { StoredTransactionsQuery } from '@/lib/transactionsContext';
+import { captureFeedback, type FeedbackSentiment } from '@/lib/feedback';
 
 export type ToolSchema = {
   name: string;
@@ -87,6 +88,28 @@ export function getWeeklyDigestSnapshotToolSchema(): ToolSchema {
   };
 }
 
+export function logFeedbackToolSchema(): ToolSchema {
+  return {
+    name: 'log_feedback',
+    description: 'Log when the user seems frustrated/angry or is reporting a bug. Use when user is upset or giving feedback.',
+    parameters: {
+      type: 'object',
+      properties: {
+        sentiment: {
+          type: 'string',
+          description: 'One of frustrated, bug_report, or feedback. Default frustrated.',
+          enum: ['frustrated', 'bug_report', 'feedback'],
+        },
+        message: {
+          type: 'string',
+          description: 'Optional short summary of what the user said.',
+        },
+      },
+      required: [],
+    },
+  };
+}
+
 export async function executeToolCall(userId: string, toolCall: ToolCall): Promise<ToolResult> {
   try {
     const parsedArgs = safeParseArgs(toolCall.function.arguments);
@@ -97,6 +120,8 @@ export async function executeToolCall(userId: string, toolCall: ToolCall): Promi
         return await executeGetTransactions(userId, parsedArgs ?? {});
       case 'get_weekly_digest_snapshot':
         return await executeGetWeeklyDigestSnapshot(userId, parsedArgs ?? {});
+      case 'log_feedback':
+        return await executeLogFeedback(userId, parsedArgs ?? {});
       default:
         return { error: 'unknown_tool' };
     }
@@ -227,6 +252,26 @@ function getTodayIso(): string {
 
 function isValidIsoDate(input?: string): boolean {
   return typeof input === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(input.trim());
+}
+
+async function executeLogFeedback(
+  userId: string,
+  params: { sentiment?: string; message?: string }
+) {
+  const sentiment = sanitizeSentiment(params.sentiment);
+  await captureFeedback({
+    userId,
+    userMessage: params.message ?? '[captured via tool]',
+    sentiment,
+    context: { source: 'tool_call' },
+  });
+  return { status: 'logged', sentiment };
+}
+
+function sanitizeSentiment(raw: unknown): FeedbackSentiment {
+  const value = typeof raw === 'string' ? raw.toLowerCase().trim() : '';
+  if (value === 'bug_report' || value === 'feedback' || value === 'frustrated') return value;
+  return 'frustrated';
 }
 
 const CATEGORY_WHITELIST = [
