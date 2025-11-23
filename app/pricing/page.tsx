@@ -102,6 +102,18 @@ export default function PricingPage() {
             <p className="text-lg sm:text-xl text-gray-600 max-w-3xl">
               weekly money clarity over text. unlimited accounts, no setup drag, cancel anytime.
             </p>
+
+            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
+              <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 lowercase">
+                built by microsoft security engineers
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 lowercase">
+                plaid for bank auth
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 lowercase">
+                vercel + neon infrastructure
+              </span>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-4">
