@@ -12,6 +12,9 @@ export default function Home() {
             </span>
           </div>
           <div className="flex items-center gap-6">
+            <a href="/pricing" className="text-sm font-medium text-gray-600 lowercase hover:text-blue-600 transition-colors">
+              pricing
+            </a>
             <a href="/signin" className="text-sm font-medium text-gray-600 lowercase hover:text-blue-600 transition-colors">
               sign in
             </a>
@@ -381,6 +384,9 @@ export default function Home() {
               trilogy
             </span>
             <div className="flex items-center space-x-8 text-sm font-medium text-gray-500">
+              <a href="/pricing" className="hover:text-blue-600 transition-colors">
+                pricing
+              </a>
               <a href="/privacy" className="hover:text-blue-600 transition-colors">
                 privacy
               </a>
