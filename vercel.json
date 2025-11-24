@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/balances",
-      "schedule": "0 14 * * *"
+      "schedule": "*/10 * * * *"
     }
   ]
 }
