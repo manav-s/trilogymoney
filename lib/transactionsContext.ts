@@ -1,6 +1,5 @@
 import type { TransactionQuery } from './transactionQuery';
 import type { TransactionSummary } from './transactions';
-import { RECENT_FALLBACK_LIMIT } from './transactionQuery';
 
 export type StoredQuerySource = 'weekly_digest' | 'monthly_digest' | 'adhoc';
 
@@ -17,12 +16,6 @@ export type StoredTransactionsQuery = {
   categoryFocusNormalized?: string | null;
   categoryFocusDisplay?: string | null;
   storedTransactions?: TransactionSummary[];
-};
-
-const SOURCE_TTL_MS: Record<StoredQuerySource, number> = {
-  weekly_digest: 1000 * 60 * 60 * 72, // 72h
-  monthly_digest: 1000 * 60 * 60 * 24 * 10, // ~10 days
-  adhoc: 1000 * 60 * 60 * 48, // 48h
 };
 
 type RangeLike = { from: string; to: string };
@@ -65,48 +58,3 @@ export function buildStoredTransactionsQuery(
     storedTransactions: meta?.storedTransactions,
   };
 }
-
-export function storedQueryToTransactionQuery(
-  stored: StoredTransactionsQuery
-): TransactionQuery {
-  if (stored.kind === 'merchantSpend') {
-    return {
-      kind: 'merchantSpend',
-      from: stored.from,
-      to: stored.to,
-      limit: stored.limit,
-      merchant: stored.merchant,
-    };
-  }
-
-  return {
-    kind: 'recent',
-    from: stored.from,
-    to: stored.to,
-    limit: stored.limit,
-  };
-}
-
-export function shouldReuseStoredQuery(
-  parsedMeta: { query: TransactionQuery; overrideRange: boolean },
-  stored: StoredTransactionsQuery | null | undefined,
-  now = new Date()
-): stored is StoredTransactionsQuery {
-  if (!stored) return false;
-  if (parsedMeta.overrideRange) return false;
-
-  const storedTime = Date.parse(stored.storedAt);
-  if (!Number.isFinite(storedTime)) return false;
-  const ttl = SOURCE_TTL_MS[stored.source] ?? SOURCE_TTL_MS.adhoc;
-  if (now.getTime() - storedTime > ttl) return false;
-
-  // Allow reuse when parser fell back to generic windows (recent/merchant hints without explicit dates).
-  const parsed = parsedMeta.query;
-  const parserIsFallbackRecent =
-    parsed.kind === 'recent' && parsed.limit === RECENT_FALLBACK_LIMIT;
-  const parserIsGenericMerchant =
-    parsed.kind === 'merchantSpend' && parsed.limit === 100 && parsed.merchant != null;
-
-  return parserIsFallbackRecent || parserIsGenericMerchant;
-}
-

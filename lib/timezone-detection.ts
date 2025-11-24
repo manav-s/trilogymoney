@@ -136,23 +136,6 @@ export function getTimezoneDisplayName(timezone: string): string {
 }
 
 /**
- * Return a DST-aware short abbreviation for a timezone (e.g., EDT/EST/CT/PT)
- * Falls back to the IANA id on failure.
- */
-export function getTimezoneAbbreviation(timezone: string, date: Date = new Date()): string {
-  try {
-    const parts = new Intl.DateTimeFormat('en-US', {
-      timeZone: timezone,
-      timeZoneName: 'short',
-    }).formatToParts(date);
-    const tzName = parts.find((p) => p.type === 'timeZoneName')?.value;
-    return (tzName || timezone).toUpperCase();
-  } catch {
-    return timezone;
-  }
-}
-
-/**
  * Read the browser's timezone (IANA id) when available
  */
 export function getBrowserTimezone(): string | null {
@@ -164,17 +147,3 @@ export function getBrowserTimezone(): string | null {
     return null;
   }
 }
-
-/**
- * All US timezones for manual selection
- */
-export const US_TIMEZONES: TimezoneInfo[] = [
-  { timezone: 'America/New_York', displayName: 'Eastern Time (ET)' },
-  { timezone: 'America/Chicago', displayName: 'Central Time (CT)' },
-  { timezone: 'America/Denver', displayName: 'Mountain Time (MT)' },
-  { timezone: 'America/Phoenix', displayName: 'Arizona Time (AZ)' },
-  { timezone: 'America/Los_Angeles', displayName: 'Pacific Time (PT)' },
-  { timezone: 'America/Anchorage', displayName: 'Alaska Time (AKT)' },
-  { timezone: 'Pacific/Honolulu', displayName: 'Hawaii Time (HT)' },
-];
-

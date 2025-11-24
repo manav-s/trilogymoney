@@ -14,9 +14,9 @@ describe('splitIntoSmsSegments', () => {
     ]);
   });
 
-  it('caps the number of segments at 5 and filters empties', () => {
+  it('caps the number of segments when limit provided and filters empties', () => {
     const input = 'a. b. c. d. e. f. g.';
-    const segments = splitIntoSmsSegments(input);
+    const segments = splitIntoSmsSegments(input, 5);
     expect(segments.length).toBe(5);
     expect(segments[0]).toBe('a.');
   });
@@ -26,5 +26,4 @@ describe('splitIntoSmsSegments', () => {
     expect(segments).toEqual([]);
   });
 });
-
 
