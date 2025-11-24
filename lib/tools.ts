@@ -4,6 +4,7 @@ import { getTransactions, isIncome, buildTransactionsSummary } from '@/lib/trans
 import { logError } from '@/lib/logger';
 import type { StoredTransactionsQuery } from '@/lib/transactionsContext';
 import { captureFeedback, type FeedbackSentiment } from '@/lib/feedback';
+import { getRecurringStreams } from '@/lib/recurring';
 
 export type ToolSchema = {
   name: string;
@@ -110,6 +111,19 @@ export function logFeedbackToolSchema(): ToolSchema {
   };
 }
 
+export function getRecurringChargesToolSchema(): ToolSchema {
+  return {
+    name: 'get_recurring_charges',
+    description:
+      'Fetch active recurring subscriptions and bills (e.g. netflix, rent, gym). Use this for questions about subscriptions, monthly charges, or bills.',
+    parameters: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  };
+}
+
 export async function executeToolCall(userId: string, toolCall: ToolCall): Promise<ToolResult> {
   try {
     const parsedArgs = safeParseArgs(toolCall.function.arguments);
@@ -122,6 +136,8 @@ export async function executeToolCall(userId: string, toolCall: ToolCall): Promi
         return await executeGetWeeklyDigestSnapshot(userId, parsedArgs ?? {});
       case 'log_feedback':
         return await executeLogFeedback(userId, parsedArgs ?? {});
+      case 'get_recurring_charges':
+        return await executeGetRecurringCharges(userId);
       default:
         return { error: 'unknown_tool' };
     }
@@ -272,6 +288,27 @@ function sanitizeSentiment(raw: unknown): FeedbackSentiment {
   const value = typeof raw === 'string' ? raw.toLowerCase().trim() : '';
   if (value === 'bug_report' || value === 'feedback' || value === 'frustrated') return value;
   return 'frustrated';
+}
+
+async function executeGetRecurringCharges(userId: string) {
+  const streams = await getRecurringStreams(userId);
+
+  const active = streams
+    .filter((s) => s.isActive)
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 15);
+
+  if (active.length === 0) return { message: 'No active recurring charges found.' };
+
+  return active.map((s) => ({
+    merchant: s.merchant,
+    amount: s.amount,
+    freq: s.frequency,
+    next: s.nextDate,
+    cat: s.category,
+    acct: `${s.institutionName} - ${s.accountName}`,
+    status: s.status,
+  }));
 }
 
 const CATEGORY_WHITELIST = [

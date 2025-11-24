@@ -10,6 +10,7 @@ import {
   getTransactionsToolSchema,
   getWeeklyDigestSnapshotToolSchema,
   logFeedbackToolSchema,
+  getRecurringChargesToolSchema,
   type ToolCall,
   type ToolSchema,
 } from '@/lib/tools';
@@ -90,6 +91,7 @@ export async function handleLLMConversationWithTools(phone: string, userText: st
     { type: 'function' as const, function: getBalancesToolSchema() },
     { type: 'function' as const, function: getTransactionsToolSchema() },
     { type: 'function' as const, function: getWeeklyDigestSnapshotToolSchema() },
+    { type: 'function' as const, function: getRecurringChargesToolSchema() },
     { type: 'function' as const, function: logFeedbackToolSchema() },
   ];
 
@@ -175,15 +177,17 @@ STYLE:
 - Answer directly; do NOT add questions unless strictly required to proceed
 - Never append soft check-ins like "does that help?"
 TOOLS:
-You have access to three tools:
+You have access to tools:
 1. get_balances: Cash and credit card balances
 2. get_transactions: Recent spending with filters (dates, merchants, categories)
 3. get_weekly_digest_snapshot: Cached weekly summary (if available and recent)
-4. log_feedback: Log user frustration/bug feedback (use when user is upset)
+4. get_recurring_charges: Active subscriptions/bills (netflix, rent, gym) with amount, frequency, next date
+5. log_feedback: Log user frustration/bug feedback (use when user is upset)
 RULES:
 - For "what did I spend on" or "show me [merchant]" → use get_transactions
 - For "my balance" or "how much do I have" → use get_balances
 - For "break down [category from last week]" → try get_weekly_digest_snapshot first (faster)
+- For "subscriptions", "recurring", "monthly bill", "netflix", "gym", "rent" → use get_recurring_charges
 - For income/paycheck questions → use get_transactions with includeIncome: true
 - If they ask about cancelling or adding/connecting more accounts/banks, tell them to go to trytrilogy.com
 - If the user sounds frustrated/angry or is reporting a bug, call log_feedback with sentiment and move on
