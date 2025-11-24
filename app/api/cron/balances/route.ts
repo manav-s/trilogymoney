@@ -12,8 +12,8 @@ function getBatchSize(): number {
 }
 
 export async function GET(req: Request) {
-  const tenMinutesAgo = new Date();
-  tenMinutesAgo.setMinutes(tenMinutesAgo.getMinutes() - 10);
+  const twoDaysAgo = new Date();
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
   const batchSize = getBatchSize();
 
@@ -24,7 +24,7 @@ export async function GET(req: Request) {
       billingStatus: { in: ['active', 'trialing'] },
       OR: [
         { lastBalanceUpdateAt: null },
-        { lastBalanceUpdateAt: { lt: tenMinutesAgo } },
+        { lastBalanceUpdateAt: { lt: twoDaysAgo } },
       ],
     },
     select: { id: true },

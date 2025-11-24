@@ -95,7 +95,7 @@ export async function runBalanceUpdateForUser(userId: string): Promise<BalanceUp
       cardCount: breakdown.credit.count,
       cardInstitutions: cardInstitutions.length > 0 ? cardInstitutions : null,
       cardAccountsJson,
-      userText: 'give the member a 10-minute balance pulse',
+      userText: 'give the member a 2-day balance pulse',
       history: '',
       profile: {},
       quizAnswers: null,
