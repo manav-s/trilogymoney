@@ -28,7 +28,7 @@ describe('lib/llm generateReply integration', () => {
   it('returns sorry message when API key missing', async () => {
     vi.stubEnv('OPENAI_API_KEY', '');
     const { generateReply } = await import('../lib/llm');
-    const out = await generateReply('chat' as any, { userText: 'hi' });
+    const out = await generateReply('balances', { userText: 'hi' });
     expect(out).toMatch(/sorry the model is having trouble/i);
   });
 
@@ -39,7 +39,7 @@ describe('lib/llm generateReply integration', () => {
       [`${base}/chat/completions`]: async () => jsonResponse({ choices: [ { message: { content: 'hello there' } } ] }),
     });
     const { generateReply } = await import('../lib/llm');
-    const out = await generateReply('chat' as any, { userText: 'hi' });
+    const out = await generateReply('balances', { userText: 'hi' });
     expect(out).toContain('hello there');
   });
 
@@ -51,7 +51,7 @@ describe('lib/llm generateReply integration', () => {
       [`${base}/responses`]: async () => jsonResponse({ output_text: 'hi from responses' }),
     });
     const { generateReply } = await import('../lib/llm');
-    const out = await generateReply('chat' as any, { userText: 'hi' });
+    const out = await generateReply('balances', { userText: 'hi' });
     expect(out).toContain('hi from responses');
   });
 
@@ -62,9 +62,8 @@ describe('lib/llm generateReply integration', () => {
       [`${base}/chat/completions`]: async () => new Response('{"error":"quota"}', { status: 429 }),
     });
     const { generateReply } = await import('../lib/llm');
-    const out = await generateReply('chat' as any, { userText: 'hi' });
+    const out = await generateReply('balances', { userText: 'hi' });
     expect(out).toMatch(/sorry the model is having trouble/i);
   });
 });
-
 
