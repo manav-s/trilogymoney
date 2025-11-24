@@ -1,4 +1,4 @@
-export function splitIntoSmsSegments(text: string, limit = 5): string[] {
+export function splitIntoSmsSegments(text: string, limit = 20): string[] {
   // First, split by newlines to preserve explicit formatting (like lists)
   const lines = text.split('\n');
   const segments: string[] = [];
