@@ -115,7 +115,7 @@ export default function Home() {
                       {/* Second message bubble (gray, left-aligned) */}
                       <div className="bg-gray-200 rounded-3xl rounded-bl-sm p-4 shadow-md max-w-[240px] mt-2 animate-fade-in-up delay-200">
                         <p className="text-gray-900 text-sm">
-                          might want to slow down on doordash this week 😅
+                          doordash is lowkey eating your wallet rn 😭
                         </p>
                       </div>
 
