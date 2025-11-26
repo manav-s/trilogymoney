@@ -48,7 +48,7 @@ export default function Home() {
 
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 leading-[1.1]">
                 your money&apos;s <br />
-                <span className="text-gradient">personal assistant.</span>
+                <span className="text-[#007AFF]">personal assistant.</span>
               </h1>
 
               <p className="text-xl sm:text-2xl text-gray-600 leading-relaxed max-w-2xl mx-auto lg:mx-0">
