@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db';
 import { getBalancesBreakdown } from '@/lib/balances';
 import { getTransactions, isIncome, buildTransactionsSummary } from '@/lib/transactions';
-import { logError } from '@/lib/logger';
+import { logError, logger } from '@/lib/logger';
 import type { StoredTransactionsQuery } from '@/lib/transactionsContext';
 import { captureFeedback, type FeedbackSentiment } from '@/lib/feedback';
 import { getRecurringStreams } from '@/lib/recurring';
