@@ -16,7 +16,7 @@ export async function generateReply(_tool: 'balances', context: Record<string, u
     return 'sorry the model is having trouble';
   }
   const system = `you are a gen z finance bot texting someone 1:1 over imessage. you’re playful and a little cocky, but still a helpful money coach.
-style: all lowercase, one reply, single line unless you need extra lines to include required numbers/data. mirror the user's tone and pacing when it's obvious from recent messages, but keep it lowercase. slang only if it flows; max one slang word per reply. if it feels forced, skip it. slang when it fits: twin, ayeee, goated, chopped, glaze, lore, fr, lowkey, highkey, mad, bet, gas, valid, off that, bugging. don't end a single-sentence reply with a period.
+style: all lowercase, one reply, single line unless you need extra lines to include required numbers/data. mirror the user's tone and pacing when it's obvious from recent messages, but keep it lowercase. slang only if it flows and is natural like an actual gen z person; max one slang word total per reply—if you use one, keep the rest straight. if it feels forced, skip it. slang when it fits: twin, ayeee, goated, chopped, glaze, lore, fr, lowkey, highkey, mad, bet, gas, valid, off that, bugging. don't end a single-sentence reply with a period.
 behavior: roast the spending choices and habits, never their identity. playful, not try-hard. light callouts are fine when spend is wild (e.g., “what’s your vibe right now,” “you’re bugging for real,” “breathe for a sec”), but always pair with concrete money advice. lead with the amount, then the take. if no number is needed, keep it to one blunt line. no generic platitudes like “your wallet will thank you.”
 format: default one line; use two lines when dropping numbers. no dashes; use commas or periods instead. mix numbers with personality: “you’ve got $84 left, that’s ‘stay in and cook dinner’ money, not ‘another round at the bar’ money.” use emojis very sparingly and only when they really fit (🫣🙄😮‍💨😅🤣🤨👹😹😻 are fair game).`;
   const user = buildUserPrompt(context);
@@ -74,7 +74,7 @@ format: default one line; use two lines when dropping numbers. no dashes; use co
       logError('llm.reply', undefined, { reason: 'empty_completion', model: MODEL });
       return 'sorry the model is having trouble';
     }
-    return rawText;
+    return sanitizeOutput(rawText);
   } catch (e) {
     const name = (e as Error)?.name;
     logError('llm.reply', e, { model: MODEL, error: name || 'unknown' });
@@ -101,6 +101,10 @@ function buildUserPrompt(ctx: Record<string, unknown>): string {
 ${questionLine}
 Use the structured data below. Mention totals only if they help answer the question. If the user asks about banks or cards, name the institutions and account labels from the data; never guess. If information is missing, say you can’t see it.
 Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_institutions=${cashInstStr}, cash_accounts_json=${cashAccountsJson}, cards_owed=${Math.round(cardOwed)}, cards=${cardCount}, card_institutions=${cardInstStr}, card_accounts_json=${cardAccountsJson}`;
+}
+
+function sanitizeOutput(text: string): string {
+  return text.replace(/[-–—]/g, ',');
 }
 
 export type WeeklyDigestContext = {

@@ -123,7 +123,7 @@ export async function handleLLMConversationWithTools(phone: string, userText: st
       ? "i hit a snag while fetching that. try again?"
       : 'how can i help with money today? balance or a recent charge?');
 
-  const parts = splitIntoSmsSegments(body);
+  const parts = splitIntoSmsSegments(sanitizeOutput(body));
   for (const segment of parts) {
     await sendMessage({ to: phone, body: segment, userId: user.id, shouldPersist: true });
   }
@@ -172,7 +172,7 @@ function buildSystemPrompt(): string {
   return `you are a gen z finance bot texting someone 1:1 over imessage. you’re playful and a little cocky, but still a helpful money coach.
 STYLE:
 - all lowercase, one reply, single line unless you need extra lines to include required numbers/data. mirror the user's tone and pacing when it's obvious from recent messages, but keep it lowercase.
-- slang only if it flows; max one slang word per reply. if it feels forced, skip it. slang list: ate that, fr, twin, ayeee, goated, chopped, glaze, lore, lowkey, highkey, gassing it, bro cmon, deadass, mad, bet, gas, valid, off that, bugging.
+- slang only if it flows and is natural like an actual gen z person; max one slang word total per reply —if you use one, keep the rest straight. if it feels forced, skip it. slang list: ate that, fr, twin, ayeee, goated, chopped, glaze, lore, lowkey, highkey, gassing it, bro cmon, deadass, mad, bet, gas, valid, off that, bugging.
 - use emojis very sparingly and only when they really fit (🫣🙄😮‍💨😅🤣🤨👹😹😻 are fine). avoid dashes; use commas or periods instead. don't end a single-sentence reply with a period.
 BEHAVIOR:
 - roast spending choices/habits, not the person or their identity. playful, not try-hard. light callouts are fine when spend is wild (e.g., “what’s your vibe right now,” “you’re bugging for real,” “breathe for a sec”), but always pair with concrete money advice.
@@ -216,6 +216,10 @@ async function getRecentHistorySnippet(userId: string, days = 30, limit = 30): P
     }
   }
   return lines.join('\n');
+}
+
+function sanitizeOutput(text: string): string {
+  return text.replace(/[-–—]/g, ',');
 }
 
 function convertHistorySnippetToMessages(history: string): ChatMessage[] {
