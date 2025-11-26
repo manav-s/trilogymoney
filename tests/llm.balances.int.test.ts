@@ -41,11 +41,10 @@ describe('LLM balances prompt includes cash+cards fields', () => {
     expect(userContent).toContain('cash_accounts_json=[]');
     expect(userContent).toContain('cards_owed=1200');
     expect(userContent).toContain('cards=1');
-    expect(userContent).toContain('Respond with a natural 1–2 sentence SMS');
+    expect(userContent).toContain('Respond with a natural 1 to 2 sentence SMS');
     expect(userContent).toContain('User question: "which bank is holding it?".');
     expect(userContent).toContain('name the institutions and account labels');
     expect(userContent).not.toContain('Write a single SMS showing balances');
   });
 });
-
 

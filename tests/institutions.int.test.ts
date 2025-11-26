@@ -206,7 +206,7 @@ describe('institution names in balances breakdown', () => {
 
     expect(capturedPrompt).toContain('cash_institutions=Chase Bank');
     expect(capturedPrompt).toContain('card_institutions=Discover');
-    expect(capturedPrompt).toContain('Respond with a natural 1–2 sentence SMS');
+    expect(capturedPrompt).toContain('Respond with a natural 1 to 2 sentence SMS');
     expect(capturedPrompt).toContain('name the institutions and account labels from the data');
     expect(capturedPrompt).toContain('User question: "which bank is that balance under?".');
     expect(capturedPrompt).toContain('cash_accounts_json=[{"name":"Checking","institution":"Chase Bank","mask":"1234"}]');
@@ -246,4 +246,3 @@ describe('institution names in balances breakdown', () => {
     expect(capturedPrompt).toContain('card_accounts_json=[]');
   });
 });
-

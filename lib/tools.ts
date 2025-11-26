@@ -159,6 +159,16 @@ function safeParseArgs(raw: string): Record<string, unknown> | null {
 
 async function executeGetBalances(userId: string) {
   const breakdown = await getBalancesBreakdown({ userId });
+  logger.info('tools.get_balances.snapshot', {
+    userId,
+    ts: new Date().toISOString(),
+    cashTotal: breakdown.cash.total,
+    cashCount: breakdown.cash.count,
+    cashInstitutions: breakdown.cash.accounts.map((a) => a.institution).filter(Boolean),
+    creditOwedTotal: breakdown.credit.owedTotal,
+    creditCount: breakdown.credit.count,
+    creditInstitutions: breakdown.credit.accounts.map((a) => a.institution).filter(Boolean),
+  });
   return {
     cash: {
       total: breakdown.cash.total,
