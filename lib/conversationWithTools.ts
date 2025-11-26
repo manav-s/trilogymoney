@@ -218,8 +218,9 @@ async function getRecentHistorySnippet(userId: string, days = 30, limit = 30): P
   return lines.join('\n');
 }
 
-function sanitizeOutput(text: string): string {
-  return text.replace(/[-–—]/g, ',');
+export function sanitizeOutput(text: string): string {
+  // replace long dashes but preserve short hyphens
+  return text.replace(/[–—]/g, ',');
 }
 
 function convertHistorySnippetToMessages(history: string): ChatMessage[] {

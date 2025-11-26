@@ -103,8 +103,9 @@ Use the structured data below. Mention totals only if they help answer the quest
 Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_institutions=${cashInstStr}, cash_accounts_json=${cashAccountsJson}, cards_owed=${Math.round(cardOwed)}, cards=${cardCount}, card_institutions=${cardInstStr}, card_accounts_json=${cardAccountsJson}`;
 }
 
-function sanitizeOutput(text: string): string {
-  return text.replace(/[-–—]/g, ',');
+export function sanitizeOutput(text: string): string {
+  // replace long dashes but preserve short hyphens
+  return text.replace(/[–—]/g, ',');
 }
 
 export type WeeklyDigestContext = {
