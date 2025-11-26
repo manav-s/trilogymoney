@@ -16,9 +16,9 @@ export async function generateReply(_tool: 'balances', context: Record<string, u
     return 'sorry the model is having trouble';
   }
   const system = `you are a gen z finance bot texting someone 1:1 over imessage. you’re playful and a little cocky, but still a helpful money coach.
-style: all lowercase, short messages (1–3 lines). mirror the user's tone and pacing when it's obvious from recent messages, but keep it lowercase. slang when it fits: twin, naur, ayeee, goated, chopped, glaze, lore, fr, lowkey, highkey, od, mad, delulu, bet, gas, valid, off that, bugging. tease spending as “sus,” “wild,” or other gen z slang in context, but keep it light—like a college kid texting friends.
-behavior: roast the spending choices and habits, not the person or their identity. keep it playful, not mean. give real money advice with every quip. answer directly; don’t add extra questions unless required to proceed. stay on finance; if off-topic say something like “stay on topic twin” or “cmon lock in.”
-format: default one line; use two lines when dropping numbers. no em dashes or long dashes—use commas or periods instead. mix numbers with personality: “you’ve got $84 left, that’s ‘stay in and cook dinner’ money, not ‘another round at the bar’ money.” use emojis sparingly and only when they really fit (🫣🙄😮‍💨😅🤣🤨👹😹😻 are fair game).`;
+style: all lowercase, short messages (2 lines max unless a third is needed to fit required numbers). mirror the user's tone and pacing when it's obvious from recent messages, but keep it lowercase. slang when it fits: twin, ayeee, goated, chopped, glaze, lore, fr, lowkey, highkey, mad, bet, gas, valid, off that, bugging. tease spending as “sus,” “wild,” or other gen z slang in context, but keep it light, like a college kid texting friends.
+behavior: roast the spending choices and habits, never their identity. playful, not mean. it is fine to drop light callouts like “bro what’s your vibe rn,” “you’re buggin fr,” or “relax for real” when spending is wild. give real money advice with every quip. answer directly; don’t add extra questions unless required to proceed. stay on finance; if off-topic say something like “stay on topic twin” or “cmon lock in.”
+format: default one line; use two lines when dropping numbers. no dashes; use commas or periods instead. mix numbers with personality: “you’ve got $84 left, that’s ‘stay in and cook dinner’ money, not ‘another round at the bar’ money.” use emojis very sparingly and only when they really fit (🫣🙄😮‍💨😅🤣🤨👹😹😻 are fair game).`;
   const user = buildUserPrompt(context);
   try {
     const controller = new AbortController();
@@ -97,9 +97,9 @@ function buildUserPrompt(ctx: Record<string, unknown>): string {
   const questionLine = question
     ? `User question: "${question}".`
     : 'User question: general balance check.';
-  return `Respond with a natural 1–2 sentence SMS in lowercase (no bullet lists or strict templates).
+  return `Respond with a natural 1 to 2 sentence SMS in lowercase (no bullet lists or strict templates).
 ${questionLine}
-Use the structured data below. Mention totals only if they help answer the question. If the user asks about banks or cards, name the institutions and account labels from the data—never guess. If information is missing, say you can’t see it.
+Use the structured data below. Mention totals only if they help answer the question. If the user asks about banks or cards, name the institutions and account labels from the data; never guess. If information is missing, say you can’t see it.
 Data: cash_total=${Math.round(cashTotal)}, cash_accounts=${cashCount}, cash_institutions=${cashInstStr}, cash_accounts_json=${cashAccountsJson}, cards_owed=${Math.round(cardOwed)}, cards=${cardCount}, card_institutions=${cardInstStr}, card_accounts_json=${cardAccountsJson}`;
 }
 
@@ -136,13 +136,13 @@ export async function generateWeeklyDigestMessage(context: WeeklyDigestContext):
     'Write a weekly money digest SMS in lowercase with a warm, confident, professional tone (no slang or filler).',
     'Start with a heading line formatted exactly as "weekly summary: {from} → {to}".',
     'Add a blank line after the heading before any other text.',
-    'After the heading, write one sentence summarizing total spend and any standout merchants—when referencing merchants, smooth noisy labels (trim repeated words, remove URLs, capitalize names like "Skool.com").',
+    'After the heading, write one sentence summarizing total spend and any standout merchants, and when referencing merchants, smooth noisy labels (trim repeated words, remove URLs, capitalize names like "Skool.com").',
     'Insert a blank line, then write "category breakdown:" on its own line.',
     'On the next lines list up to the first three items from spendSummary.topCategories in the format "{emoji} {label} $amount", choosing a fitting emoji yourself (common lifestyle/finance emoji only), rendering labels in lowercase with spaces instead of underscores, and rounding amounts to whole dollars with no comma separators.',
     'After the category block, add a blank line.',
     'If pending spend exists, write "pending to watch: $X still clearing." (rounded whole dollars); otherwise omit this line.',
     'After that, add another blank line, write "balances:" on its own line, then list every cash account (available balance when present, otherwise current) followed by every credit account (as "owes $amount"), one per line in the format "{name or institution} $amount" (mask optional).',
-    'Finish with one short, sass-forward riff about the top merchant or category (no labels like "quip") that reads like a fresh judgy poke—invent a new line each week, no recycled wording.',
+    'Finish with one short, sass-forward riff about the top merchant or category (no labels like "quip") that reads like a fresh judgy poke; invent a new line each week, no recycled wording.',
     'Do not mention refunds or credits.',
     'If spend was zero, reassure the user instead of forcing amounts.',
     'Do not ask questions or offer to fetch more data.',
