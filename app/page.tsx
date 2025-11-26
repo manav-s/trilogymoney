@@ -94,35 +94,35 @@ export default function Home() {
                       <p className="text-xs text-gray-400 mb-2 text-center">
                         today 8:03 AM
                       </p>
-                      {/* Trilogy's message (blue bubble, left-aligned) */}
-                      <div className="bg-blue-500 rounded-3xl rounded-bl-sm p-4 shadow-md max-w-[240px] animate-fade-in-up delay-100">
-                        <p className="text-white text-sm mb-2">
+                      {/* Trilogy's message (gray bubble, left-aligned) */}
+                      <div className="bg-gray-200 rounded-3xl rounded-bl-sm p-4 shadow-md max-w-[240px] animate-fade-in-up delay-100">
+                        <p className="text-gray-900 text-sm mb-2">
                           weekly summary: nov 10 → nov 16
                         </p>
-                        <p className="text-white text-sm mb-3">
+                        <p className="text-gray-900 text-sm mb-3">
                           you spent $450 this week with amazon leading the way.
                         </p>
-                        <div className="space-y-1.5 text-white text-sm mb-3">
+                        <div className="space-y-1.5 text-gray-900 text-sm mb-3">
                           <p>🛍️ general merchandise $315</p>
                           <p>💅 personal care $94</p>
                           <p>🚗 transportation $25</p>
                         </div>
-                        <p className="text-white text-sm">
+                        <p className="text-gray-900 text-sm">
                           balances: td bank $3,589
                         </p>
                       </div>
-                      
-                      {/* Second message bubble */}
-                      <div className="bg-blue-500 rounded-3xl rounded-bl-sm p-4 shadow-md max-w-[240px] mt-2 animate-fade-in-up delay-200">
-                        <p className="text-white text-sm">
+
+                      {/* Second message bubble (gray, left-aligned) */}
+                      <div className="bg-gray-200 rounded-3xl rounded-bl-sm p-4 shadow-md max-w-[240px] mt-2 animate-fade-in-up delay-200">
+                        <p className="text-gray-900 text-sm">
                           might want to slow down on doordash this week 😅
                         </p>
                       </div>
-                      
-                      {/* User's response (gray bubble, right-aligned) */}
+
+                      {/* User's response (iMessage blue bubble, right-aligned) */}
                       <div className="flex justify-end mt-3 animate-fade-in-up delay-300">
-                        <div className="bg-gray-200 rounded-3xl rounded-br-sm p-4 shadow-md max-w-[200px]">
-                          <p className="text-gray-900 text-sm">
+                        <div className="bg-[#007AFF] rounded-3xl rounded-br-sm p-4 shadow-md max-w-[200px]">
+                          <p className="text-white text-sm">
                             ok fine
                           </p>
                         </div>
