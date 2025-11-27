@@ -1,26 +1,13 @@
 export function splitIntoSmsSegments(text: string, limit = 20): string[] {
-  // First, split by newlines to preserve explicit formatting (like lists)
-  const lines = text.split('\n');
+  // Split on double newlines (blank lines) to separate logical sections
+  // Single newlines within a section (like bullet lists) stay together
+  const sections = text.split(/\n\s*\n+/);
   const segments: string[] = [];
 
-  for (const line of lines) {
-    const trimmed = line.trim();
+  for (const section of sections) {
+    const trimmed = section.trim();
     if (!trimmed) continue;
-
-    // If it looks like a numbered list item (e.g. "1. Item"), keep it whole
-    if (/^\d+\./.test(trimmed)) {
-      segments.push(trimmed);
-      continue;
-    }
-
-    // Otherwise, split by sentence boundaries
-    // Lookbehind for [.!?] followed by whitespace
-    const parts = trimmed.split(/(?<=[.!?])\s+/);
-
-    for (const part of parts) {
-      const p = part.trim();
-      if (p) segments.push(p);
-    }
+    segments.push(trimmed);
   }
 
   return segments.slice(0, limit);

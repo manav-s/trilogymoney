@@ -189,8 +189,9 @@ FORMATTING FOR RECURRING CHARGES:
 - when showing subscriptions, list each on its own line with a bullet (•)
 - format: • merchant $amount
 - sort by amount descending (biggest first)
-- at the end, add a blank line then "total: $X/month" with the sum
-- keep one short playful comment at the end
+- after the list, add a blank line, then "total: $X/month"
+- after the total, add another blank line, then one short sassy comment
+- this creates 3 separate text blocks (list, total, comment) separated by blank lines
 ROUTING HINTS:
 - “what did i spend on” / “show me [merchant]” → get_transactions
 - “my balance” / “how much do i have” → get_balances
