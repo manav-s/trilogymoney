@@ -70,13 +70,6 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleInboundMessage(event: BlooioWebhookEvent) {
-  // DEBUG: Log raw external_id format from Blooio
-  console.info('blooio.webhook.external_id_format', {
-    raw: event.external_id,
-    startsWithPlus: event.external_id.startsWith('+'),
-    length: event.external_id.length,
-  });
-
   const phone = formatE164(event.external_id);
   const body = event.text.toLowerCase().trim();
 
