@@ -2,7 +2,6 @@ import { prisma } from '@/lib/db/db';
 import { sendMessage } from '@/lib/integrations/blooio';
 import { splitIntoSmsSegments } from '@/lib/integrations/sms';
 import { decryptMessage } from '@/lib/db/encryption';
-import { detectFeedbackIntent, captureFeedback } from '@/lib/services/feedback';
 import { logError } from '@/lib/utils/logger';
 import {
   executeToolCall,
@@ -40,36 +39,6 @@ export async function handleLLMConversationWithTools(phone: string, userText: st
 
   const history = await getRecentHistorySnippet(user.id, 30, 30);
   const conversationMessages = convertHistorySnippetToMessages(history);
-
-  const feedbackDetection = detectFeedbackIntent(userText);
-  if (feedbackDetection.isFeedback && feedbackDetection.sentiment) {
-    await captureFeedback({
-      userId: user.id,
-      userMessage: userText,
-      sentiment: feedbackDetection.sentiment,
-      context: {
-        history: history.slice(0, 500),
-        timestamp: new Date().toISOString(),
-      },
-    });
-
-    let acknowledgment = '';
-    if (feedbackDetection.sentiment === 'frustrated') {
-      acknowledgment = "i hear you, that's frustrating. i've logged this for the team to review. what else can i help with?";
-    } else if (feedbackDetection.sentiment === 'bug_report') {
-      acknowledgment = "thanks for reporting this. i've logged it for the team to investigate. anything else i can help with?";
-    } else {
-      acknowledgment = "thanks for the feedback! i've passed it along to the team. what else can i help with?";
-    }
-
-    await sendMessage({
-      to: phone,
-      body: acknowledgment,
-      userId: user.id,
-      shouldPersist: true,
-    });
-    return;
-  }
 
   if (!OPENAI_API_KEY) {
     await sendMessage({
