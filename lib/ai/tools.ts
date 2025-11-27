@@ -310,15 +310,18 @@ async function executeGetRecurringCharges(userId: string) {
 
   if (active.length === 0) return { message: 'No active recurring charges found.' };
 
-  return active.map((s) => ({
-    merchant: s.merchant,
-    amount: s.amount,
-    freq: s.frequency,
-    next: s.nextDate,
-    cat: s.category,
-    acct: `${s.institutionName} - ${s.accountName}`,
-    status: s.status,
-  }));
+  const total = active.reduce((sum, s) => sum + s.amount, 0);
+
+  return {
+    subscriptions: active.map((s) => ({
+      merchant: s.merchant,
+      amount: Math.round(s.amount * 100) / 100,
+      freq: s.frequency,
+      next: s.nextDate,
+    })),
+    monthlyTotal: Math.round(total * 100) / 100,
+    count: active.length,
+  };
 }
 
 const CATEGORY_WHITELIST = [

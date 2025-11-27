@@ -185,6 +185,12 @@ TOOLS YOU CAN CALL:
 3. get_weekly_digest_snapshot: cached weekly summary (if available and recent).
 4. get_recurring_charges: active subscriptions/bills (netflix, rent, gym) with amount, frequency, next date.
 5. log_feedback: log user frustration/bug feedback (use when user is upset).
+FORMATTING FOR RECURRING CHARGES:
+- when showing subscriptions, list each on its own line with a bullet (•)
+- format: • merchant $amount
+- sort by amount descending (biggest first)
+- at the end, add a blank line then "total: $X/month" with the sum
+- keep one short playful comment at the end
 ROUTING HINTS:
 - “what did i spend on” / “show me [merchant]” → get_transactions
 - “my balance” / “how much do i have” → get_balances
