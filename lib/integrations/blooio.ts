@@ -203,28 +203,40 @@ export function verifyBlooioSignature(rawBody: string, headerSig: string | null,
 }
 
 /**
- * Format phone number to E.164
+ * Normalize phone number to E.164 format
+ * Blooio sends E.164 already, this just cleans up formatting
+ * Only assumes US/Canada (+1) for 10-digit numbers without country code
  */
 export function formatE164(phone: string): string {
-  // Remove all non-digit characters
-  const digits = phone.replace(/\D/g, '');
+  const trimmed = phone.trim();
   
-  // If starts with 1 and has 11 digits (US/Canada)
+  // Already valid E.164 (starts with + followed by digits)
+  if (/^\+\d{10,15}$/.test(trimmed)) {
+    return trimmed;
+  }
+  
+  // Has + but with formatting characters - strip them
+  if (trimmed.startsWith('+')) {
+    const digits = trimmed.replace(/\D/g, '');
+    if (digits.length >= 10 && digits.length <= 15) {
+      return `+${digits}`;
+    }
+  }
+  
+  // Remove all non-digit characters
+  const digits = trimmed.replace(/\D/g, '');
+  
+  // 11 digits starting with 1 = US/Canada
   if (digits.length === 11 && digits[0] === '1') {
     return `+${digits}`;
   }
   
-  // If has 10 digits, assume US/Canada
+  // 10 digits = assume US/Canada (this is the only assumption we make)
   if (digits.length === 10) {
     return `+1${digits}`;
   }
   
-  // If already has country code
-  if (digits.length > 10) {
-    return `+${digits}`;
-  }
-  
-  throw new Error(`Invalid phone number format: ${phone}`);
+  throw new Error(`Invalid phone number format: ${phone}. International numbers must include country code with +`);
 }
 
 /**
