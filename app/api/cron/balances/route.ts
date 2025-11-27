@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { runBalanceUpdateForUser } from '@/lib/balanceJob';
 
-const DEFAULT_BATCH_SIZE = 50;
+const DEFAULT_BATCH_SIZE = 500;
 
 function getBatchSize(): number {
   const raw = process.env.BALANCE_CRON_BATCH_SIZE;
@@ -12,8 +12,8 @@ function getBatchSize(): number {
 }
 
 export async function GET(req: Request) {
-  const twoDaysAgo = new Date();
-  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+  const oneDayAgo = new Date();
+  oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
   const batchSize = getBatchSize();
 
@@ -24,10 +24,11 @@ export async function GET(req: Request) {
       billingStatus: { in: ['active', 'trialing'] },
       OR: [
         { lastBalanceUpdateAt: null },
-        { lastBalanceUpdateAt: { lt: twoDaysAgo } },
+        { lastBalanceUpdateAt: { lt: oneDayAgo } },
       ],
     },
     select: { id: true },
+    orderBy: { lastBalanceUpdateAt: 'asc' },
     take: batchSize,
   });
 
