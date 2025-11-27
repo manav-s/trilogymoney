@@ -1,4 +1,4 @@
-import { handleLLMConversationWithTools } from '../lib/conversationWithTools';
+import { handleLLMConversationWithTools } from '../lib/ai/conversationWithTools';
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';

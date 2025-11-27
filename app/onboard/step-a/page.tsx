@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { detectTimezone, getBrowserTimezone } from "@/lib/timezone-detection";
+import { detectTimezone, getBrowserTimezone } from "@/lib/utils/timezone-detection";
 const ONBOARDING_PHONE_KEY = "onboarding_phone";
 
 export default function StepA() {

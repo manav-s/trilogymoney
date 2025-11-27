@@ -9,15 +9,15 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { BlooioWebhookEvent, formatE164 } from '@/lib/blooio';
+import { prisma } from '@/lib/db/db';
+import { BlooioWebhookEvent, formatE164 } from '@/lib/integrations/blooio';
 import { generateMagicLink } from '@/lib/magic-link';
-import { sendMessage } from '@/lib/blooio';
-import { encryptMessage } from '@/lib/encryption';
+import { sendMessage } from '@/lib/integrations/blooio';
+import { encryptMessage } from '@/lib/db/encryption';
 import { z } from 'zod';
 import { createHmac, timingSafeEqual } from 'crypto';
-import { RATE_LIMIT_WINDOW_MS, MAX_MESSAGES_PER_WINDOW } from '@/lib/constants';
-import { handleLLMConversationWithTools } from '@/lib/conversationWithTools';
+import { RATE_LIMIT_WINDOW_MS, MAX_MESSAGES_PER_WINDOW } from '@/lib/utils/constants';
+import { handleLLMConversationWithTools } from '@/lib/ai/conversationWithTools';
 
 const WEBHOOK_SECRET = process.env.BLOOIO_WEBHOOK_SECRET;
 

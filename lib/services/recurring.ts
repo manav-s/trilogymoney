@@ -1,7 +1,7 @@
-import { getPlaidClient } from './plaid';
-import { prisma } from './db';
-import { decryptMessage } from './encryption';
-import { logError } from './logger';
+import { getPlaidClient } from '../integrations/plaid';
+import { prisma } from '../db/db';
+import { decryptMessage } from '../db/encryption';
+import { logError } from '../utils/logger';
 
 export type RecurringStream = {
   streamId: string;

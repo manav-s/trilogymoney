@@ -18,8 +18,8 @@ type InMemAccount = {
 
 let prismaMockGlobal: any;
 
-vi.mock('../lib/db', () => ({ prisma: prismaMockGlobal }));
-vi.mock('../lib/plaid', () => ({
+vi.mock('../lib/db/db', () => ({ prisma: prismaMockGlobal }));
+vi.mock('../lib/integrations/plaid', () => ({
   getPlaidClient: () => ({
     accountsBalanceGet: vi.fn(async ({ access_token }: any) => {
       const r = (globalThis as any).__P_RESOLVER__ as (t: string) => any;
@@ -29,7 +29,7 @@ vi.mock('../lib/plaid', () => ({
     }),
   }),
 }));
-vi.mock('../lib/encryption', () => ({ decryptMessage: (s: string) => s }));
+vi.mock('../lib/db/encryption', () => ({ decryptMessage: (s: string) => s }));
 
 describe('balances breakdown (cash vs credit)', () => {
   beforeEach(() => {
@@ -46,7 +46,7 @@ describe('balances breakdown (cash vs credit)', () => {
           const where = args?.where ?? {};
           return items.filter(i => !where.userId || i.userId === where.userId).map(i => ({ id: i.id, accessToken: i.accessToken, institutionName: i.institutionName ?? null }));
         }),
-        update: vi.fn(async () => {}),
+        update: vi.fn(async () => { }),
       },
       plaidAccount: {
         upsert: vi.fn(async (args: any) => {
@@ -116,17 +116,21 @@ describe('balances breakdown (cash vs credit)', () => {
       { id: 'it2', userId: 'u1', accessToken: 't2', institutionName: 'Bank B' },
     );
     setPlaidResolver((t) => {
-      if (t === 't1') return { accounts: [
-        { account_id: 'a1', name: 'Chk', type: 'depository', subtype: 'checking', balances: { iso_currency_code: 'USD', available: 900, current: 1000 } },
-        { account_id: 'a2', name: 'Sav', type: 'depository', subtype: 'savings', balances: { iso_currency_code: 'USD', available: null, current: 600 } },
-      ] };
-      if (t === 't2') return { accounts: [
-        { account_id: 'c1', name: 'Card', type: 'credit', subtype: 'credit card', balances: { iso_currency_code: 'USD', current: -1200, available: null } },
-      ] };
+      if (t === 't1') return {
+        accounts: [
+          { account_id: 'a1', name: 'Chk', type: 'depository', subtype: 'checking', balances: { iso_currency_code: 'USD', available: 900, current: 1000 } },
+          { account_id: 'a2', name: 'Sav', type: 'depository', subtype: 'savings', balances: { iso_currency_code: 'USD', available: null, current: 600 } },
+        ]
+      };
+      if (t === 't2') return {
+        accounts: [
+          { account_id: 'c1', name: 'Card', type: 'credit', subtype: 'credit card', balances: { iso_currency_code: 'USD', current: -1200, available: null } },
+        ]
+      };
       return { accounts: [] };
     });
 
-    const { getBalancesBreakdown } = await import('../lib/balances');
+    const { getBalancesBreakdown } = await import('../lib/services/balances');
     const res = await getBalancesBreakdown({ userId: 'u1' });
     expect(res.cash.count).toBe(2);
     expect(Math.round(res.cash.total)).toBe(1500);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createLinkToken } from '@/lib/plaid';
+import { createLinkToken } from '@/lib/integrations/plaid';
 
 export async function POST(req: NextRequest) {
   try {

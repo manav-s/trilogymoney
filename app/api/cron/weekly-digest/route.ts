@@ -2,8 +2,8 @@ export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { prisma } from '@/lib/db';
-import { getWeekStart, runWeeklyDigestForUser } from '@/lib/weeklyDigestJob';
+import { prisma } from '@/lib/db/db';
+import { getWeekStart, runWeeklyDigestForUser } from '@/lib/jobs/weeklyDigestJob';
 
 const DEFAULT_BATCH_LIMIT = 10;
 const MAX_BATCH_LIMIT = 50;

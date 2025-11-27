@@ -4,7 +4,7 @@ function captureFetch(fn: (json: any) => void) {
   const impl = vi.fn(async (_input: RequestInfo, init?: RequestInit) => {
     const json = init?.body ? JSON.parse(String(init.body)) : {};
     fn(json);
-    return new Response(JSON.stringify({ choices: [ { message: { content: 'ok' } } ] }), {
+    return new Response(JSON.stringify({ choices: [{ message: { content: 'ok' } }] }), {
       status: 200,
       headers: { 'content-type': 'application/json' },
     });
@@ -27,7 +27,7 @@ describe('LLM balances prompt includes cash+cards fields', () => {
       const u = msgs.find((m: any) => m.role === 'user');
       userContent = u?.content || '';
     });
-    const { generateReply } = await import('../lib/llm');
+    const { generateReply } = await import('../lib/ai/llm');
     const out = await generateReply('balances' as any, {
       cashTotal: 1500,
       cashCount: 2,

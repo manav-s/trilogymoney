@@ -1,10 +1,10 @@
-import { prisma } from '@/lib/db';
-import { getBalancesBreakdown } from '@/lib/balances';
-import { getTransactions, isIncome, buildTransactionsSummary } from '@/lib/transactions';
-import { logError, logger } from '@/lib/logger';
+import { prisma } from '@/lib/db/db';
+import { getBalancesBreakdown } from '@/lib/services/balances';
+import { getTransactions, isIncome, buildTransactionsSummary } from '@/lib/services/transactions';
+import { logError, logger } from '@/lib/utils/logger';
 import type { StoredTransactionsQuery } from '@/lib/transactionsContext';
-import { captureFeedback, type FeedbackSentiment } from '@/lib/feedback';
-import { getRecurringStreams } from '@/lib/recurring';
+import { captureFeedback, type FeedbackSentiment } from '@/lib/services/feedback';
+import { getRecurringStreams } from '@/lib/services/recurring';
 
 export type ToolSchema = {
   name: string;

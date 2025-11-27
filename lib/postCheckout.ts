@@ -1,7 +1,7 @@
-import { prisma } from '@/lib/db';
-import { sendMessage } from '@/lib/blooio';
-import { logError, logger } from '@/lib/logger';
-import { runWeeklyDigestForUser } from '@/lib/weeklyDigestJob';
+import { prisma } from '@/lib/db/db';
+import { sendMessage } from '@/lib/integrations/blooio';
+import { logError, logger } from '@/lib/utils/logger';
+import { runWeeklyDigestForUser } from '@/lib/jobs/weeklyDigestJob';
 
 const WELCOME_SCRIPT = `welcome to trilogy! you're live now.
 

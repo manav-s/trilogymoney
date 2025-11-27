@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/db/db";
 import { handlePostCheckoutActivation } from "@/lib/postCheckout";
 
 // Stripe webhook handler

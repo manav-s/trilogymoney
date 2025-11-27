@@ -1,7 +1,7 @@
-import type { BalancesBreakdown } from './balances';
-import type { WeeklyDigestContext } from './llm';
-import type { TransactionSummary, TransactionsSummary } from './transactions';
-import { isExcludedFromSummary } from './transactions';
+import type { BalancesBreakdown } from './services/balances';
+import type { WeeklyDigestContext } from './ai/llm';
+import type { TransactionSummary, TransactionsSummary } from './services/transactions';
+import { isExcludedFromSummary } from './services/transactions';
 
 export const WEEKLY_DIGEST_HIGHLIGHT_KEYWORDS: Array<{ key: string; label: string }> = [
   { key: 'amazon', label: 'amazon' },

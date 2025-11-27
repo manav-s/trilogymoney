@@ -1,9 +1,9 @@
-import { prisma } from '@/lib/db';
-import { sendMessage } from '@/lib/blooio';
-import { splitIntoSmsSegments } from '@/lib/sms';
-import { decryptMessage } from '@/lib/encryption';
-import { detectFeedbackIntent, captureFeedback } from '@/lib/feedback';
-import { logError } from '@/lib/logger';
+import { prisma } from '@/lib/db/db';
+import { sendMessage } from '@/lib/integrations/blooio';
+import { splitIntoSmsSegments } from '@/lib/integrations/sms';
+import { decryptMessage } from '@/lib/db/encryption';
+import { detectFeedbackIntent, captureFeedback } from '@/lib/services/feedback';
+import { logError } from '@/lib/utils/logger';
 import {
   executeToolCall,
   getBalancesToolSchema,
@@ -13,7 +13,7 @@ import {
   getRecurringChargesToolSchema,
   type ToolCall,
   type ToolSchema,
-} from '@/lib/tools';
+} from '@/lib/ai/tools';
 
 type ChatMessage = {
   role: 'system' | 'user' | 'assistant' | 'tool';

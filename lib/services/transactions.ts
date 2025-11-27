@@ -1,7 +1,7 @@
-import { getPlaidClient } from '@/lib/plaid';
-import { prisma } from '@/lib/db';
-import { decryptMessage } from '@/lib/encryption';
-import { logError } from '@/lib/logger';
+import { getPlaidClient } from '@/lib/integrations/plaid';
+import { prisma } from '@/lib/db/db';
+import { decryptMessage } from '@/lib/db/encryption';
+import { logError } from '@/lib/utils/logger';
 
 const DEFAULT_LOOKBACK_DAYS = 30;
 const MAX_LIMIT = 20;

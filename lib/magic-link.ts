@@ -7,7 +7,7 @@
  */
 
 import { nanoid } from 'nanoid';
-import { prisma } from './db';
+import { prisma } from './db/db';
 
 /**
  * Generate a short magic link for onboarding

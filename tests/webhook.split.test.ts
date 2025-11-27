@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { splitIntoSmsSegments } from '../lib/sms';
+import { splitIntoSmsSegments } from '../lib/integrations/sms';
 
 describe('splitIntoSmsSegments', () => {
   it('splits sentences and trims whitespace', () => {

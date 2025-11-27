@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
-import { prisma } from '@/lib/db';
-import { runBalanceUpdateForUser } from '@/lib/balanceJob';
+import { prisma } from '@/lib/db/db';
+import { runBalanceUpdateForUser } from '@/lib/jobs/balanceJob';
 
 const DEFAULT_BATCH_SIZE = 500;
 

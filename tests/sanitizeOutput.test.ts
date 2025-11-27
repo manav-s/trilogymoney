@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { sanitizeOutput as sanitizeLlmOutput } from '../lib/llm';
-import { sanitizeOutput as sanitizeConvoOutput } from '../lib/conversationWithTools';
+import { sanitizeOutput as sanitizeLlmOutput } from '../lib/ai/llm';
+import { sanitizeOutput as sanitizeConvoOutput } from '../lib/ai/conversationWithTools';
 
 const cases = [
   { input: 'a-b', expected: 'a-b', label: 'preserves hyphen' },

@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
-import { prisma } from '@/lib/db';
-import { logError } from '@/lib/logger';
+import { prisma } from '@/lib/db/db';
+import { logError } from '@/lib/utils/logger';
 
 export type FeedbackSentiment = 'frustrated' | 'feedback' | 'bug_report';
 

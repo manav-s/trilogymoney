@@ -19,8 +19,8 @@ type InMemAccount = {
 
 let prismaMockGlobal: any;
 
-vi.mock('../lib/db', () => ({ prisma: prismaMockGlobal }));
-vi.mock('../lib/plaid', () => ({
+vi.mock('../lib/db/db', () => ({ prisma: prismaMockGlobal }));
+vi.mock('../lib/integrations/plaid', () => ({
   getPlaidClient: () => ({
     accountsBalanceGet: vi.fn(async ({ access_token }: any) => {
       const r = (globalThis as any).__TEST_PLAID_RESOLVER__ as (t: string) => any;
@@ -30,7 +30,7 @@ vi.mock('../lib/plaid', () => ({
     }),
   }),
 }));
-vi.mock('../lib/encryption', () => ({
+vi.mock('../lib/db/encryption', () => ({
   decryptMessage: (s: string) => s,
 }));
 
@@ -122,7 +122,7 @@ describe('lib/balances getBalances integration (mocked Plaid + Prisma)', () => {
     prismaMockGlobal = prismaMock;
     return { prismaMock, state: { items, accounts } };
   }
-  
+
   function setPlaidResolver(resolver: (accessToken: string) => any) {
     (globalThis as any).__TEST_PLAID_RESOLVER__ = resolver;
   }
@@ -139,20 +139,24 @@ describe('lib/balances getBalances integration (mocked Plaid + Prisma)', () => {
 
     setPlaidResolver((token) => {
       if (token === 'tok1') {
-        return { accounts: [
-          { account_id: 'a1', name: 'Chk A', official_name: 'Checking A', mask: '1111', type: 'depository', subtype: 'checking', balances: { iso_currency_code: 'USD', current: 1200.25, available: 1000.00 } },
-          { account_id: 'a2', name: 'Sav A', mask: '2222', type: 'depository', subtype: 'savings', balances: { iso_currency_code: 'USD', current: 500.00, available: null } },
-        ] };
+        return {
+          accounts: [
+            { account_id: 'a1', name: 'Chk A', official_name: 'Checking A', mask: '1111', type: 'depository', subtype: 'checking', balances: { iso_currency_code: 'USD', current: 1200.25, available: 1000.00 } },
+            { account_id: 'a2', name: 'Sav A', mask: '2222', type: 'depository', subtype: 'savings', balances: { iso_currency_code: 'USD', current: 500.00, available: null } },
+          ]
+        };
       }
       if (token === 'tok2') {
-        return { accounts: [
-          { account_id: 'a3', name: 'Card B', mask: '3333', type: 'credit', subtype: 'credit card', balances: { iso_currency_code: 'USD', current: -200.50, available: null } },
-        ] };
+        return {
+          accounts: [
+            { account_id: 'a3', name: 'Card B', mask: '3333', type: 'credit', subtype: 'credit card', balances: { iso_currency_code: 'USD', current: -200.50, available: null } },
+          ]
+        };
       }
       return { accounts: [] };
     });
 
-    const { getBalances } = await import('../lib/balances');
+    const { getBalances } = await import('../lib/services/balances');
     const res = await getBalances({ userId: 'u1' });
 
     expect(res.count).toBe(2);
@@ -162,7 +166,7 @@ describe('lib/balances getBalances integration (mocked Plaid + Prisma)', () => {
     expect(res.accounts.find(a => a.accountId === 'a2')?.institution).toBe('Bank A');
     expect(res.accounts.find(a => a.accountId === 'a3')).toBeUndefined();
   });
-  
+
   // Additional edge-case tests (partial errors, inactive filters) can be added later.
 });
 

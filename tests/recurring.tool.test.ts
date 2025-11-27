@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 
-vi.mock('../lib/recurring', () => {
+vi.mock('../lib/services/recurring', () => {
   return {
     getRecurringStreams: vi.fn(),
   };
 });
 
-import { executeToolCall } from '../lib/tools';
-import { getRecurringStreams } from '../lib/recurring';
+import { executeToolCall } from '../lib/ai/tools';
+import { getRecurringStreams } from '../lib/services/recurring';
 
 describe('get_recurring_charges tool executor', () => {
   const toolCall = {

@@ -1,5 +1,5 @@
 import type { TransactionQuery } from './transactionQuery';
-import type { TransactionSummary } from './transactions';
+import type { TransactionSummary } from './services/transactions';
 
 export type StoredQuerySource = 'weekly_digest' | 'monthly_digest' | 'adhoc';
 

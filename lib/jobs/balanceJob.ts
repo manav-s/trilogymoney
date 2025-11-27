@@ -1,9 +1,9 @@
-import { prisma } from '@/lib/db';
-import { sendMessage } from '@/lib/blooio';
-import { getBalancesBreakdown } from '@/lib/balances';
-import { generateReply } from '@/lib/llm';
-import { splitIntoSmsSegments } from '@/lib/sms';
-import { logError } from '@/lib/logger';
+import { prisma } from '@/lib/db/db';
+import { sendMessage } from '@/lib/integrations/blooio';
+import { getBalancesBreakdown } from '@/lib/services/balances';
+import { generateReply } from '@/lib/ai/llm';
+import { splitIntoSmsSegments } from '@/lib/integrations/sms';
+import { logError } from '@/lib/utils/logger';
 
 type BalanceUpdateResult =
   | { status: 'sent' }

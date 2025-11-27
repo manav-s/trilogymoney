@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPlaidClient, getPlaidDefaults } from '@/lib/plaid';
-import { prisma } from '@/lib/db';
+import { getPlaidClient, getPlaidDefaults } from '@/lib/integrations/plaid';
+import { prisma } from '@/lib/db/db';
 import { z } from 'zod';
-import { encryptMessage } from '@/lib/encryption';
-import { logError } from '@/lib/logger';
+import { encryptMessage } from '@/lib/db/encryption';
+import { logError } from '@/lib/utils/logger';
 
 const schema = z.object({ phone: z.string().min(10), public_token: z.string().min(10) });
 

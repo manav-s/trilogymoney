@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { logError } from "@/lib/logger";
-import { runWeeklyDigestForUser } from "@/lib/weeklyDigestJob";
+import { prisma } from "@/lib/db/db";
+import { logError } from "@/lib/utils/logger";
+import { runWeeklyDigestForUser } from "@/lib/jobs/weeklyDigestJob";
 
 export async function POST(req: NextRequest) {
   try {

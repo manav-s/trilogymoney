@@ -12,15 +12,15 @@ const prismaMock = {
   },
 };
 
-vi.mock('@/lib/db', () => ({ prisma: prismaMock }));
-vi.mock('@/lib/encryption', () => ({ encryptMessage: encryptSpy }));
+vi.mock('@/lib/db/db', () => ({ prisma: prismaMock }));
+vi.mock('@/lib/db/encryption', () => ({ encryptMessage: encryptSpy }));
 
 function mockFetch(body: unknown, status = 200) {
   const fetchSpy = vi.fn(async () => new Response(JSON.stringify(body), {
     status,
     headers: { 'content-type': 'application/json' },
   }));
-  // @ts-expect-error override global fetch for tests
+
   global.fetch = fetchSpy;
   return fetchSpy;
 }
@@ -46,7 +46,7 @@ describe('lib/blooio sendMessage persistence flags', () => {
     mockFetch({ id: 'msg-1' });
     prismaMock.message.create.mockResolvedValue({});
 
-    const { sendMessage } = await import('../lib/blooio');
+    const { sendMessage } = await import('../lib/integrations/blooio');
     await sendMessage({ to: '+15551230000', body: 'paid message', userId: 'user-1', shouldPersist: true });
 
     expect(prismaMock.message.create).toHaveBeenCalledTimes(1);
@@ -63,7 +63,7 @@ describe('lib/blooio sendMessage persistence flags', () => {
   it('does not persist when shouldPersist is false', async () => {
     mockFetch({ id: 'msg-2' });
 
-    const { sendMessage } = await import('../lib/blooio');
+    const { sendMessage } = await import('../lib/integrations/blooio');
     await sendMessage({ to: '+15551230001', body: 'free message', userId: 'user-2', shouldPersist: false });
 
     expect(prismaMock.message.create).not.toHaveBeenCalled();
@@ -75,7 +75,7 @@ describe('lib/blooio sendMessage persistence flags', () => {
     prismaMock.user.findUnique.mockResolvedValue({ id: 'user-3' });
     prismaMock.message.create.mockResolvedValue({});
 
-    const { sendMessage } = await import('../lib/blooio');
+    const { sendMessage } = await import('../lib/integrations/blooio');
     await sendMessage({ to: '+15551230002', body: 'lookup message', shouldPersist: true });
 
     expect(prismaMock.user.findUnique).toHaveBeenCalledWith({ where: { phone: '+15551230002' } });
@@ -87,7 +87,7 @@ describe('lib/blooio sendMessage persistence flags', () => {
     mockFetch({ id: 'msg-4' });
     prismaMock.user.findUnique.mockResolvedValue(null);
 
-    const { sendMessage } = await import('../lib/blooio');
+    const { sendMessage } = await import('../lib/integrations/blooio');
     await sendMessage({ to: '+15551230003', body: 'orphan message', shouldPersist: true });
 
     expect(prismaMock.message.create).not.toHaveBeenCalled();
@@ -97,7 +97,7 @@ describe('lib/blooio sendMessage persistence flags', () => {
     mockFetch({ id: 'msg-5' });
     prismaMock.message.create.mockRejectedValue(new Error('db down'));
 
-    const { sendMessage } = await import('../lib/blooio');
+    const { sendMessage } = await import('../lib/integrations/blooio');
     await expect(sendMessage({ to: '+15551230004', body: 'resilient', userId: 'user-4', shouldPersist: true })).resolves.toBeTruthy();
   });
 
@@ -108,7 +108,7 @@ describe('lib/blooio sendMessage persistence flags', () => {
     mockFetch({ id: 'msg-6' });
     prismaMock.message.create.mockResolvedValue({});
 
-    const { sendMessage } = await import('../lib/blooio');
+    const { sendMessage } = await import('../lib/integrations/blooio');
     await sendMessage({ to: '+15551230005', body: 'timed', userId: 'user-5', shouldPersist: true });
 
     const expiresAt = prismaMock.message.create.mock.calls[0][0].data.expiresAt as Date;
@@ -121,7 +121,7 @@ describe('lib/blooio sendMessage persistence flags', () => {
   it('does not attempt persistence when Blooio API fails', async () => {
     mockFetch({ error: 'oops' }, 500);
 
-    const { sendMessage } = await import('../lib/blooio');
+    const { sendMessage } = await import('../lib/integrations/blooio');
     await expect(sendMessage({ to: '+15551230006', body: 'fail path', shouldPersist: true })).rejects.toThrow();
     expect(prismaMock.message.create).not.toHaveBeenCalled();
   });

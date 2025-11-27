@@ -1,11 +1,11 @@
 import { Prisma } from '@prisma/client';
 
-import { getBalancesBreakdown } from '@/lib/balances';
-import { sendMessage } from '@/lib/blooio';
-import { prisma } from '@/lib/db';
-import { logError } from '@/lib/logger';
-import { generateWeeklyDigestMessage } from '@/lib/llm';
-import { getTransactions, buildTransactionsSummary, isExcludedFromSummary, isIncome } from '@/lib/transactions';
+import { getBalancesBreakdown } from '@/lib/services/balances';
+import { sendMessage } from '@/lib/integrations/blooio';
+import { prisma } from '@/lib/db/db';
+import { logError } from '@/lib/utils/logger';
+import { generateWeeklyDigestMessage } from '@/lib/ai/llm';
+import { getTransactions, buildTransactionsSummary, isExcludedFromSummary, isIncome } from '@/lib/services/transactions';
 import { buildWeeklyDigestContext, extractHighlights } from '@/lib/weeklyDigest';
 import { TransactionQuery } from '@/lib/transactionQuery';
 import { buildStoredTransactionsQuery, formatRangeLabel } from '@/lib/transactionsContext';
@@ -154,8 +154,8 @@ export async function runWeeklyDigestForUser(
     highlights,
   });
   const digestCategoryLabels = digestContext.spendSummary.topCategories
-    .map((cat) => normalizeCategoryLabel(cat.label))
-    .filter((label): label is string => Boolean(label));
+    .map((cat: { label: string | null | undefined }) => normalizeCategoryLabel(cat.label))
+    .filter((label: string | null): label is string => Boolean(label));
 
   const message = await generateWeeklyDigestMessage(digestContext);
   if (!message) {

@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 
-import type { BalancesBreakdown } from '../lib/balances';
+import type { BalancesBreakdown } from '../lib/services/balances';
 import type {
   TransactionSummary,
   TransactionsSummary,
   TransactionsSummaryBucket,
-} from '../lib/transactions';
+} from '../lib/services/transactions';
 import { buildWeeklyDigestContext, extractHighlights } from '../lib/weeklyDigest';
-import type { WeeklyDigestContext } from '../lib/llm';
+import type { WeeklyDigestContext } from '../lib/ai/llm';
 
 function makeBucket(
   label: string,
@@ -196,7 +196,7 @@ describe('generateWeeklyDigestMessage', () => {
   it('sends context JSON to OpenAI and returns the response text', async () => {
     process.env.OPENAI_API_KEY = 'test-key';
     vi.resetModules();
-    const { generateWeeklyDigestMessage } = await import('../lib/llm');
+    const { generateWeeklyDigestMessage } = await import('../lib/ai/llm');
 
     const context: WeeklyDigestContext = {
       week: { from: '2025-10-07', to: '2025-10-13' },

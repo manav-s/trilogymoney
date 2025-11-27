@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 let prismaMockGlobal: any;
 
-vi.mock('../lib/db', () => ({ prisma: prismaMockGlobal }));
-vi.mock('../lib/plaid', () => ({
+vi.mock('../lib/db/db', () => ({ prisma: prismaMockGlobal }));
+vi.mock('../lib/integrations/plaid', () => ({
   getPlaidClient: () => ({
     accountsBalanceGet: vi.fn(async ({ access_token }: any) => {
       const r = (globalThis as any).__INST_PLAID_RESOLVER__ as (t: string) => any;
@@ -14,7 +14,7 @@ vi.mock('../lib/plaid', () => ({
   }),
   getPlaidDefaults: () => ({ countryCodes: ['US'] }),
 }));
-vi.mock('../lib/encryption', () => ({ decryptMessage: (s: string) => s }));
+vi.mock('../lib/db/encryption', () => ({ decryptMessage: (s: string) => s }));
 
 describe('institution names in balances breakdown', () => {
   beforeEach(() => {
@@ -43,7 +43,7 @@ describe('institution names in balances breakdown', () => {
               return out;
             });
         }),
-        update: vi.fn(async () => {}),
+        update: vi.fn(async () => { }),
       },
       plaidAccount: {
         upsert: vi.fn(async (args: any) => {
@@ -126,16 +126,20 @@ describe('institution names in balances breakdown', () => {
       { id: 'it2', userId: 'u1', accessToken: 't2', institutionName: 'Discover' },
     );
     setPlaidResolver((t) => {
-      if (t === 't1') return { accounts: [
-        { account_id: 'a1', name: 'Checking', type: 'depository', subtype: 'checking', balances: { iso_currency_code: 'USD', available: 1000, current: 1200 } },
-      ] };
-      if (t === 't2') return { accounts: [
-        { account_id: 'c1', name: 'Credit Card', type: 'credit', subtype: 'credit card', balances: { iso_currency_code: 'USD', current: -500, available: null } },
-      ] };
+      if (t === 't1') return {
+        accounts: [
+          { account_id: 'a1', name: 'Checking', type: 'depository', subtype: 'checking', balances: { iso_currency_code: 'USD', available: 1000, current: 1200 } },
+        ]
+      };
+      if (t === 't2') return {
+        accounts: [
+          { account_id: 'c1', name: 'Credit Card', type: 'credit', subtype: 'credit card', balances: { iso_currency_code: 'USD', current: -500, available: null } },
+        ]
+      };
       return { accounts: [] };
     });
 
-    const { getBalancesBreakdown } = await import('../lib/balances');
+    const { getBalancesBreakdown } = await import('../lib/services/balances');
     const res = await getBalancesBreakdown({ userId: 'u1' });
 
     expect(res.cash.accounts.length).toBe(1);
@@ -167,7 +171,7 @@ describe('institution names in balances breakdown', () => {
       ],
     }));
 
-    const { getBalancesBreakdown } = await import('../lib/balances');
+    const { getBalancesBreakdown } = await import('../lib/services/balances');
     const res = await getBalancesBreakdown({ userId: 'u2' });
     // Even if no accounts returned from getBalances (due to filtering), credit query should work
     // Main test is that null institutions don't break the flow
@@ -191,7 +195,7 @@ describe('institution names in balances breakdown', () => {
     });
     global.fetch = mockFetch as any;
 
-    const { generateReply } = await import('../lib/llm');
+    const { generateReply } = await import('../lib/ai/llm');
     await generateReply('balances' as any, {
       cashTotal: 1200,
       cashCount: 1,
@@ -228,7 +232,7 @@ describe('institution names in balances breakdown', () => {
     });
     global.fetch = mockFetch as any;
 
-    const { generateReply } = await import('../lib/llm');
+    const { generateReply } = await import('../lib/ai/llm');
     await generateReply('balances' as any, {
       cashTotal: 500,
       cashCount: 1,

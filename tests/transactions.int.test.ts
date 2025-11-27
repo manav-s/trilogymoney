@@ -18,10 +18,10 @@ const plaidClientMock = {
   transactionsGet: vi.fn(),
 };
 
-vi.mock('@/lib/db', () => ({ prisma: prismaMock }));
-vi.mock('@/lib/encryption', () => ({ decryptMessage: decryptMock }));
-vi.mock('@/lib/logger', () => ({ logError: logErrorMock }));
-vi.mock('@/lib/plaid', () => ({ getPlaidClient: () => plaidClientMock }));
+vi.mock('@/lib/db/db', () => ({ prisma: prismaMock }));
+vi.mock('@/lib/db/encryption', () => ({ decryptMessage: decryptMock }));
+vi.mock('@/lib/utils/logger', () => ({ logError: logErrorMock }));
+vi.mock('@/lib/integrations/plaid', () => ({ getPlaidClient: () => plaidClientMock }));
 
 describe('lib/transactions getTransactions', () => {
   beforeEach(() => {
@@ -72,7 +72,7 @@ describe('lib/transactions getTransactions', () => {
       },
     });
 
-    const { getTransactions } = await import('../lib/transactions');
+    const { getTransactions } = await import('../lib/services/transactions');
     const result = await getTransactions({ userId: 'user-1', limit: 3 });
 
     expect(result.moreAvailable).toBe(false);
@@ -138,7 +138,7 @@ describe('lib/transactions getTransactions', () => {
       },
     });
 
-    const { getTransactions } = await import('../lib/transactions');
+    const { getTransactions } = await import('../lib/services/transactions');
     const result = await getTransactions({ userId: 'user-1', limit: 5, merchant: 'star' });
 
     expect(result.transactions).toHaveLength(1);
@@ -190,7 +190,7 @@ describe('lib/transactions getTransactions', () => {
       },
     });
 
-    const { getTransactions } = await import('../lib/transactions');
+    const { getTransactions } = await import('../lib/services/transactions');
     const result = await getTransactions({ userId: 'user-1', limit: 10, category: 'Food and Drink' });
 
     expect(result.transactions).toHaveLength(1);
@@ -227,7 +227,7 @@ describe('lib/transactions getTransactions', () => {
       },
     });
 
-    const { getTransactions } = await import('../lib/transactions');
+    const { getTransactions } = await import('../lib/services/transactions');
     const result = await getTransactions({ userId: 'user-1', limit: 1 });
 
     expect(result.transactions).toHaveLength(1);
@@ -279,7 +279,7 @@ describe('lib/transactions getTransactions', () => {
       },
     });
 
-    const { getTransactions } = await import('../lib/transactions');
+    const { getTransactions } = await import('../lib/services/transactions');
     const result = await getTransactions({ userId: 'user-1', limit: 10 });
 
     expect(result.transactions).toHaveLength(2);
@@ -303,7 +303,7 @@ describe('lib/transactions getTransactions', () => {
   it('throws for unpaid users', async () => {
     prismaMock.user.findUnique.mockResolvedValue({ id: 'user-1', billingStatus: 'inactive' });
 
-    const { getTransactions } = await import('../lib/transactions');
+    const { getTransactions } = await import('../lib/services/transactions');
     await expect(getTransactions({ userId: 'user-1' })).rejects.toThrow(/paid users/);
   });
 
@@ -318,7 +318,7 @@ describe('lib/transactions getTransactions', () => {
     plaidClientMock.transactionsGet.mockRejectedValueOnce({ response: { status: 500 } });
     plaidClientMock.transactionsGet.mockRejectedValueOnce({ response: { status: 500 } });
 
-    const { getTransactions } = await import('../lib/transactions');
+    const { getTransactions } = await import('../lib/services/transactions');
     const result = await getTransactions({ userId: 'user-1' });
 
     expect(result.transactions).toHaveLength(0);
@@ -379,7 +379,7 @@ describe('lib/transactions getTransactions', () => {
       },
     });
 
-    const { getTransactions } = await import('../lib/transactions');
+    const { getTransactions } = await import('../lib/services/transactions');
     const result = await getTransactions({ userId: 'user-1', limit: 5 });
 
     expect(result.summary.totalSpend).toBe(100);
@@ -403,7 +403,7 @@ describe('lib/transactions getTransactions', () => {
     prismaMock.user.findUnique.mockResolvedValue({ id: 'user-1', billingStatus: 'active' });
     prismaMock.plaidItem.findMany.mockResolvedValue([]);
 
-    const { getTransactions } = await import('../lib/transactions');
+    const { getTransactions } = await import('../lib/services/transactions');
     const result = await getTransactions({ userId: 'user-1' });
 
     expect(result.transactions).toHaveLength(0);

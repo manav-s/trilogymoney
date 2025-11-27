@@ -3,8 +3,8 @@
  * Docs: https://imessages.readme.io/reference
  */
 import { createHmac, timingSafeEqual } from 'crypto';
-import { prisma } from '@/lib/db';
-import { encryptMessage } from '@/lib/encryption';
+import { prisma } from '@/lib/db/db';
+import { encryptMessage } from '@/lib/db/encryption';
 
 const BLOOIO_API_KEY = process.env.BLOOIO_API_KEY;
 const BLOOIO_BASE_URL = 'https://backend.blooio.com/v1/api';
