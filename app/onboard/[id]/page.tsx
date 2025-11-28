@@ -93,25 +93,25 @@ export default function OnboardWithIdPage() {
             </div>
             <div className="space-y-4 pt-4">
               <a
-                href="/signin"
-                className="block w-full px-8 py-4 text-lg font-semibold rounded-full bg-blue-600 text-white hover:bg-blue-700 focus:ring-4 focus:ring-blue-600/20 transition-all lowercase shadow-lg hover:shadow-blue-500/30 hover:-translate-y-0.5"
-              >
-                sign in for a new link
-              </a>
-              <div className="flex items-center gap-4">
-                <div className="flex-1 h-px bg-gray-200"></div>
-                <span className="text-sm text-gray-400 lowercase">or</span>
-                <div className="flex-1 h-px bg-gray-200"></div>
-              </div>
-              <a
                 href="https://shorturl.at/KGbiL"
-                className="block w-full px-8 py-4 text-lg font-semibold rounded-full bg-gray-100 text-gray-900 hover:bg-gray-200 transition-all lowercase border border-gray-200"
+                className="block w-full px-8 py-4 text-lg font-semibold rounded-full bg-blue-600 text-white hover:bg-blue-700 focus:ring-4 focus:ring-blue-600/20 transition-all lowercase shadow-lg hover:shadow-blue-500/30 hover:-translate-y-0.5"
               >
                 continue onboarding
               </a>
               <p className="text-sm text-gray-500 lowercase">
                 opens imessage to restart setup
               </p>
+              <div className="flex items-center gap-4">
+                <div className="flex-1 h-px bg-gray-200"></div>
+                <span className="text-sm text-gray-400 lowercase">or</span>
+                <div className="flex-1 h-px bg-gray-200"></div>
+              </div>
+              <a
+                href="/signin"
+                className="block w-full px-8 py-4 text-lg font-semibold rounded-full bg-gray-100 text-gray-900 hover:bg-gray-200 transition-all lowercase border border-gray-200"
+              >
+                existing user? sign in
+              </a>
             </div>
           </div>
         )}
@@ -133,25 +133,25 @@ export default function OnboardWithIdPage() {
             </div>
             <div className="space-y-4 pt-4">
               <a
-                href="/signin"
-                className="block w-full px-8 py-4 text-lg font-semibold rounded-full bg-blue-600 text-white hover:bg-blue-700 focus:ring-4 focus:ring-blue-600/20 transition-all lowercase shadow-lg hover:shadow-blue-500/30 hover:-translate-y-0.5"
-              >
-                sign in for a new link
-              </a>
-              <div className="flex items-center gap-4">
-                <div className="flex-1 h-px bg-gray-200"></div>
-                <span className="text-sm text-gray-400 lowercase">or</span>
-                <div className="flex-1 h-px bg-gray-200"></div>
-              </div>
-              <a
                 href="https://shorturl.at/KGbiL"
-                className="block w-full px-8 py-4 text-lg font-semibold rounded-full bg-gray-100 text-gray-900 hover:bg-gray-200 transition-all lowercase border border-gray-200"
+                className="block w-full px-8 py-4 text-lg font-semibold rounded-full bg-blue-600 text-white hover:bg-blue-700 focus:ring-4 focus:ring-blue-600/20 transition-all lowercase shadow-lg hover:shadow-blue-500/30 hover:-translate-y-0.5"
               >
                 continue onboarding
               </a>
               <p className="text-sm text-gray-500 lowercase">
                 opens imessage to restart setup
               </p>
+              <div className="flex items-center gap-4">
+                <div className="flex-1 h-px bg-gray-200"></div>
+                <span className="text-sm text-gray-400 lowercase">or</span>
+                <div className="flex-1 h-px bg-gray-200"></div>
+              </div>
+              <a
+                href="/signin"
+                className="block w-full px-8 py-4 text-lg font-semibold rounded-full bg-gray-100 text-gray-900 hover:bg-gray-200 transition-all lowercase border border-gray-200"
+              >
+                existing user? sign in
+              </a>
             </div>
           </div>
         )}
