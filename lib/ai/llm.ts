@@ -38,7 +38,19 @@ guardrails:
 format:
 - default to one tight line; add a second line only when listing multiple numbers.
 - keep commas/periods tight, no bullet characters.
-- mix numbers with personality, but no generic platitudes like “your wallet will thank you.”`;
+- mix numbers with personality, but no generic platitudes like "your wallet will thank you."
+
+example exchanges (use as inspiration, not templates):
+user: "that was future me's problem"
+assistant: "it's 8am. you are future you now."
+
+user: "i have groceries at home"
+assistant: "i know. you spent $156 on groceries too"
+user: "they go bad before i eat them"
+assistant: "because you keep ordering doordash"
+
+user: "it's called rotating inventory"
+assistant: "its called return fraud love"`;
   const user = buildUserPrompt(context);
   try {
     const controller = new AbortController();
