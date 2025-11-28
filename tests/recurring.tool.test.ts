@@ -57,18 +57,21 @@ describe('get_recurring_charges tool executor', () => {
       },
     ]);
 
-    const result = (await executeToolCall('user1', toolCall)) as Array<Record<string, unknown>>;
+    const result = (await executeToolCall('user1', toolCall)) as {
+      subscriptions: Array<{ merchant: string; amount: number; freq: string; next: string }>;
+      monthlyTotal: number;
+      count: number;
+    };
 
-    expect(result).toHaveLength(2);
-    expect(result[0].merchant).toBe('A');
-    expect(result[1].merchant).toBe('B');
-    expect(result[0]).toMatchObject({
+    expect(result.subscriptions).toHaveLength(2);
+    expect(result.count).toBe(2);
+    expect(result.monthlyTotal).toBe(70);
+    expect(result.subscriptions[0].merchant).toBe('A');
+    expect(result.subscriptions[1].merchant).toBe('B');
+    expect(result.subscriptions[0]).toMatchObject({
       amount: 50,
       freq: 'MONTHLY',
       next: '2025-12-02',
-      cat: 'entertainment',
-      acct: 'Bank - Chk',
-      status: 'MATURE',
     });
   });
 
