@@ -32,6 +32,8 @@ model User {
   postCheckoutBalanceSentAt DateTime?
   lastBalanceUpdateAt       DateTime?
   welcomeSentAt             DateTime?
+  lowBalanceThreshold       Float?      @default(100)
+  lastLowBalanceAlertAt     DateTime?
   messages                  Message[]
   items                     PlaidItem[]
 

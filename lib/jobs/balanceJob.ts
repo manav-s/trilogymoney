@@ -4,6 +4,7 @@ import { getBalancesBreakdown } from '@/lib/services/balances';
 import { generateReply } from '@/lib/ai/llm';
 import { splitIntoSmsSegments } from '@/lib/integrations/sms';
 import { logError } from '@/lib/utils/logger';
+import { checkAndAlertLowBalance } from '@/lib/lowBalanceAlert';
 
 type BalanceUpdateResult =
   | { status: 'sent' }
@@ -133,6 +134,14 @@ export async function runBalanceUpdateForUser(userId: string): Promise<BalanceUp
   } catch (error) {
     logError('balance-update.persist', error, { userId: user.id });
     return { status: 'failed', reason: 'persist_error' };
+  }
+
+  // Check for low balance and alert if needed
+  try {
+    await checkAndAlertLowBalance(user.id);
+  } catch (error) {
+    logError('balance-update.low-balance-check', error, { userId: user.id });
+    // Don't fail the whole job if low balance check fails
   }
 
   return { status: 'sent' };

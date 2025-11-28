@@ -5,6 +5,7 @@ import { logError, logger } from '@/lib/utils/logger';
 import type { StoredTransactionsQuery } from '@/lib/transactionsContext';
 import { captureFeedback, type FeedbackSentiment } from '@/lib/services/feedback';
 import { getRecurringStreams } from '@/lib/services/recurring';
+import { setLowBalanceThreshold } from '@/lib/lowBalanceAlert';
 
 export type ToolSchema = {
   name: string;
@@ -124,6 +125,24 @@ export function getRecurringChargesToolSchema(): ToolSchema {
   };
 }
 
+export function setLowBalanceAlertToolSchema(): ToolSchema {
+  return {
+    name: 'set_low_balance_alert',
+    description:
+      'Set or disable low balance alerts. When any cash account drops below the threshold, the user gets a heads-up message. Set threshold to 0 or null to disable alerts.',
+    parameters: {
+      type: 'object',
+      properties: {
+        threshold: {
+          type: 'number',
+          description: 'Dollar amount threshold. Alert when balance drops below this. Set to 0 to disable.',
+        },
+      },
+      required: ['threshold'],
+    },
+  };
+}
+
 export async function executeToolCall(userId: string, toolCall: ToolCall): Promise<ToolResult> {
   try {
     const parsedArgs = safeParseArgs(toolCall.function.arguments);
@@ -138,6 +157,8 @@ export async function executeToolCall(userId: string, toolCall: ToolCall): Promi
         return await executeLogFeedback(userId, parsedArgs ?? {});
       case 'get_recurring_charges':
         return await executeGetRecurringCharges(userId);
+      case 'set_low_balance_alert':
+        return await executeSetLowBalanceAlert(userId, parsedArgs ?? {});
       default:
         return { error: 'unknown_tool' };
     }
@@ -377,4 +398,27 @@ function normalizeLabel(label: string | null | undefined): string | null {
     .replace(/\s+/g, ' ')
     .trim();
   return normalized || null;
+}
+
+async function executeSetLowBalanceAlert(
+  userId: string,
+  params: { threshold?: number }
+) {
+  const threshold = params.threshold === 0 ? null : (params.threshold ?? null);
+
+  const result = await setLowBalanceThreshold(userId, threshold);
+
+  if (!result.success) {
+    return { error: 'Failed to update threshold' };
+  }
+
+  if (threshold === null) {
+    return { status: 'disabled', message: 'Low balance alerts have been disabled.' };
+  }
+
+  return {
+    status: 'enabled',
+    threshold,
+    message: `Low balance alerts set to $${threshold}. You'll get a heads-up when any account drops below this.`,
+  };
 }

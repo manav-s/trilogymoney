@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN "lowBalanceThreshold" DOUBLE PRECISION DEFAULT 100;
+ALTER TABLE "User" ADD COLUMN "lastLowBalanceAlertAt" TIMESTAMP(3);
