@@ -77,49 +77,83 @@ export default function OnboardWithIdPage() {
         )}
 
         {status === "expired" && (
-          <>
-            <div className="text-6xl">⏰</div>
-            <h1 className="text-3xl font-bold text-gray-900 lowercase">
-              link expired
-            </h1>
-            <p className="text-xl text-gray-600 lowercase">
-              authentication links expire after 10 minutes. head to sign in to get a fresh link.
-            </p>
-            <a
-              href="/signin"
-              className="inline-flex items-center px-10 py-5 text-xl font-semibold rounded-full bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-600/20 transition-all lowercase shadow-lg"
-            >
-              go to sign in
-            </a>
-          </>
+          <div className="space-y-8">
+            <div className="w-16 h-16 mx-auto rounded-full bg-amber-100 flex items-center justify-center">
+              <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="space-y-3">
+              <h1 className="text-3xl font-bold text-gray-900 lowercase">
+                link expired
+              </h1>
+              <p className="text-lg text-gray-600 lowercase">
+                for security, links expire after 10 minutes.
+              </p>
+            </div>
+            <div className="space-y-4 pt-4">
+              <a
+                href="/signin"
+                className="block w-full px-8 py-4 text-lg font-semibold rounded-full bg-blue-600 text-white hover:bg-blue-700 focus:ring-4 focus:ring-blue-600/20 transition-all lowercase shadow-lg hover:shadow-blue-500/30 hover:-translate-y-0.5"
+              >
+                sign in for a new link
+              </a>
+              <div className="flex items-center gap-4">
+                <div className="flex-1 h-px bg-gray-200"></div>
+                <span className="text-sm text-gray-400 lowercase">or</span>
+                <div className="flex-1 h-px bg-gray-200"></div>
+              </div>
+              <a
+                href="https://shorturl.at/KGbiL"
+                className="block w-full px-8 py-4 text-lg font-semibold rounded-full bg-gray-100 text-gray-900 hover:bg-gray-200 transition-all lowercase border border-gray-200"
+              >
+                continue onboarding
+              </a>
+              <p className="text-sm text-gray-500 lowercase">
+                opens imessage to restart setup
+              </p>
+            </div>
+          </div>
         )}
 
         {status === "invalid" && (
-          <>
-            <div className="text-6xl">❌</div>
-            <h1 className="text-3xl font-bold text-gray-900 lowercase">
-              invalid link
-            </h1>
-            <p className="text-xl text-gray-600 lowercase">
-              this link isn&apos;t valid. maybe you already used it, or it got corrupted?
-            </p>
-            <a
-              href="/signin"
-              className="inline-flex items-center px-10 py-5 text-xl font-semibold rounded-full bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-600/20 transition-all lowercase shadow-lg"
-            >
-              go to sign in
-            </a>
-            <p className="text-sm text-gray-500 lowercase">
-              starting fresh?{" "}
+          <div className="space-y-8">
+            <div className="w-16 h-16 mx-auto rounded-full bg-red-100 flex items-center justify-center">
+              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <div className="space-y-3">
+              <h1 className="text-3xl font-bold text-gray-900 lowercase">
+                invalid link
+              </h1>
+              <p className="text-lg text-gray-600 lowercase">
+                this link isn&apos;t valid. it may have already been used or was corrupted.
+              </p>
+            </div>
+            <div className="space-y-4 pt-4">
+              <a
+                href="/signin"
+                className="block w-full px-8 py-4 text-lg font-semibold rounded-full bg-blue-600 text-white hover:bg-blue-700 focus:ring-4 focus:ring-blue-600/20 transition-all lowercase shadow-lg hover:shadow-blue-500/30 hover:-translate-y-0.5"
+              >
+                sign in for a new link
+              </a>
+              <div className="flex items-center gap-4">
+                <div className="flex-1 h-px bg-gray-200"></div>
+                <span className="text-sm text-gray-400 lowercase">or</span>
+                <div className="flex-1 h-px bg-gray-200"></div>
+              </div>
               <a
                 href="https://shorturl.at/KGbiL"
-                className="text-indigo-600 hover:text-indigo-700 underline"
+                className="block w-full px-8 py-4 text-lg font-semibold rounded-full bg-gray-100 text-gray-900 hover:bg-gray-200 transition-all lowercase border border-gray-200"
               >
-                text us for a new link
+                continue onboarding
               </a>
-              .
-            </p>
-          </>
+              <p className="text-sm text-gray-500 lowercase">
+                opens imessage to restart setup
+              </p>
+            </div>
+          </div>
         )}
       </div>
     </div>
