@@ -34,9 +34,11 @@ export async function GET(req: NextRequest) {
     },
   });
   if (!user) return NextResponse.json({ error: "user not found" }, { status: 404 });
+  // Filter out items with no active accounts
+  const itemsWithAccounts = user.items.filter(item => item.accounts.length > 0);
   return NextResponse.json({
     user: { email: user.email, stripeCustomerId: user.stripeCustomerId },
-    items: user.items,
+    items: itemsWithAccounts,
   });
 }
 
