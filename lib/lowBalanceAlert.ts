@@ -48,7 +48,7 @@ export async function checkAndAlertLowBalance(userId: string): Promise<LowBalanc
 
   // Find lowest cash account below threshold
   const lowAccounts = breakdown.cash.accounts
-    .filter((a) => a.available !== null && a.available < user.lowBalanceThreshold!)
+    .filter((a) => a.available !== null && a.available !== undefined && a.available < user.lowBalanceThreshold!)
     .sort((a, b) => (a.available ?? 0) - (b.available ?? 0));
 
   if (lowAccounts.length === 0) {
