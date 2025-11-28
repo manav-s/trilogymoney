@@ -33,11 +33,31 @@ export default function ConnectPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [loadingExchange, setLoadingExchange] = useState(false);
 
+  const [deletingAccountId, setDeletingAccountId] = useState<string | null>(null);
+
   const fetchAccounts = async (phone: string) => {
     const res = await fetch(`/api/accounts/list?phone=${encodeURIComponent(phone)}`);
     if (res.ok) {
       const data = await res.json();
       setItems(data.items || []);
+    }
+  };
+
+  const removeAccount = async (accountId: string) => {
+    const phone = sessionStorage.getItem(ONBOARDING_PHONE_KEY);
+    if (!phone) return;
+    setDeletingAccountId(accountId);
+    try {
+      const res = await fetch('/api/accounts/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountId }),
+      });
+      if (res.ok) {
+        await fetchAccounts(phone);
+      }
+    } finally {
+      setDeletingAccountId(null);
     }
   };
 
@@ -148,11 +168,28 @@ export default function ConnectPage() {
                 ) : null}
                 <div className="space-y-2">
                   {it.accounts.map((a) => (
-                    <div key={a.id} className="flex items-center justify-between bg-gradient-to-br from-gray-50 to-indigo-50/30 rounded-xl p-3">
+                    <div key={a.id} className="flex items-center justify-between bg-gradient-to-br from-gray-50 to-indigo-50/30 rounded-xl p-3 relative group">
                       <div className="text-sm lowercase">
                         <div className="font-medium">{a.name} {a.mask ? `•••${a.mask}` : ''}</div>
                         <div className="text-gray-600">{a.type}{a.subtype ? ` / ${a.subtype}` : ''} {a.currency ? ` • ${a.currency}` : ''}</div>
                       </div>
+                      <button
+                        onClick={() => removeAccount(a.id)}
+                        disabled={deletingAccountId === a.id}
+                        className="w-6 h-6 flex items-center justify-center rounded-full bg-gray-200 hover:bg-red-100 text-gray-500 hover:text-red-600 transition-all duration-200 opacity-0 group-hover:opacity-100 focus:opacity-100 disabled:opacity-50"
+                        aria-label="Remove account"
+                      >
+                        {deletingAccountId === a.id ? (
+                          <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                        ) : (
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        )}
+                      </button>
                     </div>
                   ))}
                 </div>
