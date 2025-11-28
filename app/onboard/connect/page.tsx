@@ -168,7 +168,7 @@ export default function ConnectPage() {
                 ) : null}
                 <div className="space-y-2">
                   {it.accounts.map((a) => (
-                    <div key={a.id} className="flex items-center justify-between bg-gradient-to-br from-gray-50 to-indigo-50/30 rounded-xl p-3 relative group">
+                    <div key={a.id} className="flex items-center justify-between bg-gradient-to-br from-gray-50 to-indigo-50/30 rounded-xl p-3 pr-8 relative">
                       <div className="text-sm lowercase">
                         <div className="font-medium">{a.name} {a.mask ? `•••${a.mask}` : ''}</div>
                         <div className="text-gray-600">{a.type}{a.subtype ? ` / ${a.subtype}` : ''} {a.currency ? ` • ${a.currency}` : ''}</div>
@@ -176,7 +176,7 @@ export default function ConnectPage() {
                       <button
                         onClick={() => removeAccount(a.id)}
                         disabled={deletingAccountId === a.id}
-                        className="w-6 h-6 flex items-center justify-center rounded-full bg-gray-200 hover:bg-red-100 text-gray-500 hover:text-red-600 transition-all duration-200 opacity-0 group-hover:opacity-100 focus:opacity-100 disabled:opacity-50"
+                        className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full text-red-500 hover:text-red-700 hover:bg-red-100 transition-all duration-200 disabled:opacity-50"
                         aria-label="Remove account"
                       >
                         {deletingAccountId === a.id ? (
