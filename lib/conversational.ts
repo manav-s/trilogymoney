@@ -17,12 +17,12 @@ const PENDING_JOB_QUESTIONS: Record<PendingJobType, string> = {
 };
 
 const DECLINE_RESPONSES = [
-  "okay hollywood 💅",
-  "damn my fault",
-  "lol damn, noted 📝",
-  "my fault og 🫡",
-  "say less 🤐",
-  "aight bet",
+  "noted",
+  "fair enough",
+  "okay, another time",
+  "got it",
+  "no worries",
+  "understood",
 ];
 
 export function getDeclineResponse(): string {
