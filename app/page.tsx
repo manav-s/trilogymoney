@@ -67,6 +67,12 @@ export default function Home() {
                 </p>
               </div>
 
+              {/* Product Hunt Badge */}
+              <div className="flex justify-center lg:justify-start pt-4">
+                <a href="https://www.producthunt.com/products/trilogy-money?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-trilogy-money" target="_blank">
+                  <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1043758&theme=light&t=1764392671773" alt="trilogy money - Your money's personal assistant, via iMessage | Product Hunt" style={{ width: 250, height: 54 }} width="250" height="54" />
+                </a>
+              </div>
 
             </div>
 
