@@ -12,8 +12,8 @@ function getBatchSize(): number {
 }
 
 export async function GET(req: Request) {
-  const oneDayAgo = new Date();
-  oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+  const threeDaysAgo = new Date();
+  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
   const batchSize = getBatchSize();
 
@@ -25,7 +25,7 @@ export async function GET(req: Request) {
       pendingJobType: null, // Don't ask if already pending
       OR: [
         { lastBalanceUpdateAt: null },
-        { lastBalanceUpdateAt: { lt: oneDayAgo } },
+        { lastBalanceUpdateAt: { lt: threeDaysAgo } },
       ],
     },
     select: { id: true },
