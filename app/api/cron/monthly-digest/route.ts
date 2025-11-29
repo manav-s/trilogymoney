@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { runMonthlyDigestJob } from '@/lib/jobs/monthlyDigestJob';
+import { runMonthlyDigestJob } from '@/lib/jobs/monthlyRecurringDigestJob';
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
