@@ -18,6 +18,8 @@ import { z } from 'zod';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { RATE_LIMIT_WINDOW_MS, MAX_MESSAGES_PER_WINDOW } from '@/lib/utils/constants';
 import { handleLLMConversationWithTools } from '@/lib/ai/conversationWithTools';
+import { classifyPendingReply, getDeclineResponse } from '@/lib/conversational';
+import { runBalanceUpdateForUser } from '@/lib/jobs/balanceJob';
 
 const WEBHOOK_SECRET = process.env.BLOOIO_WEBHOOK_SECRET;
 
@@ -106,7 +108,20 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
     return;
   }
 
-  const user = await prisma.user.findUnique({ where: { phone } });
+  const user = await prisma.user.findUnique({
+    where: { phone },
+    select: {
+      id: true,
+      phone: true,
+      email: true,
+      onboardingStatus: true,
+      preferredTime: true,
+      messagingStatus: true,
+      billingStatus: true,
+      isActive: true,
+      pendingJobType: true,
+    },
+  });
   const isOnboardingMessage = body === 'hi trilogy...';
 
   // Sign-in cue
@@ -179,6 +194,12 @@ async function handleInboundMessage(event: BlooioWebhookEvent) {
     return;
   }
 
+  // Handle pending job response (conversational flow)
+  if (user?.pendingJobType) {
+    await handlePendingJobResponse(user, body);
+    return;
+  }
+
   if (!user) {
     await handleNewUser(phone, event);
   } else if (isOnboardingMessage && !(user.onboardingStatus === 'complete' || user.onboardingStatus === 'subscribed')) {
@@ -227,6 +248,7 @@ type ExistingUserContext = {
   messagingStatus?: string;
   billingStatus?: string | null;
   isActive?: boolean | null;
+  pendingJobType?: string | null;
 };
 
 async function handleExistingUser(user: ExistingUserContext, event: BlooioWebhookEvent) {
@@ -291,5 +313,54 @@ async function handleMessageStatus(event: BlooioWebhookEvent) {
       where: { providerId: event.message_id },
       data: { status: event.event === 'message.delivered' ? 'delivered' : event.event === 'message.read' ? 'read' : 'sent' },
     });
+  }
+}
+
+/**
+ * Handle user's reply to a pending job question.
+ * Uses LLM to classify intent as YES/NO/OTHER.
+ */
+async function handlePendingJobResponse(
+  user: { id: string; phone: string | null; pendingJobType: string | null },
+  body: string
+) {
+  if (!user.phone || !user.pendingJobType) return;
+
+  const pending = user.pendingJobType;
+
+  // Classify the user's reply using LLM
+  const { intent, followUp } = await classifyPendingReply(pending, body);
+
+  // Clear pending state first (always, regardless of outcome)
+  // Wrapped in try/catch to prevent user getting stuck if DB fails
+  try {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { pendingJobType: null, pendingJobAskedAt: null },
+    });
+  } catch (error) {
+    // Log but continue - better to respond and leave stale state
+    // (cleanup cron will fix it) than to leave user hanging
+    console.error('handlePendingJobResponse.clear_pending_failed', { userId: user.id, error });
+  }
+
+  if (intent === 'YES') {
+    // User wants the info - deliver it
+    if (pending === 'balance') {
+      await runBalanceUpdateForUser(user.id);
+    }
+    // Future: else if (pending === 'weekly') { ... }
+    // Future: else if (pending === 'subscriptions') { ... }
+  } else if (intent === 'NO') {
+    // User declined - send sass
+    await sendMessage({
+      to: user.phone,
+      body: getDeclineResponse(),
+      userId: user.id,
+      shouldPersist: true,
+    });
+  } else {
+    // OTHER: User asked something unrelated - route to normal conversation
+    await handleLLMConversationWithTools(user.phone, followUp || body);
   }
 }

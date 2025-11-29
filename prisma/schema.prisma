@@ -34,6 +34,8 @@ model User {
   welcomeSentAt             DateTime?
   lowBalanceThreshold       Float?      @default(100)
   lastLowBalanceAlertAt     DateTime?
+  pendingJobType            String?
+  pendingJobAskedAt         DateTime?
   messages                  Message[]
   items                     PlaidItem[]
 

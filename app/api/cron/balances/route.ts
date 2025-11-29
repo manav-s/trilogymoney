@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { prisma } from '@/lib/db/db';
-import { runBalanceUpdateForUser } from '@/lib/jobs/balanceJob';
+import { askBalanceQuestion } from '@/lib/jobs/balanceJob';
 
 const DEFAULT_BATCH_SIZE = 500;
 
@@ -22,6 +22,7 @@ export async function GET(req: Request) {
       isActive: true,
       messagingStatus: 'active',
       billingStatus: { in: ['active', 'trialing'] },
+      pendingJobType: null, // Don't ask if already pending
       OR: [
         { lastBalanceUpdateAt: null },
         { lastBalanceUpdateAt: { lt: oneDayAgo } },
@@ -32,13 +33,12 @@ export async function GET(req: Request) {
     take: batchSize,
   });
 
-  const results = { sent: 0, skipped: 0, failed: 0 };
+  const results = { asked: 0, skipped: 0 };
 
   for (const user of usersToUpdate) {
-    const result = await runBalanceUpdateForUser(user.id);
-    if (result.status === 'sent') results.sent += 1;
-    else if (result.status === 'skipped') results.skipped += 1;
-    else results.failed += 1;
+    const result = await askBalanceQuestion(user.id);
+    if (result.status === 'asked') results.asked += 1;
+    else results.skipped += 1;
   }
 
   return NextResponse.json({

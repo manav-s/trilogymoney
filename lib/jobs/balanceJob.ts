@@ -5,11 +5,16 @@ import { generateReply } from '@/lib/ai/llm';
 import { splitIntoSmsSegments } from '@/lib/integrations/sms';
 import { logError } from '@/lib/utils/logger';
 import { checkAndAlertLowBalance } from '@/lib/lowBalanceAlert';
+import { getPendingJobQuestion } from '@/lib/conversational';
 
 type BalanceUpdateResult =
   | { status: 'sent' }
   | { status: 'skipped'; reason: string }
   | { status: 'failed'; reason: string };
+
+type AskBalanceResult =
+  | { status: 'asked' }
+  | { status: 'skipped'; reason: string };
 
 const ACTIVE_BILLING_STATUSES = ['active', 'trialing'];
 
@@ -145,4 +150,85 @@ export async function runBalanceUpdateForUser(userId: string): Promise<BalanceUp
   }
 
   return { status: 'sent' };
+}
+
+/**
+ * Ask the user if they want their balance (conversational flow).
+ * Sets pending state and sends the question. User's reply triggers runBalanceUpdateForUser.
+ */
+export async function askBalanceQuestion(userId: string): Promise<AskBalanceResult> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      phone: true,
+      isActive: true,
+      messagingStatus: true,
+      billingStatus: true,
+      pendingJobType: true,
+    },
+  });
+
+  if (!user) return { status: 'skipped', reason: 'user_not_found' };
+  if (!user.phone) return { status: 'skipped', reason: 'missing_phone' };
+  if (!user.isActive || user.messagingStatus !== 'active') {
+    return { status: 'skipped', reason: 'messaging_inactive' };
+  }
+  if (!user.billingStatus || !ACTIVE_BILLING_STATUSES.includes(user.billingStatus)) {
+    return { status: 'skipped', reason: 'billing_inactive' };
+  }
+  if (user.pendingJobType) {
+    return { status: 'skipped', reason: 'already_pending' };
+  }
+
+  const accountCount = await prisma.plaidAccount.count({
+    where: { item: { userId: user.id }, isActive: true },
+  });
+  if (accountCount === 0) {
+    return { status: 'skipped', reason: 'no_active_accounts' };
+  }
+
+  // Set pending state atomically - only update if pendingJobType is still null
+  // This prevents race conditions when multiple cron workers hit the same user
+  let updateResult;
+  try {
+    updateResult = await prisma.user.updateMany({
+      where: {
+        id: user.id,
+        pendingJobType: null, // Only claim if not already pending
+      },
+      data: {
+        pendingJobType: 'balance',
+        pendingJobAskedAt: new Date(),
+      },
+    });
+  } catch (error) {
+    logError('balance-ask.pending', error, { userId: user.id });
+    return { status: 'skipped', reason: 'pending_error' };
+  }
+
+  // If no rows updated, another worker got there first
+  if (updateResult.count === 0) {
+    return { status: 'skipped', reason: 'already_pending' };
+  }
+
+  // Send the question
+  try {
+    await sendMessage({
+      to: user.phone,
+      body: getPendingJobQuestion('balance'),
+      userId: user.id,
+      shouldPersist: true,
+    });
+  } catch (error) {
+    logError('balance-ask.send', error, { userId: user.id });
+    // Clear pending state since we failed to send
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { pendingJobType: null, pendingJobAskedAt: null },
+    }).catch(() => {});
+    return { status: 'skipped', reason: 'send_error' };
+  }
+
+  return { status: 'asked' };
 }
