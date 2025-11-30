@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/db";
-import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 const schema = z.object({ phone: z.string().min(10) });

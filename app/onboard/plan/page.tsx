@@ -129,7 +129,7 @@ export default function PlanPage() {
         {/* Primary goal callout */}
         {goalLabel && (
           <p className="text-gray-600 mb-8 lowercase">
-            based on your answers, we'll focus on <span className="font-semibold text-gray-900">{goalLabel}</span>
+            based on your answers, we&apos;ll focus on <span className="font-semibold text-gray-900">{goalLabel}</span>
           </p>
         )}
 
