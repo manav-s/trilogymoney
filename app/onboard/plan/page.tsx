@@ -6,11 +6,47 @@ import { usePlaidLink } from "react-plaid-link";
 
 const ONBOARDING_PHONE_KEY = "onboarding_phone";
 
+type AnalysisSummary = {
+  score: number;
+  riskBand: 'low' | 'medium' | 'high';
+  headline: string;
+  bullets: string[];
+  primaryGoal: string | null;
+  flags: string[];
+};
+
+const GOAL_LABELS: Record<string, string> = {
+  pay_down_card: 'paying down debt',
+  build_1mo_cushion: 'building an emergency fund',
+  stop_leak_spend: 'cutting overspending',
+  automate_bills: 'automating your bills',
+  start_investing: 'starting to invest',
+};
+
+const BULLET_ICONS: Record<string, string> = {
+  'trim food delivery': '🍕',
+  'automate minimum debt': '💳',
+  'building a 1-month cushion': '🛡️',
+  'start building': '🛡️',
+  'weekly check-in': '📊',
+  default: '✨',
+};
+
+function getIconForBullet(text: string): string {
+  const lower = text.toLowerCase();
+  for (const [key, icon] of Object.entries(BULLET_ICONS)) {
+    if (lower.includes(key)) return icon;
+  }
+  return BULLET_ICONS.default;
+}
+
 export default function PlanPage() {
   const router = useRouter();
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const [opening, setOpening] = useState(false);
   const [openRequested, setOpenRequested] = useState(false);
+  const [summary, setSummary] = useState<AnalysisSummary | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
 
   const { open, ready } = usePlaidLink({
     token: linkToken || "",
@@ -46,22 +82,59 @@ export default function PlanPage() {
           const data = await res.json();
           if (data.next && data.next !== "/onboard/plan") {
             router.replace(data.next);
+            return;
+          }
+          if (data.analysisSummary) {
+            setSummary(data.analysisSummary);
+          }
+          if (data.name) {
+            setUserName(data.name.split(' ')[0]); // first name only
           }
         }
       } catch {}
     })();
   }, [router]);
 
+  // Fallback bullets if no summary
+  const bullets = summary?.bullets?.length
+    ? summary.bullets.map((text) => ({ icon: getIconForBullet(text), text }))
+    : [
+        { icon: "⚡️", text: "automate minimum payments this week" },
+        { icon: "🛡️", text: "build a 1‑month cushion with a monthly transfer" },
+        { icon: "📊", text: "weekly check‑in keeps you consistent" },
+      ];
+
+  const headline = summary?.headline || "your weekly money plan";
+  const goalLabel = summary?.primaryGoal ? GOAL_LABELS[summary.primaryGoal] : null;
+  const scoreColor = summary?.riskBand === 'low' ? 'text-green-600' : summary?.riskBand === 'medium' ? 'text-yellow-600' : 'text-red-500';
+
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-2xl mx-auto px-4 py-16">
-        <h1 className="text-4xl font-bold text-gray-900 mb-6 lowercase">your weekly money plan</h1>
+        {/* Personalized greeting */}
+        {userName && (
+          <p className="text-lg text-gray-500 mb-2 lowercase">hey {userName} 👋</p>
+        )}
+        
+        <h1 className="text-4xl font-bold text-gray-900 mb-3 lowercase">{headline}</h1>
+        
+        {/* Score badge */}
+        {summary?.score !== undefined && (
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full mb-6">
+            <span className="text-sm text-gray-500 lowercase">financial health score:</span>
+            <span className={`text-lg font-bold ${scoreColor}`}>{summary.score}</span>
+          </div>
+        )}
+
+        {/* Primary goal callout */}
+        {goalLabel && (
+          <p className="text-gray-600 mb-8 lowercase">
+            based on your answers, we'll focus on <span className="font-semibold text-gray-900">{goalLabel}</span>
+          </p>
+        )}
+
         <div className="space-y-4">
-          {[
-            { icon: "⚡️", text: "automate minimum payments this week" },
-            { icon: "🛡️", text: "build a 1‑month cushion with a monthly transfer" },
-            { icon: "📊", text: "weekly check‑in keeps you consistent" }
-          ].map((item, i) => (
+          {bullets.map((item, i) => (
             <div 
               key={i}
               className="flex items-center p-5 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-500 ease-out hover:-translate-y-0.5 hover:border-indigo-100"

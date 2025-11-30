@@ -31,5 +31,10 @@ export async function GET(req: NextRequest) {
   }
   const user = await prisma.user.findUnique({ where: { phone } });
   const status = user?.onboardingStatus || "pre_auth";
-  return NextResponse.json({ status, next: nextPath(status) });
+  return NextResponse.json({
+    status,
+    next: nextPath(status),
+    name: user?.name || null,
+    analysisSummary: (user as Record<string, unknown>)?.analysisSummary || null,
+  });
 }
