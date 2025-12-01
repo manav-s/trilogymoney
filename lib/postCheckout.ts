@@ -5,7 +5,7 @@ import { runWeeklyDigestForUser } from '@/lib/jobs/weeklyDigestJob';
 
 const WELCOME_SCRIPT = `welcome to trilogy! you're live now.
 
-- weekly digest will send soon
+- weekly digest from last week will send soon
 - visit trytrilogy.com to adjust your account settings or add more accounts
 - you can always ask me about your balances or spending`;
 
