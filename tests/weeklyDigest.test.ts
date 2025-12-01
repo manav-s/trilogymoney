@@ -232,6 +232,7 @@ describe('generateWeeklyDigestMessage', () => {
       expect(prompt).toContain('write "balances:" on its own line');
       expect(prompt).toContain('lowercase with spaces instead of underscores');
       expect(prompt).toContain('judgy poke');
+      expect(prompt).toContain('weekly summary: nov 17 → nov 23');
       return new Response(
         JSON.stringify({ choices: [{ message: { content: 'weekly vibe secured' } }] }),
         { status: 200, headers: { 'content-type': 'application/json' } }
