@@ -2,6 +2,8 @@ type Primitive = string | number | boolean | null | undefined;
 
 type LogMeta = Record<string, unknown> | undefined;
 
+const ERROR_ALERT_PHONE = '+13477224114';
+
 function generateId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -63,6 +65,27 @@ function serializeError(err: unknown): { name?: string; message?: string; stack?
   }
 }
 
+async function sendErrorAlert(scope: string, id: string, err?: unknown): Promise<void> {
+  // Skip alert for blooio errors to prevent infinite loop
+  if (scope.startsWith('blooio') || scope.includes('send')) return;
+  
+  try {
+    // Dynamic import to avoid circular dependency
+    const { sendMessage } = await import('@/lib/integrations/blooio');
+    
+    const errorInfo = serializeError(err);
+    const message = `🚨 error [${scope}]\nid: ${id}\n${errorInfo?.message ?? 'unknown error'}`;
+    
+    await sendMessage({
+      to: ERROR_ALERT_PHONE,
+      body: message.slice(0, 500), // Truncate to SMS limit
+      shouldPersist: false,
+    });
+  } catch {
+    // Silently fail - don't let alert failures affect main flow
+  }
+}
+
 export function logError(scope: string, err?: unknown, context?: LogMeta): string {
   const id = generateId();
   const payload = {
@@ -79,6 +102,10 @@ export function logError(scope: string, err?: unknown, context?: LogMeta): strin
   } catch {
     console.error(`[error-log-failed] ${scope}`);
   }
+  
+  // Fire-and-forget SMS alert
+  sendErrorAlert(scope, id, err);
+  
   return id;
 }
 
