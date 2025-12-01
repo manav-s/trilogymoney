@@ -284,7 +284,7 @@ export default function Home() {
               uncompromising security.
             </h2>
             <p className="text-lg text-gray-600 lowercase">
-              your financial data is protected by industry-leading encryption and security standards. built by microsoft security engineers.
+              your financial data is protected with industry-standard encryption and security best practices, designed by a team of security engineers with experience from Microsoft and JP Morgan Chase & Co.
             </p>
             
             {/* Trust badges */}
