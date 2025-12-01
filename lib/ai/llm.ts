@@ -171,7 +171,7 @@ export async function generateWeeklyDigestMessage(context: WeeklyDigestContext):
 
   const instructions = [
     'Write a weekly money digest SMS in lowercase with a warm, confident, professional tone (no slang or filler).',
-    'Start with a heading line formatted exactly as "weekly summary: {from} → {to}".',
+    'Start with a heading line formatted exactly as "weekly summary: {mon} {day} → {mon} {day}" using lowercase 3-letter month and day number (e.g. "weekly summary: nov 17 → nov 23").',
     'Add a blank line after the heading before any other text.',
     'After the heading, write one sentence summarizing total spend and any standout merchants, and when referencing merchants, smooth noisy labels (trim repeated words, remove URLs, capitalize names like "Skool.com").',
     'Insert a blank line, then write "category breakdown:" on its own line.',
