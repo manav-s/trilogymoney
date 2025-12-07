@@ -28,7 +28,7 @@ export async function sendMonthlyDigest(
   if (active.length === 0) {
     await sendMessage({
       to: phone,
-      body: "no recurring charges found. you're either really frugal or hiding something",
+      body: "no recurring charges found. either you're debt-free or your banks aren't synced",
       userId,
       shouldPersist: true,
     });
@@ -41,7 +41,7 @@ export async function sendMonthlyDigest(
   // Message 1: Count
   await sendMessage({
     to: phone,
-    body: `you have ${count} subscription${count !== 1 ? 's' : ''} bleeding you dry every month`,
+    body: `monthly check-in. ${count} subscription${count !== 1 ? 's' : ''} on autopilot:`,
     userId,
     shouldPersist: true,
   });
@@ -103,18 +103,18 @@ async function generateMonthlyCommentary(
     .map((s) => `${s.merchant} $${s.amount}`)
     .join(', ');
 
-  const prompt = `You're a sassy 23-year-old texting a friend about their monthly subscriptions.
+  const prompt = `You're a brutally honest money friend commenting on someone's subscriptions.
 
 Their subscriptions: ${topMerchants}
 Total: $${total}/month
 Count: ${subs.length}
 
-Write ONE short sassy comment (under 100 chars). Lowercase, no emoji. Roast the spending, not them. Be specific to their top merchants if possible.
+Write ONE short, direct comment (under 100 chars). Lowercase, no emoji unless they're being ridiculous. Be judgy if warranted. Be specific to their merchants.
 
-Examples of good responses:
-- "rent said 'i'm the main character' and honestly... yeah"
-- "spotify AND netflix? pick a personality"
-- "over $2k/month on autopilot. you sure about all these?"`;
+Examples:
+- "that's a lot of streaming for someone who rewatches the office"
+- "$2k/month on autopilot. you sure about all these?"
+- "spotify and apple music? pick one"`;
 
   try {
     const controller = new AbortController();

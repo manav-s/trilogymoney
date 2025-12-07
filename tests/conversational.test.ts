@@ -26,17 +26,17 @@ describe('lib/conversational', () => {
   describe('getPendingJobQuestion', () => {
     it('returns balance question', () => {
       const question = getPendingJobQuestion('balance');
-      expect(question).toBe("hey! wanna hear your balance?");
+      expect(question).toBe('balance check?');
     });
 
     it('returns weekly question', () => {
       const question = getPendingJobQuestion('weekly');
-      expect(question).toBe("your week in money is ready—want the recap?");
+      expect(question).toBe('weekly recap?');
     });
 
     it('returns subscriptions question', () => {
       const question = getPendingJobQuestion('subscriptions');
-      expect(question).toBe("want to hear your subscriptions?");
+      expect(question).toBe('subscriptions?');
     });
   });
 

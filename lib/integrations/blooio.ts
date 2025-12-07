@@ -285,19 +285,19 @@ ${getPlayfulComment(yesterday, thisWeek)}`;
 function getPlayfulComment(yesterday: number, thisWeek: number): string {
   const comments = {
     good: [
-      "you're killing it! 🎯",
-      "financial discipline unlocked 🔓",
-      "chef's kiss on that budget 👨‍🍳💋",
+      'nice',
+      'not bad',
+      'okay you',
     ],
     warning: [
-      "maybe lay off the doordash today? 🤨",
-      "those coffee runs adding up... ☕️",
-      "your wallet called, it's tired 😴",
+      'might wanna slow down',
+      'that adds up',
+      'just saying',
     ],
     neutral: [
-      "keeping it steady 📊",
-      "another day, another dollar 💵",
-      "you do you 🤷",
+      'noted',
+      'okay',
+      'heard',
     ],
   };
 

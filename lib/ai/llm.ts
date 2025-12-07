@@ -1,5 +1,5 @@
 import { logError } from '@/lib/utils/logger';
-import { PERSONA, VOICE, DONT, TONE, GUARDRAILS, EXAMPLES } from '@/lib/ai/prompts';
+import { PERSONA, VOICE, STYLE, DONT, TONE, GUARDRAILS, EXAMPLES } from '@/lib/ai/prompts';
 
 /**
  * LLM utilities for replies and digests.
@@ -19,6 +19,8 @@ export async function generateReply(_tool: 'balances', context: Record<string, u
   const system = `${PERSONA}
 
 ${VOICE}
+
+${STYLE}
 
 ${DONT}
 

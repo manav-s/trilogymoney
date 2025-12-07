@@ -11,18 +11,16 @@ export type PendingJobType = 'balance' | 'weekly' | 'subscriptions';
 export type PendingReplyIntent = 'YES' | 'NO' | 'OTHER';
 
 const PENDING_JOB_QUESTIONS: Record<PendingJobType, string> = {
-  balance: "hey! wanna hear your balance?",
-  weekly: "your week in money is ready—want the recap?",
-  subscriptions: "want to hear your subscriptions?",
+  balance: 'balance check?',
+  weekly: 'weekly recap?',
+  subscriptions: 'subscriptions?',
 };
 
 const DECLINE_RESPONSES = [
-  "noted",
-  "fair enough",
-  "okay, another time",
-  "got it",
-  "no worries",
-  "understood",
+  'okay',
+  'got it',
+  'no worries',
+  "that's what i thought",
 ];
 
 export function getDeclineResponse(): string {

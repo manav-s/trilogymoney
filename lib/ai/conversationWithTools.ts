@@ -13,7 +13,7 @@ import {
   type ToolCall,
   type ToolSchema,
 } from '@/lib/ai/tools';
-import { PERSONA, VOICE, DONT, TONE, GUARDRAILS, EXAMPLES } from '@/lib/ai/prompts';
+import { PERSONA, VOICE, STYLE, DONT, TONE, GUARDRAILS, EXAMPLES } from '@/lib/ai/prompts';
 
 type ChatMessage = {
   role: 'system' | 'user' | 'assistant' | 'tool';
@@ -142,6 +142,8 @@ function buildSystemPrompt(): string {
   return `${PERSONA}
 
 ${VOICE}
+
+${STYLE}
 
 ${DONT}
 
