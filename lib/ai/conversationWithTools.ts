@@ -10,7 +10,6 @@ import {
   getWeeklyDigestSnapshotToolSchema,
   logFeedbackToolSchema,
   getRecurringChargesToolSchema,
-  setLowBalanceAlertToolSchema,
   type ToolCall,
   type ToolSchema,
 } from '@/lib/ai/tools';
@@ -62,7 +61,6 @@ export async function handleLLMConversationWithTools(phone: string, userText: st
     { type: 'function' as const, function: getTransactionsToolSchema() },
     { type: 'function' as const, function: getWeeklyDigestSnapshotToolSchema() },
     { type: 'function' as const, function: getRecurringChargesToolSchema() },
-    { type: 'function' as const, function: setLowBalanceAlertToolSchema() },
     { type: 'function' as const, function: logFeedbackToolSchema() },
   ];
 
@@ -170,16 +168,13 @@ TOOLS:
 2. get_transactions — recent spending (can filter by dates, merchants, categories)
 3. get_weekly_digest_snapshot — cached weekly summary if available
 4. get_recurring_charges — subscriptions/bills with amount, frequency, next date
-5. set_low_balance_alert — set or disable low balance alerts (threshold in dollars, 0 to disable)
-6. log_feedback — use when user is frustrated or reporting a bug, then move on
+5. log_feedback — use when user is frustrated or reporting a bug, then move on
 
 ROUTING:
 - "what did i spend on" / "show me [merchant]" → get_transactions
 - "my balance" / "how much do i have" → get_balances
 - "break down [category]" → try get_weekly_digest_snapshot first
 - "subscriptions" / "recurring" / "monthly" / specific bills → get_recurring_charges
-- "alert me when i'm below $X" / "set low balance alert" → set_low_balance_alert
-- "turn off low balance alerts" → set_low_balance_alert with threshold 0
 - income/paycheck → get_transactions with includeIncome: true
 - cancelling subs or connecting banks → tell them to go to trytrilogy.com
 - user sounds frustrated or is reporting a bug → log_feedback
