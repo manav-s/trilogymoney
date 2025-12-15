@@ -47,6 +47,30 @@ export function buildWeeklyDigestContext(input: {
   highlights: string[];
 }): WeeklyDigestContext {
   const { summary, transactions, balances, timezone, range, highlights } = input;
+  
+  // Build a map of category -> top merchants
+  const categoryMerchants = new Map<string, Map<string, number>>();
+  for (const txn of transactions) {
+    if (txn.amount <= 0) continue; // skip refunds/income
+    const cat = txn.category ?? 'other';
+    const merchant = txn.merchant ?? txn.description ?? 'unknown';
+    if (!categoryMerchants.has(cat)) {
+      categoryMerchants.set(cat, new Map());
+    }
+    const merchantMap = categoryMerchants.get(cat)!;
+    merchantMap.set(merchant, (merchantMap.get(merchant) ?? 0) + txn.amount);
+  }
+  
+  // Helper to get top 2 merchants for a category
+  const getTopMerchantsForCategory = (category: string): string[] => {
+    const merchantMap = categoryMerchants.get(category);
+    if (!merchantMap) return [];
+    return Array.from(merchantMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 2)
+      .map(([name]) => name.toLowerCase());
+  };
+  
   const topCategories = summary.perCategory
     .filter((bucket) => !isExcludedCategoryLabel(bucket.label))
     .slice(0, 5)
@@ -55,6 +79,7 @@ export function buildWeeklyDigestContext(input: {
       spendAmount: roundCurrency(bucket.spendAmount),
       refundAmount: roundCurrency(bucket.refundAmount),
       count: bucket.count,
+      topMerchants: getTopMerchantsForCategory(bucket.label),
     }));
   const topMerchants = summary.perMerchant.slice(0, 5).map((bucket) => ({
     label: bucket.label,

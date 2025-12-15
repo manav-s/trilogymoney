@@ -131,7 +131,7 @@ export type WeeklyDigestContext = {
     pendingSpend: number;
     count: number;
     pendingCount: number;
-    topCategories: Array<{ label: string; spendAmount: number; refundAmount: number; count: number }>;
+    topCategories: Array<{ label: string; spendAmount: number; refundAmount: number; count: number; topMerchants: string[] }>;
     topMerchants: Array<{ label: string; spendAmount: number; refundAmount: number; count: number }>;
     topTransactions: Array<{ merchant: string; amount: number; date: string; category: string | null; pending: boolean }>;
   };
@@ -158,7 +158,7 @@ export async function generateWeeklyDigestMessage(context: WeeklyDigestContext):
     'Add a blank line after the heading before any other text.',
     'After the heading, write one sentence summarizing total spend and any standout merchants, and when referencing merchants, smooth noisy labels (trim repeated words, remove URLs, capitalize names like "Skool.com").',
     'Insert a blank line, then write "category breakdown:" on its own line.',
-    'On the next lines list up to the first three items from spendSummary.topCategories in the format "{emoji} {label} $amount", choosing a fitting emoji yourself (common lifestyle/finance emoji only), rendering labels in lowercase with spaces instead of underscores, and rounding amounts to whole dollars with no comma separators.',
+    'On the next lines list up to the first three items from spendSummary.topCategories in the format "{emoji} {label} $amount — {merchant1}, {merchant2}" where merchant1 and merchant2 come from the topMerchants array for that category (if available), choosing a fitting emoji yourself (common lifestyle/finance emoji only), rendering labels in lowercase with spaces instead of underscores, and rounding amounts to whole dollars with no comma separators. If topMerchants is empty or has one item, adjust accordingly (omit the dash if no merchants).',
     'After the category block, add a blank line.',
     'If pending spend exists, write "pending to watch: $X still clearing." (rounded whole dollars); otherwise omit this line.',
     'After that, add another blank line, write "balances:" on its own line, then list every cash account (available balance when present, otherwise current) followed by every credit account (as "owes $amount"), one per line in the format "{name or institution} $amount" (mask optional).',
