@@ -79,13 +79,13 @@ export default function Home() {
             </div>
 
             {/* Right side - iPhone mockup */}
-            <div className="relative flex justify-center lg:justify-end animate-float delay-300">
-              <div className="relative z-10">
+            <div className="relative flex justify-center lg:justify-end animate-float delay-300" style={{ perspective: "1000px" }}>
+              <div className="relative z-10" style={{ transform: "rotateY(-15deg) rotateX(5deg) rotateZ(3deg)" }}>
                 {/* Glass Panel Behind */}
                 <div className="absolute -inset-4 bg-gradient-to-tr from-blue-100 to-indigo-100 rounded-[3.5rem] blur-xl opacity-70"></div>
                 
                 {/* iPhone frame */}
-                <div className="relative bg-black rounded-[3rem] p-3 shadow-2xl">
+                <div className="relative bg-gradient-to-br from-gray-800 via-gray-900 to-black rounded-[3rem] p-3 shadow-2xl" style={{ boxShadow: "-20px 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1) inset" }}>
                   <div className="bg-white rounded-[2.5rem] overflow-hidden" style={{ width: "280px", height: "560px" }}>
                     {/* Status bar */}
                     <div className="flex items-center justify-between px-6 py-3 bg-white">
