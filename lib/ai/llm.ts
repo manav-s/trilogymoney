@@ -178,7 +178,7 @@ format: heading + short paragraphs. keep output compact, no bullet characters ot
 
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
+    const timeout = setTimeout(() => controller.abort(), 15000);
     let res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -214,7 +214,7 @@ format: heading + short paragraphs. keep output compact, no bullet characters ot
     if (!rawText) {
       try {
         const controller2 = new AbortController();
-        const timeout2 = setTimeout(() => controller2.abort(), 5000);
+        const timeout2 = setTimeout(() => controller2.abort(), 15000);
         res = await fetch('https://api.openai.com/v1/responses', {
           method: 'POST',
           headers: {
