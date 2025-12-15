@@ -1,4 +1,5 @@
 import { Lock, ShieldCheck, EyeOff, Wifi, Signal, Battery } from "lucide-react";
+import SocialProofBadge from "./components/SocialProofBadge";
 
 export default function Home() {
   return (
@@ -10,6 +11,9 @@ export default function Home() {
             <span className="text-xl font-bold text-gray-900 lowercase tracking-tight hover:opacity-80 transition-opacity cursor-pointer">
               trilogy
             </span>
+          </div>
+          <div className="hidden md:block absolute left-1/2 -translate-x-1/2">
+            <SocialProofBadge />
           </div>
           <div className="flex items-center gap-6">
             <a href="/pricing" className="text-sm font-medium text-gray-600 lowercase hover:text-blue-600 transition-colors">
@@ -38,6 +42,11 @@ export default function Home() {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Left side - Content */}
             <div className="space-y-8 text-center lg:text-left animate-fade-in-up">
+              {/* Social proof - mobile only */}
+              <div className="flex justify-center md:hidden mb-4">
+                <SocialProofBadge />
+              </div>
+              
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-xs font-medium uppercase tracking-wider mb-4">
                 <span className="relative flex h-2 w-2 mr-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
@@ -65,13 +74,6 @@ export default function Home() {
                 <p className="text-sm text-gray-500">
                   cancel anytime • blue bubbles
                 </p>
-              </div>
-
-              {/* Product Hunt Badge */}
-              <div className="flex justify-center lg:justify-start pt-4">
-                <a href="https://www.producthunt.com/products/trilogy-money?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-trilogy-money" target="_blank">
-                  <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1043758&theme=light&t=1764392671773" alt="trilogy money - Your money's personal assistant, via iMessage | Product Hunt" style={{ width: 250, height: 54 }} width="250" height="54" />
-                </a>
               </div>
 
             </div>
