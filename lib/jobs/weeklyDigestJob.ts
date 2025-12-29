@@ -56,25 +56,14 @@ function normalizeCategoryLabel(label: string | null | undefined): string | null
   return normalized || null;
 }
 
-function splitDigestIntoMessages(message: string): string[] {
-  // First split on blank lines between sections
+export function splitDigestIntoMessages(message: string): string[] {
+  // Split on blank lines between sections
   const parts = message
     .split(/\n\s*\n+/)
     .map((part) => part.trim())
     .filter(Boolean);
   
-  // Then split any part containing a long dash (—) into separate messages
-  const result: string[] = [];
-  for (const part of parts) {
-    if (part.includes('—')) {
-      const subParts = part.split('—').map((s) => s.trim()).filter(Boolean);
-      result.push(...subParts);
-    } else {
-      result.push(part);
-    }
-  }
-  
-  return result;
+  return parts;
 }
 
 export async function runWeeklyDigestForUser(

@@ -7,6 +7,7 @@ import type {
   TransactionsSummaryBucket,
 } from '../lib/services/transactions';
 import { buildWeeklyDigestContext, extractHighlights } from '../lib/weeklyDigest';
+import { splitDigestIntoMessages } from '../lib/jobs/weeklyDigestJob';
 import type { WeeklyDigestContext } from '../lib/ai/llm';
 
 function makeBucket(
@@ -245,5 +246,92 @@ describe('generateWeeklyDigestMessage', () => {
     expect(message).toBe('weekly vibe secured');
     expect(fetchMock).toHaveBeenCalledTimes(1);
     delete process.env.OPENAI_API_KEY;
+  });
+});
+
+describe('splitDigestIntoMessages', () => {
+  it('splits on blank lines between sections', () => {
+    const message = `weekly summary: dec 22 → dec 28
+
+you spent a total of $223 this week.
+
+category breakdown:
+🛍️ general merchandise $148 — Tesla Motors, Amazon
+🚗 transportation $75 — E-zpass Rebill Ezp
+
+pending to watch: $28 still clearing.
+
+balances:
+td convenience checking 16299.98`;
+
+    const parts = splitDigestIntoMessages(message);
+    expect(parts).toEqual([
+      'weekly summary: dec 22 → dec 28',
+      'you spent a total of $223 this week.',
+      'category breakdown:\n🛍️ general merchandise $148 — Tesla Motors, Amazon\n🚗 transportation $75 — E-zpass Rebill Ezp',
+      'pending to watch: $28 still clearing.',
+      'balances:\ntd convenience checking 16299.98',
+    ]);
+  });
+
+  it('preserves em-dashes within category lines', () => {
+    const message = `weekly summary: dec 22 → dec 28
+
+category breakdown:
+🍽️ food and drink $121 — dishoom, ssp london
+🚇 transportation $45 — uber, lyft`;
+
+    const parts = splitDigestIntoMessages(message);
+    expect(parts).toHaveLength(2);
+    expect(parts[1]).toContain('🍽️ food and drink $121 — dishoom, ssp london');
+    expect(parts[1]).toContain('🚇 transportation $45 — uber, lyft');
+  });
+
+  it('handles multiple blank lines as single separator', () => {
+    const message = `heading
+
+
+body text
+
+
+
+footer`;
+
+    const parts = splitDigestIntoMessages(message);
+    expect(parts).toEqual(['heading', 'body text', 'footer']);
+  });
+
+  it('trims whitespace from each part', () => {
+    const message = `  heading with spaces  
+
+  body with spaces  `;
+
+    const parts = splitDigestIntoMessages(message);
+    expect(parts).toEqual(['heading with spaces', 'body with spaces']);
+  });
+
+  it('filters out empty parts', () => {
+    const message = `heading
+
+   
+
+body`;
+
+    const parts = splitDigestIntoMessages(message);
+    expect(parts).toEqual(['heading', 'body']);
+  });
+
+  it('handles single line message', () => {
+    const parts = splitDigestIntoMessages('just one line');
+    expect(parts).toEqual(['just one line']);
+  });
+
+  it('handles message with no blank lines', () => {
+    const message = `line one
+line two
+line three`;
+
+    const parts = splitDigestIntoMessages(message);
+    expect(parts).toEqual(['line one\nline two\nline three']);
   });
 });
