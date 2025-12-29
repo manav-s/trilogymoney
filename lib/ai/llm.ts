@@ -1,5 +1,6 @@
 import { logError } from '@/lib/utils/logger';
 import { PERSONA, VOICE, STYLE, DONT, TONE, GUARDRAILS, EXAMPLES } from '@/lib/ai/prompts';
+import type { MidweekContext } from '@/lib/midweekCheckin';
 
 /**
  * LLM utilities for replies and digests.
@@ -246,6 +247,92 @@ format: heading + short paragraphs. keep output compact, no bullet characters ot
   } catch (error) {
     const name = (error as Error)?.name;
     logError('llm.weekly_digest', error, { model: MODEL, error: name || 'unknown' });
+    return null;
+  }
+}
+
+export async function generateMidweekMessage(context: MidweekContext): Promise<string | null> {
+  if (!OPENAI_API_KEY) {
+    logError('llm.midweek', undefined, { reason: 'missing_api_key' });
+    return null;
+  }
+
+  const variantInstructions: Record<string, string> = {
+    pace: `Write a "pace check" message comparing current week spend so far ($${context.currentWeekSpend}) to last week's spend by this point ($${context.lastWeekByWednesday}). Comment on whether they're pacing ahead, behind, or similar.`,
+    spike: `Write a "category spike" alert. The user spent $${context.topCategory?.amount} on ${context.topCategory?.label} already this week, which is unusually high compared to their average of $${context.categoryAvgMonthly[context.topCategory?.label ?? ''] ?? 0}/week. Gently flag this.`,
+    quiet: `Write a "quiet week" message. The user has only spent $${context.currentWeekSpend} so far, wallet's taking a breather. Acknowledge this positively with light sass.`,
+    big_txn: `Write a "big transaction" callout. Their biggest purchase this week was $${context.biggestTransaction?.amount} at ${context.biggestTransaction?.merchant}. Mention it without judgment.`,
+    pending: `Write a "pending watch" message. The user has $${context.pendingTotal} in pending charges still clearing. Remind them to keep an eye on their balance.`,
+  };
+
+  const instructions = [
+    'Write a midweek check-in SMS.',
+    'Keep it SHORT: ONE paragraph, ideally under 160 characters, max 200.',
+    'Start with "midweek pulse:" or "heads up:" or similar casual opener.',
+    variantInstructions[context.variant],
+    'End with one relevant emoji.',
+    'Use a real emoji character, do not write the word "emoji".',
+    'Do not ask questions.',
+    'Do not mention specific days like "monday" or "wednesday".',
+    'Do not use long dashes (— or –). If you would use a dash, use a comma.',
+    'Use only the numbers provided, rounded to whole dollars.',
+  ].join(' ');
+
+  const userContent = `${instructions}
+JSON: ${JSON.stringify(context)}`;
+
+  const system = `You are Trilogy, a midweek money check-in writer for SMS.
+
+${VOICE}
+
+${DONT}
+
+format: single short paragraph, one emoji at end. no bullet points.`;
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: userContent },
+        ],
+        max_tokens: 100,
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    if (!res.ok) {
+      let errText = '';
+      try {
+        errText = await res.text();
+      } catch { }
+      logError('llm.midweek', undefined, {
+        reason: 'openai_error',
+        status: res.status,
+        model: MODEL,
+        body: errText?.slice(0, 200),
+      });
+      return null;
+    }
+    const data = await res.json();
+    const rawText = extractTextFromOpenAI(data);
+    if (!rawText) {
+      logError('llm.midweek', undefined, { reason: 'empty_completion', model: MODEL });
+      return null;
+    }
+    const compact = rawText.replace(/\s*\n\s*/g, ' ').trim();
+    return sanitizeOutput(compact);
+  } catch (error) {
+    const name = (error as Error)?.name;
+    logError('llm.midweek', error, { model: MODEL, error: name || 'unknown' });
     return null;
   }
 }

@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/cleanup-pending",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/midweek-checkin",
+      "schedule": "0 12 * * 3"
     }
   ]
 }
