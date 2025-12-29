@@ -1,5 +1,4 @@
 import { prisma } from '@/lib/db/db';
-import { getBalancesBreakdown } from '@/lib/services/balances';
 import { getTransactions, isIncome, buildTransactionsSummary } from '@/lib/services/transactions';
 import { logError, logger } from '@/lib/utils/logger';
 import type { StoredTransactionsQuery } from '@/lib/transactionsContext';
@@ -19,18 +18,6 @@ export type ToolCall = {
 };
 
 type ToolResult = unknown;
-
-export function getBalancesToolSchema(): ToolSchema {
-  return {
-    name: 'get_balances',
-    description: 'Get current cash and credit card balances for the user',
-    parameters: {
-      type: 'object',
-      properties: {},
-      required: [],
-    },
-  };
-}
 
 export function getTransactionsToolSchema(): ToolSchema {
   return {
@@ -128,8 +115,6 @@ export async function executeToolCall(userId: string, toolCall: ToolCall): Promi
   try {
     const parsedArgs = safeParseArgs(toolCall.function.arguments);
     switch (toolCall.function.name) {
-      case 'get_balances':
-        return await executeGetBalances(userId);
       case 'get_transactions':
         return await executeGetTransactions(userId, parsedArgs ?? {});
       case 'get_weekly_digest_snapshot':
@@ -155,40 +140,6 @@ function safeParseArgs(raw: string): Record<string, unknown> | null {
   } catch {
     return null;
   }
-}
-
-async function executeGetBalances(userId: string) {
-  const breakdown = await getBalancesBreakdown({ userId });
-  logger.info('tools.get_balances.snapshot', {
-    userId,
-    ts: new Date().toISOString(),
-    cashTotal: breakdown.cash.total,
-    cashCount: breakdown.cash.count,
-    cashInstitutions: breakdown.cash.accounts.map((a) => a.institution).filter(Boolean),
-    creditOwedTotal: breakdown.credit.owedTotal,
-    creditCount: breakdown.credit.count,
-    creditInstitutions: breakdown.credit.accounts.map((a) => a.institution).filter(Boolean),
-  });
-  return {
-    cash: {
-      total: breakdown.cash.total,
-      accounts: breakdown.cash.accounts.map((a) => ({
-        name: a.name,
-        institution: a.institution,
-        available: a.available,
-        mask: a.mask,
-      })),
-    },
-    credit: {
-      owedTotal: breakdown.credit.owedTotal,
-      accounts: breakdown.credit.accounts.map((a) => ({
-        name: a.name,
-        institution: a.institution,
-        balance: a.current ?? null,
-        mask: a.mask,
-      })),
-    },
-  };
 }
 
 async function executeGetTransactions(

@@ -5,7 +5,6 @@ import { decryptMessage } from '@/lib/db/encryption';
 import { logError } from '@/lib/utils/logger';
 import {
   executeToolCall,
-  getBalancesToolSchema,
   getTransactionsToolSchema,
   getWeeklyDigestSnapshotToolSchema,
   logFeedbackToolSchema,
@@ -58,7 +57,6 @@ export async function handleLLMConversationWithTools(phone: string, userText: st
   ];
 
   const tools = [
-    { type: 'function' as const, function: getBalancesToolSchema() },
     { type: 'function' as const, function: getTransactionsToolSchema() },
     { type: 'function' as const, function: getWeeklyDigestSnapshotToolSchema() },
     { type: 'function' as const, function: getRecurringChargesToolSchema() },
@@ -155,15 +153,14 @@ STAYING ON TRACK:
 - if they go off-topic, a quick "we're talking money here" and move on
 
 TOOLS:
-1. get_balances — cash and credit card balances
-2. get_transactions — recent spending (can filter by dates, merchants, categories)
-3. get_weekly_digest_snapshot — cached weekly summary if available
-4. get_recurring_charges — subscriptions/bills with amount, frequency, next date
-5. log_feedback — use when user is frustrated or reporting a bug, then move on
+1. get_transactions — recent spending (can filter by dates, merchants, categories)
+2. get_weekly_digest_snapshot — cached weekly summary if available
+3. get_recurring_charges — subscriptions/bills with amount, frequency, next date
+4. log_feedback — use when user is frustrated or reporting a bug, then move on
 
 ROUTING:
 - "what did i spend on" / "show me [merchant]" → get_transactions
-- "my balance" / "how much do i have" → get_balances
+- "my balance" / "how much do i have" → tell them balances show up in the monday weekly digest
 - "break down [category]" → try get_weekly_digest_snapshot first
 - "subscriptions" / "recurring" / "monthly" / specific bills → get_recurring_charges
 - income/paycheck → get_transactions with includeIncome: true

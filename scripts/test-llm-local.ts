@@ -12,7 +12,6 @@ import { splitIntoSmsSegments } from '../lib/integrations/sms';
 import { decryptMessage } from '../lib/db/encryption';
 import {
   executeToolCall,
-  getBalancesToolSchema,
   getTransactionsToolSchema,
   getWeeklyDigestSnapshotToolSchema,
   logFeedbackToolSchema,
@@ -57,11 +56,10 @@ BEHAVIOR:
 - answer directly; don't add extra questions unless required to proceed. stay on finance; if off-topic say "stay on topic twin" or "cmon lock in."
 - if a tool returns nothing, say you can't see it; never invent amounts, dates, or merchants.
 TOOLS YOU CAN CALL:
-1. get_balances: cash and credit card balances.
-2. get_transactions: recent spending with filters (dates, merchants, categories).
-3. get_weekly_digest_snapshot: cached weekly summary (if available and recent).
-4. get_recurring_charges: active subscriptions/bills (netflix, rent, gym) with amount, frequency, next date.
-5. log_feedback: log user frustration/bug feedback (use when user is upset).
+1. get_transactions: recent spending with filters (dates, merchants, categories).
+2. get_weekly_digest_snapshot: cached weekly summary (if available and recent).
+3. get_recurring_charges: active subscriptions/bills (netflix, rent, gym) with amount, frequency, next date.
+4. log_feedback: log user frustration/bug feedback (use when user is upset).
 FORMATTING FOR RECURRING CHARGES:
 - when showing subscriptions, list each on its own line with a bullet (•)
 - format: • merchant $amount
@@ -71,7 +69,6 @@ FORMATTING FOR RECURRING CHARGES:
 - this creates 3 separate text blocks (list, total, comment) separated by blank lines
 ROUTING HINTS:
 - "what did i spend on" / "show me [merchant]" → get_transactions
-- "my balance" / "how much do i have" → get_balances
 - "break down [category from last week]" → try get_weekly_digest_snapshot first
 - "subscriptions" / "recurring" / "monthly bill" / "netflix" / "gym" / "rent" → get_recurring_charges
 - income/paycheck questions → get_transactions with includeIncome: true
@@ -147,7 +144,6 @@ async function main() {
   ];
 
   const tools = [
-    { type: 'function' as const, function: getBalancesToolSchema() },
     { type: 'function' as const, function: getTransactionsToolSchema() },
     { type: 'function' as const, function: getWeeklyDigestSnapshotToolSchema() },
     { type: 'function' as const, function: getRecurringChargesToolSchema() },

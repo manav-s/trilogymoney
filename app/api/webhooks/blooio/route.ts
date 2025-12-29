@@ -19,7 +19,6 @@ import { createHmac, timingSafeEqual } from 'crypto';
 import { RATE_LIMIT_WINDOW_MS, MAX_MESSAGES_PER_WINDOW } from '@/lib/utils/constants';
 import { handleLLMConversationWithTools } from '@/lib/ai/conversationWithTools';
 import { classifyPendingReply, getDeclineResponse } from '@/lib/conversational';
-import { runBalanceUpdateForUser } from '@/lib/jobs/balanceJob';
 
 const WEBHOOK_SECRET = process.env.BLOOIO_WEBHOOK_SECRET;
 
@@ -345,12 +344,8 @@ async function handlePendingJobResponse(
   }
 
   if (intent === 'YES') {
-    // User wants the info - deliver it
-    if (pending === 'balance') {
-      await runBalanceUpdateForUser(user.id);
-    }
-    // Future: else if (pending === 'weekly') { ... }
-    // Future: else if (pending === 'subscriptions') { ... }
+    // User wants the info - route to LLM conversation
+    await handleLLMConversationWithTools(user.phone, body);
   } else if (intent === 'NO') {
     // User declined - send sass
     await sendMessage({

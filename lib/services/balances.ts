@@ -144,6 +144,7 @@ export async function getBalances(params: { userId: string }): Promise<GetBalanc
 
 /**
  * Return cash (depository, USD, non-negative) and credit (owed amount) breakdowns.
+ * This calls Plaid API to get fresh data - used only by weekly digest.
  */
 export async function getBalancesBreakdown(params: { userId: string }): Promise<BalancesBreakdown> {
   const base = await getBalances(params); // cash portion per our filtering
