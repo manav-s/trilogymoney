@@ -35,7 +35,7 @@ export default function SocialProofBadge() {
       </div>
       
       <span className="text-sm text-gray-700">
-        <span className="font-semibold">10,000+</span> people{' '}
+        <span className="font-semibold">100+</span> people{' '}
         <span
           className={`inline-block transition-all duration-300 ${
             isAnimating ? 'opacity-0 translate-y-1' : 'opacity-100 translate-y-0'

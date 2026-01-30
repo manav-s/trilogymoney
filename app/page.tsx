@@ -19,12 +19,6 @@ export default function Home() {
             <a href="/pricing" className="text-sm font-medium text-gray-600 lowercase hover:text-blue-600 transition-colors">
               pricing
             </a>
-            <a href="/signin" className="text-sm font-medium text-gray-600 lowercase hover:text-blue-600 transition-colors">
-              sign in
-            </a>
-            <a href="https://shorturl.at/KGbiL" className="hidden sm:block px-5 py-2.5 text-sm font-semibold rounded-full bg-gray-900 text-white hover:bg-gray-800 transition-all hover:scale-105 shadow-lg hover:shadow-xl">
-              get started
-            </a>
           </div>
         </div>
       </nav>
@@ -64,17 +58,7 @@ export default function Home() {
                 texts you via imessage like a friend. once a week, a quick money check-in.
               </p>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
-                <a
-                  href="https://shorturl.at/KGbiL"
-                  className="px-10 py-4 text-lg font-semibold rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-500/30 hover:-translate-y-1"
-                >
-                  start now
-                </a>
-                <p className="text-sm text-gray-500">
-                  cancel anytime • blue bubbles
-                </p>
-              </div>
+
 
             </div>
 
@@ -145,6 +129,13 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      {/* Retired Project Banner */}
+      <div className="bg-gray-900 text-white text-center py-5 px-4">
+        <p className="text-sm font-medium">
+          🎓 This project has been retired. Thank you to everyone who tried Trilogy!
+        </p>
+      </div>
 
       {/* Problem statement */}
       <section className="py-24 sm:py-32 bg-gray-50 relative overflow-hidden">
@@ -363,24 +354,12 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-white to-blue-50/50"></div>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-10 relative z-10">
           <h2 className="text-5xl sm:text-6xl font-bold text-gray-900 tracking-tight">
-            ready to stay aware?
+            thanks for being part of the journey.
           </h2>
 
-          <div className="flex flex-col items-center gap-6">
-            <a
-              href="https://shorturl.at/KGbiL"
-              className="relative inline-flex items-center px-12 py-6 text-xl font-bold rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 overflow-hidden group"
-            >
-              <span className="relative z-10">start now</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
-            </a>
-
-            <p className="text-sm text-gray-500 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              we&apos;ll open your messages app — just hit send.
-            </p>
-          </div>
+          <p className="text-xl text-gray-600">
+            trilogy has been retired, but we appreciate everyone who gave it a try.
+          </p>
         </div>
       </section>
 
@@ -397,9 +376,6 @@ export default function Home() {
               </a>
               <a href="/privacy" className="hover:text-blue-600 transition-colors">
                 privacy
-              </a>
-              <a href="/signin" className="hover:text-blue-600 transition-colors">
-                sign in
               </a>
             </div>
             <p className="text-sm text-gray-400">© 2025 trilogy</p>
