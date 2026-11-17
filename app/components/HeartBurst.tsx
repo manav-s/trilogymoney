@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, type CSSProperties, type MouseEvent } from 'react';
+import { confettiBurst } from './fx/confetti';
 
 type Heart = { id: number; x: number; y: number; emoji: string; drift: number };
 
@@ -24,6 +25,7 @@ export default function HeartBurst() {
       emoji: EMOJIS[Math.floor(Math.random() * EMOJIS.length)],
       drift: (Math.random() - 0.5) * 140,
     }));
+    confettiBurst(r.left + x, r.top + y, { count: 60, emojis: EMOJIS });
     setHearts((h) => [...h, ...batch]);
     setCount((c) => c + 1);
     const ids = new Set(batch.map((b) => b.id));
@@ -34,6 +36,7 @@ export default function HeartBurst() {
     <div className="flex flex-col items-center gap-3">
       <button
         type="button"
+        data-magnetic
         onClick={burst}
         className="relative inline-flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-medium lowercase text-white shadow-lg transition-all duration-200 hover:scale-105 hover:bg-[#007AFF] hover:shadow-blue-200 active:scale-95"
       >

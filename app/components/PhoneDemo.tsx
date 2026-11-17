@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import { Battery, ChevronRight, RotateCcw, Signal, Wifi } from 'lucide-react';
 import { useInView, useReducedMotion } from './motion/hooks';
 import CountUp from './motion/CountUp';
+import { confettiBurst } from './fx/confetti';
 
 type Msg = {
   id: number;
@@ -24,6 +25,13 @@ const REPLIES = [
   { label: 'how bad is doordash?', reply: '4 orders this week. that’s basically a whole grocery run 🛒' },
   { label: 'roast me', reply: 'you visited amazon more than the gym this week 💀' },
   { label: 'am i doing ok?', reply: 'honestly yeah. spending’s down from last week. proud of you fr 🫶' },
+];
+
+const ORBIT = [
+  { text: '💸 payday hit', pos: '-left-28 top-20', z: 90, delay: 0 },
+  { text: '📉 food spend down', pos: '-right-24 top-[38%]', z: 130, delay: 0.25 },
+  { text: '🔔 netflix renewed', pos: '-left-20 bottom-32', z: 70, delay: 0.5 },
+  { text: '🫶 proud of you', pos: '-right-14 bottom-14', z: 110, delay: 0.75 },
 ];
 
 const CATEGORIES = [
@@ -70,9 +78,10 @@ function Bubble({ m, onLike }: { m: Msg; onLike: () => void }) {
   const isUser = m.from === 'user';
 
   // Our own double-tap detection: dblclick is unreliable on touch screens.
-  const onClick = () => {
+  const onClick = (e: MouseEvent<HTMLDivElement>) => {
     const now = Date.now();
     if (now - lastTap.current < 320) {
+      if (!m.liked) confettiBurst(e.clientX, e.clientY, { count: 24, emojis: ['❤️', '💖', '✨'] });
       onLike();
       lastTap.current = 0;
     } else {
@@ -137,6 +146,7 @@ export default function PhoneDemo() {
   const timers = useRef<number[]>([]);
   const run = useRef(0);
   const nextId = useRef(0);
+  const firstPlay = useRef(true);
 
   const wait = useCallback(
     (ms: number) =>
@@ -171,7 +181,9 @@ export default function PhoneDemo() {
     setTyping(false);
     setBusy(true);
 
-    await wait(400);
+    const introPlaying = firstPlay.current && !document.documentElement.classList.contains('intro-seen');
+    firstPlay.current = false;
+    await wait(introPlaying ? 1900 : 400);
     if (id !== run.current) return;
     for (const m of INTRO) {
       if (m.from === 'bot') {
@@ -257,8 +269,27 @@ export default function PhoneDemo() {
         <div
           ref={tiltRef}
           className="relative z-10 transition-transform duration-300 ease-out will-change-transform"
-          style={{ transform: 'rotateY(-15deg) rotateX(5deg) rotateZ(3deg)' }}
+          style={{ transform: 'rotateY(-15deg) rotateX(5deg) rotateZ(3deg)', transformStyle: 'preserve-3d' }}
         >
+          {/* Notifications floating in 3D around the phone; they parallax with the tilt */}
+          {ORBIT.map((o) => (
+            <div
+              key={o.text}
+              aria-hidden
+              className={`absolute z-20 hidden sm:block ${o.pos}`}
+              style={{ transform: `translateZ(${o.z}px)` }}
+            >
+              <div className="animate-pop" style={{ animationDelay: `calc(var(--intro, 0s) + ${o.delay + 1.2}s)` }}>
+                <div
+                  className="animate-orbit-bob whitespace-nowrap rounded-2xl bg-white px-3 py-2 text-xs font-medium text-gray-800 shadow-xl ring-1 ring-black/5"
+                  style={{ animationDelay: `${-o.delay * 2}s` }}
+                >
+                  {o.text}
+                </div>
+              </div>
+            </div>
+          ))}
+
           {/* Glass panel behind */}
           <div className="absolute -inset-4 bg-gradient-to-tr from-blue-100 to-indigo-100 rounded-[3.5rem] blur-xl opacity-70" />
 

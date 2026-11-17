@@ -51,6 +51,7 @@ export default function NavBar() {
         </div>
 
         <a
+          data-magnetic
           href="/pricing"
           className="relative text-sm font-medium text-gray-600 lowercase hover:text-blue-600 transition-colors after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:bg-blue-600 after:transition-transform after:duration-300 hover:after:scale-x-100"
         >

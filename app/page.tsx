@@ -3,7 +3,6 @@ import SocialProofBadge from "./components/SocialProofBadge";
 import NavBar from "./components/NavBar";
 import PhoneDemo from "./components/PhoneDemo";
 import HowItWorks from "./components/HowItWorks";
-import CompareToggle from "./components/CompareToggle";
 import ScrollWords from "./components/ScrollWords";
 import MessageMarquee from "./components/MessageMarquee";
 import HeartBurst from "./components/HeartBurst";
@@ -12,6 +11,13 @@ import CountUp from "./components/motion/CountUp";
 import ScrollProgress from "./components/motion/ScrollProgress";
 import SpotlightCard from "./components/motion/SpotlightCard";
 import HeroParallax from "./components/motion/HeroParallax";
+import IntroCurtain from "./components/fx/IntroCurtain";
+import CustomCursor from "./components/fx/CustomCursor";
+import HeroParticles from "./components/fx/HeroParticles";
+import ScrambleText from "./components/fx/ScrambleText";
+import ChaosScene from "./components/fx/ChaosScene";
+import UserHeart from "./components/fx/UserHeart";
+import EasterEgg, { SecretLogo } from "./components/fx/EasterEgg";
 
 const USER_COUNT = 129;
 
@@ -42,13 +48,17 @@ const HEADLINE_LINE_1 = ["your", "money's"];
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white selection:bg-blue-100 selection:text-blue-900 overflow-x-hidden">
+    <div className="min-h-screen bg-white selection:bg-blue-100 selection:text-blue-900 overflow-x-clip">
+      <IntroCurtain />
+      <CustomCursor />
+      <EasterEgg />
       <ScrollProgress />
       <NavBar />
 
       {/* Hero Section */}
       <HeroParallax>
         <main className="relative pt-32 pb-16 sm:pt-40 sm:pb-24 overflow-hidden">
+          <HeroParticles />
           {/* Background gradients drift with the cursor */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl -z-10 pointer-events-none">
             <div
@@ -70,11 +80,11 @@ export default function Home() {
               {/* Left side - Content */}
               <div className="space-y-8 text-center lg:text-left">
                 {/* Social proof - mobile only */}
-                <div className="flex justify-center md:hidden mb-4 animate-word-in">
+                <div className="flex justify-center md:hidden mb-4 animate-word-in" style={{ animationDelay: "var(--intro, 0s)" }}>
                   <SocialProofBadge />
                 </div>
 
-                <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-[10px] min-[400px]:text-xs font-medium uppercase tracking-wide sm:tracking-wider mb-4 whitespace-nowrap animate-word-in hover:scale-105 transition-transform">
+                <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-[10px] min-[400px]:text-xs font-medium uppercase tracking-wide sm:tracking-wider mb-4 whitespace-nowrap animate-word-in hover:scale-105 transition-transform" style={{ animationDelay: "var(--intro, 0s)" }}>
                   <span className="relative flex h-2 w-2 mr-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
@@ -84,28 +94,49 @@ export default function Home() {
 
                 <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 leading-[1.1]">
                   {HEADLINE_LINE_1.map((word, i) => (
-                    <span key={word} className="inline-block animate-word-in" style={{ animationDelay: `${150 + i * 90}ms` }}>
+                    <span key={word} className="inline-block animate-word-in cursor-default transition-[translate,rotate] duration-300 hover:-translate-y-2 hover:-rotate-3" style={{ animationDelay: `calc(var(--intro, 0s) + ${150 + i * 90}ms)` }}>
                       {word}
                       {i < HEADLINE_LINE_1.length - 1 && " "}
                     </span>
                   ))}
                   <br />
-                  <span className="inline-block animate-word-in" style={{ animationDelay: "380ms" }}>
-                    <span className="text-transparent bg-clip-text bg-[linear-gradient(90deg,#007AFF,#5856D6,#AF52DE,#007AFF)] bg-[length:200%_auto] animate-shimmer">
-                      personal assistant.
+                  <span className="inline-block animate-word-in" style={{ animationDelay: "calc(var(--intro, 0s) + 380ms)" }}>
+                    <span className="relative inline-block">
+                      <span className="text-transparent bg-clip-text bg-[linear-gradient(90deg,#007AFF,#5856D6,#AF52DE,#007AFF)] bg-[length:200%_auto] animate-shimmer">
+                        personal assistant.
+                      </span>
+                      <svg aria-hidden viewBox="0 0 300 20" preserveAspectRatio="none" className="absolute -bottom-3 left-0 h-4 w-full overflow-visible">
+                        <path
+                          d="M4 14 C 60 4, 120 4, 170 10 S 260 16, 296 6"
+                          fill="none"
+                          stroke="url(#underline-grad)"
+                          strokeWidth="5"
+                          strokeLinecap="round"
+                          pathLength={1}
+                          className="animate-draw"
+                          style={{ animationDelay: "calc(var(--intro, 0s) + 1100ms)" }}
+                        />
+                        <defs>
+                          <linearGradient id="underline-grad" x1="0" x2="1">
+                            <stop offset="0" stopColor="#007AFF" />
+                            <stop offset="1" stopColor="#AF52DE" />
+                          </linearGradient>
+                        </defs>
+                      </svg>
                     </span>
                   </span>
                 </h1>
 
                 <p
                   className="text-xl sm:text-2xl text-gray-600 leading-relaxed max-w-2xl mx-auto lg:mx-0 animate-word-in"
-                  style={{ animationDelay: "550ms" }}
+                  style={{ animationDelay: "calc(var(--intro, 0s) + 550ms)" }}
                 >
                   texts you via imessage like a friend. once a week, a quick money check-in.
                 </p>
 
-                <div className="animate-word-in" style={{ animationDelay: "700ms" }}>
+                <div className="animate-word-in" style={{ animationDelay: "calc(var(--intro, 0s) + 700ms)" }}>
                   <a
+                    data-magnetic
                     href="#how-it-works"
                     className="group inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/70 backdrop-blur px-5 py-2.5 text-sm font-medium text-gray-700 lowercase shadow-sm transition-all hover:border-blue-200 hover:text-blue-600 hover:shadow-md"
                   >
@@ -116,7 +147,7 @@ export default function Home() {
               </div>
 
               {/* Right side - interactive iPhone */}
-              <div className="relative flex justify-center lg:justify-end animate-word-in" style={{ animationDelay: "300ms" }}>
+              <div className="relative flex justify-center lg:justify-end animate-word-in" style={{ animationDelay: "calc(var(--intro, 0s) + 300ms)" }}>
                 <PhoneDemo />
               </div>
             </div>
@@ -137,36 +168,16 @@ export default function Home() {
 
       <MessageMarquee />
 
-      {/* Problem statement */}
-      <section className="py-24 sm:py-32 bg-gray-50 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-50"></div>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-12 relative z-10">
-          <Reveal className="space-y-6">
-            <p className="text-xl sm:text-2xl text-gray-600 font-medium">most finance apps are exhausting.</p>
-            <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-              they want you to build budgets, track every category, and stare at charts until your eyes glaze over.
-            </p>
-          </Reveal>
-
-          <Reveal from="scale" delay={150}>
-            <SpotlightCard tilt={false} className="glass-panel rounded-3xl p-8 sm:p-12 hover:scale-[1.02] transition-transform duration-500">
-              <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
-                trilogy is <span className="text-blue-600">different.</span>
-              </h2>
-              <p className="text-xl sm:text-2xl text-gray-700 leading-relaxed">
-                once a week, you get an imessage with what actually matters.
-              </p>
-              <CompareToggle />
-            </SpotlightCard>
-          </Reveal>
-        </div>
-      </section>
+      {/* Problem statement: pinned scroll scene */}
+      <ChaosScene />
 
       {/* How it works */}
       <section id="how-it-works" className="py-24 sm:py-32 bg-white relative scroll-mt-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal>
-            <h2 className="text-4xl sm:text-5xl font-bold text-center text-gray-900 mb-20">how it works</h2>
+            <h2 className="text-4xl sm:text-5xl font-bold text-center text-gray-900 mb-20">
+              <ScrambleText text="how it works" />
+            </h2>
           </Reveal>
           <Reveal delay={100}>
             <HowItWorks />
@@ -177,6 +188,11 @@ export default function Home() {
       {/* Why this works Section */}
       <section className="bg-gray-900 relative overflow-hidden">
         <SpotlightCard tilt={false} size={700} color="rgba(99,102,241,0.18)" className="py-24 sm:py-32">
+          {/* Slow-spinning aurora */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-1/2 h-[700px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[conic-gradient(from_0deg,#3b82f6,#8b5cf6,#ec4899,#06b6d4,#3b82f6)] opacity-[0.12] blur-3xl animate-[spin_20s_linear_infinite]"
+          />
           {/* Subtle background glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-4xl opacity-20 pointer-events-none">
             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl mix-blend-screen animate-float delay-100"></div>
@@ -185,7 +201,9 @@ export default function Home() {
 
           <div className="max-w-3xl mx-auto px-6 lg:px-8 relative z-10 text-center">
             <Reveal>
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-12 lowercase tracking-tight">why this works</h2>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-12 lowercase tracking-tight">
+                <ScrambleText text="why this works" />
+              </h2>
             </Reveal>
 
             <div className="space-y-12">
@@ -233,7 +251,9 @@ export default function Home() {
       <section className="py-24 sm:py-32 bg-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
           <Reveal className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 lowercase">uncompromising security.</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 lowercase">
+              <ScrambleText text="uncompromising security." />
+            </h2>
             <p className="text-lg text-gray-600 lowercase">
               your financial data is protected with industry-standard encryption and security best practices, designed by
               a team of security engineers with experience from Microsoft and JP Morgan Chase & Co.
@@ -275,11 +295,15 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-white to-blue-50/50"></div>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-10 relative z-10">
           <Reveal from="scale">
-            <p className="text-xs uppercase tracking-[0.25em] text-blue-600 font-semibold mb-6">thank you</p>
-            <div className="text-7xl sm:text-8xl font-bold tracking-tight text-gray-900">
+            <p className="text-xs uppercase tracking-[0.25em] text-blue-600 font-semibold mb-8">
+              <ScrambleText text="thank you" />
+            </p>
+            <UserHeart count={USER_COUNT} />
+            <div className="mt-6 text-7xl sm:text-8xl font-bold tracking-tight text-gray-900">
               <CountUp to={USER_COUNT} duration={1800} />
             </div>
-            <p className="mt-3 text-lg text-gray-500 lowercase">people trusted trilogy with their money</p>
+            <p className="mt-3 text-lg text-gray-500 lowercase">people trusted trilogy with their money.</p>
+            <p className="mt-1 text-xs text-gray-400 lowercase">every dot is one of you. go ahead, poke the heart.</p>
           </Reveal>
 
           <Reveal delay={150}>
@@ -305,7 +329,7 @@ export default function Home() {
       <footer className="border-t border-gray-100 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
-            <span className="text-xl font-bold text-gray-900 lowercase tracking-tight">trilogy</span>
+            <SecretLogo />
             <div className="flex items-center space-x-8 text-sm font-medium text-gray-500">
               <a href="/pricing" className="hover:text-blue-600 transition-colors">
                 pricing
@@ -314,7 +338,7 @@ export default function Home() {
                 privacy
               </a>
             </div>
-            <p className="text-sm text-gray-400">© 2025 trilogy</p>
+            <p className="text-sm text-gray-400" title="psst: type “money”">© 2025 trilogy</p>
           </div>
         </div>
       </footer>

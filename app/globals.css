@@ -272,3 +272,57 @@ html {
     filter: none !important;
   }
 }
+
+/* ---------- Extra-insane layer ---------- */
+
+/* Hero entrances wait for the intro curtain on first visit. */
+html:not(.intro-seen) {
+  --intro: 1.55s;
+}
+html.intro-seen .intro-curtain {
+  display: none;
+}
+
+/* Custom cursor (mouse users only; added by CustomCursor.tsx) */
+html.custom-cursor,
+html.custom-cursor * {
+  cursor: none !important;
+}
+
+[data-magnetic] {
+  transition: translate 0.25s cubic-bezier(0.2, 1, 0.3, 1);
+}
+
+@theme {
+  --animate-intro-letter: intro-letter 0.8s cubic-bezier(0.2, 1.2, 0.3, 1) both;
+  --animate-jitter: jitter 0.14s linear infinite;
+  --animate-orbit-bob: orbit-bob 4.5s ease-in-out infinite;
+  --animate-heartbeat: heartbeat 1.6s ease-in-out infinite;
+  --animate-draw: draw 1.1s cubic-bezier(0.65, 0, 0.35, 1) both;
+
+  @keyframes intro-letter {
+    from { transform: translateY(110%) rotate(12deg); }
+    to { transform: translateY(0) rotate(0); }
+  }
+  @keyframes jitter {
+    0% { translate: 0 0; }
+    25% { translate: var(--jit, 0px) calc(var(--jit, 0px) * -1); }
+    50% { translate: calc(var(--jit, 0px) * -1) var(--jit, 0px); }
+    75% { translate: var(--jit, 0px) var(--jit, 0px); }
+    100% { translate: 0 0; }
+  }
+  @keyframes orbit-bob {
+    0%, 100% { translate: 0 0; rotate: -2deg; }
+    50% { translate: 0 -12px; rotate: 2deg; }
+  }
+  @keyframes heartbeat {
+    0%, 40%, 100% { transform: scale(1); }
+    15% { transform: scale(1.08); }
+    25% { transform: scale(0.98); }
+    32% { transform: scale(1.05); }
+  }
+  @keyframes draw {
+    from { stroke-dasharray: 1; stroke-dashoffset: 1; }
+    to { stroke-dasharray: 1; stroke-dashoffset: 0; }
+  }
+}

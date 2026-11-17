@@ -24,8 +24,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
         <head>
+          {/* Before first paint: skip the intro curtain on repeat visits or for reduced-motion users. */}
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `try{if(sessionStorage.getItem('trilogy-intro')||matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('intro-seen')}catch(e){document.documentElement.classList.add('intro-seen')}`,
+            }}
+          />
           <Script id="microsoft-clarity" strategy="afterInteractive">
             {`
               (function(c,l,a,r,i,t,y){
@@ -36,7 +42,7 @@ export default function RootLayout({
             `}
           </Script>
           <noscript>
-            <style>{`[data-reveal]{opacity:1!important;transform:none!important;filter:none!important}`}</style>
+            <style>{`[data-reveal]{opacity:1!important;transform:none!important;filter:none!important}.intro-curtain{display:none!important}.chaos-final{opacity:1!important;transform:none!important}`}</style>
           </noscript>
         </head>
         <body
