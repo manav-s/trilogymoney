@@ -35,6 +35,9 @@ export default function RootLayout({
               })(window, document, "clarity", "script", "ueecsqi12a");
             `}
           </Script>
+          <noscript>
+            <style>{`[data-reveal]{opacity:1!important;transform:none!important;filter:none!important}`}</style>
+          </noscript>
         </head>
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
