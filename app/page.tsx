@@ -74,7 +74,7 @@ export default function Home() {
                   <SocialProofBadge />
                 </div>
 
-                <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-xs font-medium uppercase tracking-wider mb-4 animate-word-in hover:scale-105 transition-transform">
+                <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-[10px] min-[400px]:text-xs font-medium uppercase tracking-wide sm:tracking-wider mb-4 whitespace-nowrap animate-word-in hover:scale-105 transition-transform">
                   <span className="relative flex h-2 w-2 mr-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
@@ -197,7 +197,7 @@ export default function Home() {
                 <Reveal from="scale">
                   <p className="text-3xl sm:text-4xl font-semibold text-white leading-tight lowercase">
                     you just need to know <br className="hidden sm:block" />
-                    <span className="text-transparent bg-clip-text bg-[linear-gradient(90deg,#60a5fa,#818cf8,#c084fc,#60a5fa)] bg-[length:200%_auto] animate-shimmer">
+                    <span className="inline-block text-transparent bg-clip-text bg-[linear-gradient(90deg,#60a5fa,#818cf8,#c084fc,#60a5fa)] bg-[length:200%_auto] animate-shimmer">
                       where you&apos;re at.
                     </span>
                   </p>
@@ -283,7 +283,7 @@ export default function Home() {
           </Reveal>
 
           <Reveal delay={150}>
-            <h2 className="text-5xl sm:text-6xl font-bold text-gray-900 tracking-tight">
+            <h2 className="text-4xl min-[400px]:text-5xl sm:text-6xl font-bold text-gray-900 tracking-tight">
               thanks for being part of the journey.
             </h2>
           </Reveal>

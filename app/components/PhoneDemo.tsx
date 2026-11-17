@@ -253,7 +253,7 @@ export default function PhoneDemo() {
 
   return (
     <div ref={wrapRef} className="relative flex flex-col items-center gap-6">
-      <div className="animate-float" style={{ perspective: '1000px' }}>
+      <div className="animate-float scale-[0.86] min-[360px]:scale-[0.94] sm:scale-100 -my-6 min-[360px]:-my-2 sm:my-0" style={{ perspective: '1000px' }}>
         <div
           ref={tiltRef}
           className="relative z-10 transition-transform duration-300 ease-out will-change-transform"
@@ -347,8 +347,10 @@ export default function PhoneDemo() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 text-xs text-gray-400 lowercase">
-        <span>tap a reply to chat · double-tap a bubble to ❤️</span>
+      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 text-center text-xs text-gray-400 lowercase">
+        <span>
+          tap a reply to chat<span className="hidden min-[400px]:inline"> · double-tap a bubble to ❤️</span>
+        </span>
         <button
           type="button"
           onClick={() => play()}
